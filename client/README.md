@@ -54,7 +54,7 @@ All pages validate with zero errors (config in `.htmlvalidate.json`). Text colou
 SplitStack's front end uses a modular client data layer in `client/js/data/`:
 - `store.js`: Manages collections in `localStorage` under the versioned key `splitstack:v1`. Resilient to private browsing modes (in-memory fallback), quota limits, and corrupted storage (automatic reseed).
 - `seed.js`: Realistic sample data matching Review 1 screens (Priya Raman, October 2026, 6 months historical analytics, groups, shared expenses, settlements, and shopping lists). All currency values are strictly stored as **integer paise** (₹1 = 100 paise).
-- `api.js`: Asynchronous API module exposing Promises and structured `ApiError { field, message, status }` objects. This forms the exact contract that the Review 3 Node.js + Express REST API will implement.
+- `api.js`: Asynchronous API module exposing Promises and structured `ApiError { field, message, status }` objects. This forms the exact contract that the Review 3 Node.js + Express REST API will implement. Password hashing in this client-only mode uses Web Crypto SHA-256 + salt strictly for demo authentication; the Review 3 Express backend will replace this with server-side bcrypt (cost factor 12) over HTTPS.
 
 ### `api.js` API Contract Functions
 

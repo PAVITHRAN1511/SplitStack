@@ -7,6 +7,8 @@
 
 // Demo password hash for "Demo@1234" with salt "splitstack_demo_salt"
 // SHA-256("splitstack_demo_salt:Demo@1234")
+// NOTE: Client-side SHA-256 hashing is strictly for demo/localStorage mode.
+// Review 3 Express + MongoDB backend must replace this with bcrypt (cost factor 12).
 export const DEMO_SALT = 'splitstack_demo_salt';
 export const DEMO_PASSWORD_HASH = 'ab43b00d4ac7588b530cee14d402eb14ea1db54980b32d263fddce87c452e059';
 

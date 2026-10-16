@@ -46,6 +46,21 @@ export function generateId() {
   });
 }
 
+const REQUIRED_COLLECTIONS = [
+  'users',
+  'categories',
+  'expenses',
+  'income',
+  'budgets',
+  'recurring',
+  'groups',
+  'sharedExpenses',
+  'settlements',
+  'shoppingLists',
+  'receipts',
+  'insights'
+];
+
 /**
  * Validate that an object has the required collection arrays.
  * @param {any} data
@@ -54,52 +69,92 @@ export function generateId() {
 function isValidStore(data) {
   if (!data || typeof data !== 'object') return false;
   if (data.version !== STORE_VERSION) return false;
-
-  const collections = [
-    'users',
-    'categories',
-    'expenses',
-    'income',
-    'budgets',
-    'recurring',
-    'groups',
-    'sharedExpenses',
-    'settlements',
-    'shoppingLists',
-    'receipts',
-    'insights'
-  ];
-
-  return collections.every((c) => Array.isArray(data[c]));
+  return REQUIRED_COLLECTIONS.every((c) => Array.isArray(data[c]));
 }
 
 /**
- * Load the entire database from localStorage, or reseed if missing/corrupt.
+ * Safely preserve unparseable or corrupted store raw content before reseeding.
+ * @param {string} raw
+ */
+function backupCorruptStore(raw) {
+  if (!raw || !hasStorage) return;
+  try {
+    const backupKey = `splitstack:corrupt_backup:${Date.now()}`;
+    localStorage.setItem(backupKey, raw);
+    localStorage.setItem('splitstack:last_corrupt_backup', backupKey);
+    console.warn(`[SplitStack] Saved corrupted store backup to "${backupKey}".`);
+  } catch (_) {}
+}
+
+/**
+ * Load the entire database from localStorage, safely repairing incomplete data
+ * or reseeding only when data is completely unrecoverable.
  * @returns {Object} Complete data store
  */
 export function loadStore() {
   if (!hasStorage) {
     if (!memoryStore) {
       memoryStore = { version: STORE_VERSION, ...getInitialSeedData() };
+      memorySession = 'u_priya';
     }
     return memoryStore;
   }
 
+  let raw = null;
   try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) {
-      return reseed();
-    }
-
-    const parsed = JSON.parse(raw);
-    if (!isValidStore(parsed)) {
-      console.warn('[SplitStack] Detected invalid or legacy store schema; reseeding with initial demo data.');
-      return reseed();
-    }
-
-    return parsed;
+    raw = localStorage.getItem(STORE_KEY);
   } catch (err) {
-    console.error('[SplitStack] Error reading store from localStorage, reseeding:', err);
+    console.error('[SplitStack] Error accessing localStorage, using in-memory store:', err);
+    if (!memoryStore) {
+      memoryStore = { version: STORE_VERSION, ...getInitialSeedData() };
+      memorySession = 'u_priya';
+    }
+    return memoryStore;
+  }
+
+  if (!raw) {
+    return reseed();
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+
+    if (isValidStore(parsed)) {
+      return parsed;
+    }
+
+    // Recoverable data: valid JSON object missing some collections or legacy version.
+    // Preserve existing collections and backfill any missing collections without wiping user data.
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const seed = getInitialSeedData();
+      let repaired = false;
+
+      for (const col of REQUIRED_COLLECTIONS) {
+        if (!Array.isArray(parsed[col])) {
+          parsed[col] = Array.isArray(seed[col]) ? seed[col] : [];
+          repaired = true;
+        }
+      }
+
+      if (parsed.version !== STORE_VERSION) {
+        parsed.version = STORE_VERSION;
+        repaired = true;
+      }
+
+      if (repaired) {
+        console.warn('[SplitStack] Repaired store collections and preserved existing user data.');
+        saveStore(parsed);
+      }
+
+      return parsed;
+    }
+
+    // Parsed is not an object (e.g. primitive string or number)
+    backupCorruptStore(raw);
+    return reseed();
+  } catch (err) {
+    console.error('[SplitStack] Corrupted JSON in localStorage. Backing up and reseeding:', err);
+    backupCorruptStore(raw);
     return reseed();
   }
 }
@@ -155,16 +210,17 @@ export function reset() {
 
 /**
  * Get current session user ID.
+ * Returns null if the user has signed out.
  * @returns {string|null}
  */
 export function getSessionUserId() {
   if (!hasStorage) {
-    return memorySession || 'u_priya';
+    return memorySession;
   }
   try {
-    return localStorage.getItem(SESSION_KEY) || 'u_priya';
+    return localStorage.getItem(SESSION_KEY);
   } catch (_) {
-    return memorySession || 'u_priya';
+    return memorySession;
   }
 }
 

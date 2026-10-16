@@ -40,7 +40,7 @@ describe('Client Data Layer (Step P2)', () => {
     await api.resetDemoData();
   });
 
-  describe('1. Store initialization & recovery', () => {
+  describe('1. Store initialization, recovery, and data preservation', () => {
     test('seeds correctly on clean initialization', () => {
       const store = loadStore();
       assert.equal(store.version, STORE_VERSION);
@@ -63,19 +63,55 @@ describe('Client Data Layer (Step P2)', () => {
       assert.equal(demoUser.name, 'Priya Raman');
     });
 
-    test('recovers gracefully from corrupted JSON in storage', () => {
-      globalThis.localStorage.setItem(STORE_KEY, 'INVALID_CORRUPT_JSON{{{');
+    test('recovers gracefully from corrupted JSON and creates backup', () => {
+      const corruptRaw = 'INVALID_CORRUPT_JSON{{{';
+      globalThis.localStorage.setItem(STORE_KEY, corruptRaw);
+
       const store = loadStore();
       assert.equal(store.version, STORE_VERSION);
       assert.ok(Array.isArray(store.expenses));
       assert.ok(store.expenses.length > 0);
+
+      // Verify backup key was created
+      const backupKey = globalThis.localStorage.getItem('splitstack:last_corrupt_backup');
+      assert.ok(backupKey);
+      assert.equal(globalThis.localStorage.getItem(backupKey), corruptRaw);
     });
 
-    test('recovers from invalid schema version or missing collections', () => {
-      globalThis.localStorage.setItem(STORE_KEY, JSON.stringify({ version: 999, invalid: true }));
-      const store = loadStore();
-      assert.equal(store.version, STORE_VERSION);
-      assert.ok(Array.isArray(store.users));
+    test('does not destroy user data when store schema is missing a collection', () => {
+      // User has existing custom expenses, but receipts and insights collections are missing
+      const partialUserStore = {
+        version: 1,
+        users: [{ id: 'u_custom', name: 'Preserved User', email: 'custom@example.com' }],
+        categories: [],
+        expenses: [
+          {
+            id: 'exp_preserved',
+            userId: 'u_custom',
+            amount: 55000,
+            description: 'Preserved Expense',
+            categoryId: 'cat_food',
+            date: '2026-10-25'
+          }
+        ],
+        income: [],
+        budgets: [],
+        recurring: [],
+        groups: [],
+        sharedExpenses: [],
+        settlements: [],
+        shoppingLists: []
+        // receipts and insights intentionally omitted
+      };
+
+      globalThis.localStorage.setItem(STORE_KEY, JSON.stringify(partialUserStore));
+
+      const loaded = loadStore();
+      assert.equal(loaded.version, STORE_VERSION);
+      assert.equal(loaded.expenses.length, 1);
+      assert.equal(loaded.expenses[0].id, 'exp_preserved');
+      assert.ok(Array.isArray(loaded.receipts), 'Backfills missing receipts collection as array');
+      assert.ok(Array.isArray(loaded.insights), 'Backfills missing insights collection as array');
     });
 
     test('resetDemoData restores original seed data', async () => {
@@ -119,6 +155,30 @@ describe('Client Data Layer (Step P2)', () => {
           return true;
         }
       );
+    });
+
+    test('logout clears session and subsequent protected calls throw 401 ApiError', async () => {
+      await api.login({ email: 'demo@splitstack.app', password: 'Demo@1234' });
+      const me = await api.currentUser();
+      assert.ok(me);
+
+      await api.logout();
+      const meAfter = await api.currentUser();
+      assert.equal(meAfter, null);
+
+      await assert.rejects(
+        async () => {
+          await api.listExpenses();
+        },
+        (err) => {
+          assert.equal(err.name, 'ApiError');
+          assert.equal(err.status, 401);
+          return true;
+        }
+      );
+
+      // Re-login to continue tests cleanly
+      await api.login({ email: 'demo@splitstack.app', password: 'Demo@1234' });
     });
 
     test('rejects registration with existing email with 409 ApiError', async () => {
@@ -248,14 +308,18 @@ describe('Client Data Layer (Step P2)', () => {
       );
     });
 
-    test('filters expenses by search text, category, and date range', async () => {
+    test('filters expenses by search text, category (both keys), and date range', async () => {
       const all = await api.listExpenses({ limit: 100 });
       assert.ok(all.total > 0);
 
-      // Filter by category
-      const foodOnly = await api.listExpenses({ categoryId: 'cat_food', limit: 100 });
-      assert.ok(foodOnly.items.length > 0);
-      assert.ok(foodOnly.items.every((e) => e.categoryId === 'cat_food'));
+      // Filter by categoryId
+      const foodById = await api.listExpenses({ categoryId: 'cat_food', limit: 100 });
+      assert.ok(foodById.items.length > 0);
+      assert.ok(foodById.items.every((e) => e.categoryId === 'cat_food'));
+
+      // Filter by category key
+      const foodByKey = await api.listExpenses({ category: 'cat_food', limit: 100 });
+      assert.equal(foodByKey.items.length, foodById.items.length);
 
       // Filter by search text
       const searchRes = await api.listExpenses({ search: 'Swiggy' });
@@ -291,10 +355,15 @@ describe('Client Data Layer (Step P2)', () => {
   });
 
   describe('5. Budgets, Categories, and Recurring', () => {
-    test('lists and creates budgets', async () => {
-      const budgets = await api.listBudgets({ month: 10, year: 2026 });
-      assert.ok(Array.isArray(budgets));
-      assert.ok(budgets.length > 0);
+    test('lists and creates budgets with positional and object parameters', async () => {
+      // Positional
+      const budgetsPos = await api.listBudgets(10, 2026);
+      assert.ok(Array.isArray(budgetsPos));
+      assert.ok(budgetsPos.length > 0);
+
+      // Object
+      const budgetsObj = await api.listBudgets({ month: 10, year: 2026 });
+      assert.equal(budgetsObj.length, budgetsPos.length);
 
       // Create new budget for Travel
       const newBudget = await api.createBudget({
@@ -337,7 +406,23 @@ describe('Client Data Layer (Step P2)', () => {
       assert.ok(goa.members.length >= 4);
     });
 
-    test('computes group balances in integer paise', async () => {
+    test('addMember supports both email string and member object', async () => {
+      const newGroup = await api.createGroup({ name: 'Weekend Gamers' });
+
+      // Add by email string
+      const updated1 = await api.addMember(newGroup.id, 'gamer1@example.com');
+      assert.ok(updated1.members.some((m) => m.email === 'gamer1@example.com'));
+
+      // Add by object
+      const updated2 = await api.addMember(newGroup.id, {
+        email: 'gamer2@example.com',
+        name: 'Gamer Two',
+        role: 'member'
+      });
+      assert.ok(updated2.members.some((m) => m.email === 'gamer2@example.com' && m.name === 'Gamer Two'));
+    });
+
+    test('computes group balances in integer paise with zero-sum invariant', async () => {
       const balances = await api.getGroupBalances('grp_goa');
       assert.ok(typeof balances === 'object' && balances !== null);
       assert.ok(Object.keys(balances).length >= 4);
@@ -390,10 +475,47 @@ describe('Client Data Layer (Step P2)', () => {
         }
       );
     });
+
+    test('recordSettlement verifies payer and payee are group members', async () => {
+      // Valid settlement between Goa Trip members
+      const settlement = await api.recordSettlement('grp_goa', {
+        payerId: 'u_rohan',
+        payeeId: 'u_priya',
+        amount: 50000
+      });
+      assert.ok(settlement.id);
+      assert.equal(settlement.amount, 50000);
+
+      // Rejects non-member
+      await assert.rejects(
+        async () => {
+          await api.recordSettlement('grp_goa', {
+            payerId: 'u_rohan',
+            payeeId: 'non_member_user_999',
+            amount: 50000
+          });
+        },
+        (err) => {
+          assert.equal(err.name, 'ApiError');
+          assert.equal(err.status, 400);
+          return true;
+        }
+      );
+    });
   });
 
   describe('7. Shopping lists and conversion', () => {
-    test('adds item, toggles purchased, and converts list to expense', async () => {
+    test('group-shared shopping lists are accessible to group members', async () => {
+      // Goa packing list (shop_2) is linked to grp_goa
+      const goaLists = await api.listShoppingLists('grp_goa');
+      assert.ok(goaLists.length >= 1);
+      assert.equal(goaLists[0].id, 'shop_2');
+
+      const goaPacking = await api.getShoppingList('shop_2');
+      assert.equal(goaPacking.name, 'Goa packing list');
+    });
+
+    test('adds item, toggles purchased, and converts list to expense with string categoryId', async () => {
       const list = await api.getShoppingList('shop_1');
       assert.ok(list);
 
@@ -409,15 +531,16 @@ describe('Client Data Layer (Step P2)', () => {
       const toggled = await api.toggleShoppingItem('shop_1', added.id);
       assert.equal(toggled.purchased, true);
 
-      // Convert to expense
-      const createdExpense = await api.convertShoppingListToExpense('shop_1', { categoryId: 'cat_food' });
+      // Convert to expense using string categoryId ('cat_food')
+      const createdExpense = await api.convertShoppingListToExpense('shop_1', 'cat_food');
       assert.ok(createdExpense.id);
       assert.ok(createdExpense.amount > 0);
+      assert.equal(createdExpense.categoryId, 'cat_food');
 
       // Duplicate conversion should be rejected
       await assert.rejects(
         async () => {
-          await api.convertShoppingListToExpense('shop_1', { categoryId: 'cat_food' });
+          await api.convertShoppingListToExpense('shop_1', 'cat_food');
         },
         (err) => err.status === 409
       );
@@ -425,28 +548,45 @@ describe('Client Data Layer (Step P2)', () => {
   });
 
   describe('8. Analytics and Search', () => {
-    test('computes monthly summary with historical trend', async () => {
-      const summary = await api.monthlySummary({ month: 10, year: 2026 });
-      assert.ok(summary);
-      assert.ok(typeof summary.totalExpenses === 'number');
-      assert.ok(typeof summary.totalIncome === 'number');
-      assert.ok(Array.isArray(summary.trend));
-      assert.equal(summary.trend.length, 6);
+    test('monthlySummary handles both numeric monthsBack and options object', async () => {
+      // Positional numeric monthsBack
+      const summary3 = await api.monthlySummary(3);
+      assert.ok(summary3);
+      assert.equal(summary3.trend.length, 3);
+
+      // Options object
+      const summaryObj = await api.monthlySummary({ month: 10, year: 2026, monthsBack: 6 });
+      assert.ok(summaryObj);
+      assert.equal(summaryObj.trend.length, 6);
+      assert.ok(typeof summaryObj.totalExpenses === 'number');
+      assert.ok(typeof summaryObj.totalIncome === 'number');
     });
 
-    test('computes spending breakdown by category', async () => {
-      const catData = await api.byCategory({ month: 10, year: 2026 });
-      assert.ok(Array.isArray(catData));
-      assert.ok(catData.length > 0);
-      assert.ok(catData.every((c) => c.category && typeof c.amount === 'number'));
+    test('byCategory handles both positional (month, year) and options object', async () => {
+      // Positional
+      const catDataPos = await api.byCategory(10, 2026);
+      assert.ok(Array.isArray(catDataPos));
+      assert.ok(catDataPos.length > 0);
+
+      // Options object
+      const catDataObj = await api.byCategory({ month: 10, year: 2026 });
+      assert.equal(catDataObj.length, catDataPos.length);
+      assert.ok(catDataObj.every((c) => c.category && typeof c.amount === 'number'));
+
+      // Empty past month with no spending
+      const pastEmpty = await api.byCategory(1, 2020);
+      assert.equal(pastEmpty.length, 0);
     });
 
-    test('computes spending forecast', async () => {
-      const fc = await api.forecast({ month: 10, year: 2026 });
-      assert.ok(fc);
-      assert.ok(fc.totalSoFar > 0);
-      assert.ok(fc.projectedTotal > 0);
-      assert.ok(fc.daysInMonth >= 28);
+    test('forecast handles both positional (month, year) and options object', async () => {
+      const fcPos = await api.forecast(10, 2026);
+      assert.ok(fcPos);
+      assert.ok(fcPos.totalSoFar > 0);
+      assert.ok(fcPos.projectedTotal > 0);
+      assert.ok(fcPos.daysInMonth >= 28);
+
+      const fcObj = await api.forecast({ month: 10, year: 2026 });
+      assert.equal(fcObj.totalSoFar, fcPos.totalSoFar);
     });
 
     test('performs cross-collection search', async () => {

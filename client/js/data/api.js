@@ -30,7 +30,8 @@ export class ApiError extends Error {
 /**
  * Hash a password using SHA-256 + salt via Web Crypto API.
  * NOTE: This client-side hashing is for demo/localStorage mode only.
- * The production Review 3 Node.js + Express server will use bcrypt (cost 12).
+ * The production Review 3 Node.js + Express backend must replace this with
+ * server-side bcrypt hashing (cost factor 12) over HTTPS.
  * @param {string} password - Raw password
  * @param {string} salt - Random or unique salt
  * @returns {Promise<string>} Hex-encoded SHA-256 hash
@@ -242,16 +243,18 @@ export async function changePassword({ currentPassword, newPassword }) {
  * @param {string} [params.sort='date_desc']
  * @returns {Promise<{ items: Object[], total: number, page: number, limit: number, totalPages: number }>}
  */
-export async function listExpenses({
-  page = 1,
-  limit = 10,
-  search = '',
-  categoryId = '',
-  paymentMethod = '',
-  startDate = '',
-  endDate = '',
-  sort = 'date_desc'
-} = {}) {
+export async function listExpenses(filters = {}) {
+  const {
+    page = 1,
+    limit = 10,
+    search = '',
+    categoryId = '',
+    category = '',
+    paymentMethod = '',
+    startDate = '',
+    endDate = '',
+    sort = 'date_desc'
+  } = filters;
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -262,8 +265,9 @@ export async function listExpenses({
     list = list.filter((e) => (e.description || '').toLowerCase().includes(q) || (e.notes || '').toLowerCase().includes(q));
   }
 
-  if (categoryId) {
-    list = list.filter((e) => e.categoryId === categoryId);
+  const cat = categoryId || category;
+  if (cat) {
+    list = list.filter((e) => e.categoryId === cat);
   }
 
   if (paymentMethod) {
@@ -398,15 +402,17 @@ export async function removeExpense(id) {
  * @param {Object} [params]
  * @returns {Promise<{ items: Object[], total: number, page: number, limit: number, totalPages: number }>}
  */
-export async function listIncome({
-  page = 1,
-  limit = 10,
-  search = '',
-  categoryId = '',
-  startDate = '',
-  endDate = '',
-  sort = 'date_desc'
-} = {}) {
+export async function listIncome(filters = {}) {
+  const {
+    page = 1,
+    limit = 10,
+    search = '',
+    categoryId = '',
+    category = '',
+    startDate = '',
+    endDate = '',
+    sort = 'date_desc'
+  } = filters;
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -417,7 +423,8 @@ export async function listIncome({
     list = list.filter((i) => (i.source || '').toLowerCase().includes(q) || (i.notes || '').toLowerCase().includes(q));
   }
 
-  if (categoryId) list = list.filter((i) => i.categoryId === categoryId);
+  const cat = categoryId || category;
+  if (cat) list = list.filter((i) => i.categoryId === cat);
   if (startDate) list = list.filter((i) => i.date >= startDate);
   if (endDate) list = list.filter((i) => i.date <= endDate);
 
@@ -641,7 +648,17 @@ export async function removeCategory(id) {
  * @param {number} [params.year=2026]
  * @returns {Promise<Object[]>}
  */
-export async function listBudgets({ month = 10, year = 2026 } = {}) {
+export async function listBudgets(arg1 = 10, arg2 = 2026) {
+  let month = 10;
+  let year = 2026;
+  if (typeof arg1 === 'object' && arg1 !== null) {
+    month = arg1.month ?? 10;
+    year = arg1.year ?? 2026;
+  } else {
+    if (typeof arg1 === 'number') month = arg1;
+    if (typeof arg2 === 'number') year = arg2;
+  }
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -923,8 +940,9 @@ export async function createGroup({ name, description = '', memberEmails = [] })
  * @param {string} email
  * @returns {Promise<Object>}
  */
-export async function addMember(groupId, email) {
-  if (!email || !email.includes('@')) throw new ApiError('Valid email is required', { field: 'email' });
+export async function addMember(groupId, member) {
+  const rawEmail = typeof member === 'string' ? member : member?.email;
+  if (!rawEmail || !rawEmail.includes('@')) throw new ApiError('Valid email is required', { field: 'email' });
 
   const store = loadStore();
   const user = requireAuth(store);
@@ -932,17 +950,24 @@ export async function addMember(groupId, email) {
   const group = store.groups.find((g) => g.id === groupId && g.members.some((m) => m.userId === user.id));
   if (!group) throw new ApiError('Group not found', { status: 404 });
 
-  const norm = email.trim().toLowerCase();
+  const norm = rawEmail.trim().toLowerCase();
   if (group.members.some((m) => m.email.toLowerCase() === norm)) {
     throw new ApiError('User is already a member of this group', { field: 'email', status: 409 });
   }
 
   const existingUser = store.users.find((u) => u.email.toLowerCase() === norm);
+  const memberName =
+    typeof member === 'object' && member?.name
+      ? member.name.trim()
+      : existingUser
+        ? existingUser.name
+        : norm.split('@')[0];
+
   const newMember = {
     userId: existingUser ? existingUser.id : generateId(),
-    name: existingUser ? existingUser.name : norm.split('@')[0],
+    name: memberName,
     email: norm,
-    role: 'member',
+    role: typeof member === 'object' && member?.role === 'admin' ? 'admin' : 'member',
     joinedAt: new Date().toISOString()
   };
 
@@ -1141,6 +1166,12 @@ export async function recordSettlement(groupId, { payerId, payeeId, amount }) {
   const group = store.groups.find((g) => g.id === groupId && g.members.some((m) => m.userId === user.id));
   if (!group) throw new ApiError('Group not found', { status: 404 });
 
+  const isPayerMember = group.members.some((m) => m.userId === payerId);
+  const isPayeeMember = group.members.some((m) => m.userId === payeeId);
+  if (!isPayerMember || !isPayeeMember) {
+    throw new ApiError('Payer and payee must be members of the group', { status: 400 });
+  }
+
   const settlement = {
     id: generateId(),
     groupId,
@@ -1161,14 +1192,43 @@ export async function recordSettlement(groupId, { payerId, payeeId, amount }) {
 // =============================================================================
 
 /**
+ * Helper to find a shopping list accessible by the user (owned or through group membership).
+ * @param {Object} store
+ * @param {string} listId
+ * @param {Object} user
+ * @returns {Object|undefined}
+ */
+function findAccessibleShoppingList(store, listId, user) {
+  const userGroupIds = new Set(
+    store.groups.filter((g) => g.members.some((m) => m.userId === user.id)).map((g) => g.id)
+  );
+  return store.shoppingLists.find((sl) => {
+    if (sl.id !== listId) return false;
+    return sl.ownerId === user.id || (sl.groupId && userGroupIds.has(sl.groupId));
+  });
+}
+
+/**
  * List shopping lists owned by the user or their groups.
+ * @param {string|null} [groupId=null]
  * @returns {Promise<Object[]>}
  */
-export async function listShoppingLists() {
+export async function listShoppingLists(groupId = null) {
   const store = loadStore();
   const user = requireAuth(store);
 
-  return store.shoppingLists.filter((sl) => sl.ownerId === user.id);
+  const userGroupIds = new Set(
+    store.groups.filter((g) => g.members.some((m) => m.userId === user.id)).map((g) => g.id)
+  );
+
+  return store.shoppingLists.filter((sl) => {
+    const hasAccess = sl.ownerId === user.id || (sl.groupId && userGroupIds.has(sl.groupId));
+    if (!hasAccess) return false;
+    if (groupId !== null && groupId !== undefined) {
+      return sl.groupId === groupId;
+    }
+    return true;
+  });
 }
 
 /**
@@ -1180,7 +1240,7 @@ export async function getShoppingList(id) {
   const store = loadStore();
   const user = requireAuth(store);
 
-  const list = store.shoppingLists.find((sl) => sl.id === id && sl.ownerId === user.id);
+  const list = findAccessibleShoppingList(store, id, user);
   if (!list) throw new ApiError('Shopping list not found', { status: 404 });
   return list;
 }
@@ -1267,7 +1327,7 @@ export async function addShoppingItem(listId, { name, quantity = 1, estimatedPri
   const store = loadStore();
   const user = requireAuth(store);
 
-  const list = store.shoppingLists.find((sl) => sl.id === listId && sl.ownerId === user.id);
+  const list = findAccessibleShoppingList(store, listId, user);
   if (!list) throw new ApiError('Shopping list not found', { status: 404 });
 
   const newItem = {
@@ -1295,7 +1355,7 @@ export async function toggleShoppingItem(listId, itemId) {
   const store = loadStore();
   const user = requireAuth(store);
 
-  const list = store.shoppingLists.find((sl) => sl.id === listId && sl.ownerId === user.id);
+  const list = findAccessibleShoppingList(store, listId, user);
   if (!list) throw new ApiError('Shopping list not found', { status: 404 });
 
   const item = list.items.find((it) => it.id === itemId);
@@ -1321,7 +1381,7 @@ export async function updateShoppingItem(listId, itemId, data) {
   const store = loadStore();
   const user = requireAuth(store);
 
-  const list = store.shoppingLists.find((sl) => sl.id === listId && sl.ownerId === user.id);
+  const list = findAccessibleShoppingList(store, listId, user);
   if (!list) throw new ApiError('Shopping list not found', { status: 404 });
 
   const item = list.items.find((it) => it.id === itemId);
@@ -1359,11 +1419,14 @@ export async function removeShoppingItem(listId, itemId) {
  * @param {string} [params.paymentMethod='Card']
  * @returns {Promise<Object>} The created expense
  */
-export async function convertShoppingListToExpense(listId, { categoryId = 'cat_food', paymentMethod = 'Card' } = {}) {
+export async function convertShoppingListToExpense(listId, options = {}) {
+  const opts = typeof options === 'string' ? { categoryId: options } : options || {};
+  const { categoryId = 'cat_food', paymentMethod = 'Card' } = opts;
+
   const store = loadStore();
   const user = requireAuth(store);
 
-  const list = store.shoppingLists.find((sl) => sl.id === listId && sl.ownerId === user.id);
+  const list = findAccessibleShoppingList(store, listId, user);
   if (!list) throw new ApiError('Shopping list not found', { status: 404 });
 
   if (list.convertedExpenseId) {
@@ -1411,7 +1474,19 @@ export async function convertShoppingListToExpense(listId, { categoryId = 'cat_f
  * @param {number} [params.year=2026]
  * @returns {Promise<Object>}
  */
-export async function monthlySummary({ month = 10, year = 2026 } = {}) {
+export async function monthlySummary(arg = {}) {
+  let month = 10;
+  let year = 2026;
+  let monthsBack = 6;
+
+  if (typeof arg === 'number') {
+    monthsBack = Math.max(1, arg);
+  } else if (typeof arg === 'object' && arg !== null) {
+    month = arg.month ?? 10;
+    year = arg.year ?? 2026;
+    if (typeof arg.monthsBack === 'number') monthsBack = Math.max(1, arg.monthsBack);
+  }
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1424,9 +1499,9 @@ export async function monthlySummary({ month = 10, year = 2026 } = {}) {
   const savings = Math.max(0, totalIncome - totalExpenses);
   const savingsRate = totalIncome > 0 ? Number(((savings / totalIncome) * 100).toFixed(1)) : 0;
 
-  // Generate 6 months historical trend
+  // Generate historical trend
   const trend = [];
-  for (let i = 5; i >= 0; i--) {
+  for (let i = monthsBack - 1; i >= 0; i--) {
     const d = new Date(year, month - 1 - i, 1);
     const m = d.getMonth() + 1;
     const y = d.getFullYear();
@@ -1444,13 +1519,27 @@ export async function monthlySummary({ month = 10, year = 2026 } = {}) {
 
 /**
  * Get spending breakdown by category.
- * @param {Object} [params]
- * @param {number} [params.month=10]
- * @param {number} [params.year=2026]
- * @param {'expense'|'income'} [params.type='expense']
+ * Supports both positional (month, year, type) and options object ({ month, year, type }).
+ * @param {number|Object} [arg1=10]
+ * @param {number} [arg2=2026]
+ * @param {'expense'|'income'} [arg3='expense']
  * @returns {Promise<Object[]>} Array of { category, amount, percentage }
  */
-export async function byCategory({ month = 10, year = 2026, type = 'expense' } = {}) {
+export async function byCategory(arg1 = 10, arg2 = 2026, arg3 = 'expense') {
+  let month = 10;
+  let year = 2026;
+  let type = 'expense';
+
+  if (typeof arg1 === 'object' && arg1 !== null) {
+    month = arg1.month ?? 10;
+    year = arg1.year ?? 2026;
+    type = arg1.type ?? 'expense';
+  } else {
+    if (typeof arg1 === 'number') month = arg1;
+    if (typeof arg2 === 'number') year = arg2;
+    if (typeof arg3 === 'string') type = arg3;
+  }
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1481,12 +1570,23 @@ export async function byCategory({ month = 10, year = 2026, type = 'expense' } =
 /**
  * Calculate month-end spending forecast based on daily run rate.
  * Projected spend = (average daily spend so far) * days in month.
- * @param {Object} [params]
- * @param {number} [params.month=10]
- * @param {number} [params.year=2026]
+ * Supports both positional (month, year) and options object ({ month, year }).
+ * @param {number|Object} [arg1=10]
+ * @param {number} [arg2=2026]
  * @returns {Promise<Object>}
  */
-export async function forecast({ month = 10, year = 2026 } = {}) {
+export async function forecast(arg1 = 10, arg2 = 2026) {
+  let month = 10;
+  let year = 2026;
+
+  if (typeof arg1 === 'object' && arg1 !== null) {
+    month = arg1.month ?? 10;
+    year = arg1.year ?? 2026;
+  } else {
+    if (typeof arg1 === 'number') month = arg1;
+    if (typeof arg2 === 'number') year = arg2;
+  }
+
   const store = loadStore();
   const user = requireAuth(store);
 
