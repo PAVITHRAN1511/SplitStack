@@ -4,10 +4,12 @@
  * income history table, and empty states.
  */
 
-import { listIncome, listCategories } from '../data/api.js';
+import { listIncome, listCategories, removeIncome } from '../data/api.js';
 import { qs, createEl } from '../core/dom.js';
 import { formatINR, formatDate } from '../core/format.js';
 import { setLoading, clearElement, renderEmptyState } from '../core/render.js';
+import { confirmDialog } from '../ui/confirm.js';
+import { showToast } from '../ui/toast.js';
 
 let categoryMap = new Map();
 
@@ -114,15 +116,33 @@ function renderIncomeTable(incomeList) {
           }, [
             createEl('i', { className: 'fa-solid fa-pen', 'aria-hidden': 'true' })
           ]),
-          createEl('form', { className: 'inline-form', action: '#', method: 'post' }, [
-            createEl('button', {
+          (() => {
+            const delBtn = createEl('button', {
               className: 'icon-btn sm danger',
               type: 'submit',
               'aria-label': `Delete ${item.source}`
             }, [
               createEl('i', { className: 'fa-solid fa-trash', 'aria-hidden': 'true' })
-            ])
-          ])
+            ]);
+            const delForm = createEl('form', { className: 'inline-form', action: '#', method: 'post' }, [delBtn]);
+            delForm.addEventListener('submit', async (e) => {
+              e.preventDefault();
+              const confirmed = await confirmDialog({
+                title: 'Delete income record',
+                message: `Are you sure you want to delete "${item.source}"? This action cannot be undone.`,
+                confirmText: 'Delete'
+              });
+              if (!confirmed) return;
+              try {
+                await removeIncome(item.id);
+                showToast('Income record deleted', 'info');
+                await loadAndRenderIncome();
+              } catch (err) {
+                showToast(err.message || 'Failed to delete income', 'danger');
+              }
+            });
+            return delForm;
+          })()
         ])
       ])
     ]);
@@ -132,12 +152,10 @@ function renderIncomeTable(incomeList) {
 }
 
 /**
- * Initialize income page.
+ * Fetch and render all income data.
  */
-export async function init() {
+async function loadAndRenderIncome() {
   const cardBody = qs('section[aria-labelledby="inc-title"] .card-body');
-  setLoading(cardBody, true);
-
   try {
     const [incomeResult, cats] = await Promise.all([
       listIncome({ limit: 100 }),
@@ -151,6 +169,18 @@ export async function init() {
     renderIncomeTable(incomeList);
   } catch (err) {
     console.warn('[SplitStack] Error loading income page:', err);
+  }
+}
+
+/**
+ * Initialize income page.
+ */
+export async function init() {
+  const cardBody = qs('section[aria-labelledby="inc-title"] .card-body');
+  setLoading(cardBody, true);
+
+  try {
+    await loadAndRenderIncome();
   } finally {
     setLoading(cardBody, false);
   }

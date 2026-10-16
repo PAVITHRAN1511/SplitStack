@@ -449,20 +449,54 @@
       ],
       "result": "Created 14 modular page scripts in client/js/pages/ importing exclusively from api.js; implemented live debounced expenses filter bar with URL sync and pagination; created core rendering helpers for safe XSS-free DOM creation, aria-busy loading states, and accessible empty/error states; wired user profile display and reset demo data; added comprehensive rendering test suite.",
       "verification": "All 47 unit/integration tests passing (30 data layer + 17 rendering/UI); npm run lint:html passing with 0 errors across all 25 HTML files."
+    },
+    {
+      "id": 28,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "Request: proceed with Review 2 Step P4",
+      "type": "User prompt",
+      "prompt": "Proceed to P4: Forms, validation and CRUD flows.\n\nFirst, inspect the P4 instructions in the handover PDF and review the existing page modules, client/js/data/api.js, client/js/core/, client/js/ui/, and the current HTML forms.\n\nImplement:\n1. Connect the login and registration forms to the existing authentication API.\n2. Connect expense creation and editing, income creation, group creation, shared-expense creation, shopping-list creation, and other forms specified by P4.\n3. Implement client-side validation with accessible field-level errors, appropriate required fields, valid dates, valid integer-paise amounts, and clear error messages.\n4. Convert rupee values entered by users to integer paise at the API boundary. Never store floating-point monetary amounts.\n5. Disable submit buttons while saving, prevent accidental duplicate submissions, and show success messages only after the operation succeeds.\n6. Preserve form values when validation or API operations fail.\n7. Use the existing confirmation dialog for destructive operations and ensure cancellation never changes data.\n8. Handle missing or invalid record IDs, duplicate registrations, unauthorized operations, and API errors gracefully.\n9. Keep page modules importing data operations exclusively from client/js/data/api.js. Do not access store.js directly from page modules.\n10. Add automated tests for successful submissions, validation errors, duplicate submission prevention, edit flows, delete confirmation, and failure handling.\n\nDo not implement the P6 analytics features, P7 receipt OCR, or backend integration early.\n\nRun all relevant tests, including the data-layer and rendering tests, and npm run lint:html. Update documentation and the prompt log. Review the diff and commit locally on refurbish using the handover's required commit message, or P4: forms validation and CRUD if none is specified.\n\nReport completed forms, supported operations, test results, known limitations, and commit hash.",
+      "purpose": "Authorize execution of Step P4 to connect HTML forms to api.js, implement client-side validation, duplicate submission guards, and complete CRUD workflows.",
+      "files": [],
+      "result": "Authorized Step P4 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 29,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "Forms, validation and CRUD flows",
+      "type": "Working prompt",
+      "prompt": "Wire every form (register, login, expense add/edit, income, budget, recurring, category, group create, add member, shared expense, shopping list and item, profile, change password) to api.js. Use the Constraint Validation API plus custom rules (passwords match, date not in the future, budget greater than zero) with inline error messages linked by aria-describedby, and move focus to the first invalid field. Show a toast after each save and redirect afterwards (Post/Redirect/Get). Add password show/hide toggles with aria-pressed. Protect app pages: redirect to login.html when nobody is signed in.",
+      "purpose": "Cover the core JavaScript skills examiners look for: events, DOM manipulation, validation, and full CRUD workflows.",
+      "files": [
+        "client/js/ui/forms.js",
+        "client/js/app.js",
+        "client/js/data/api.js",
+        "client/js/pages/login.js",
+        "client/js/pages/register.js",
+        "client/js/pages/expense-form.js",
+        "client/js/pages/expense-edit.js",
+        "client/js/pages/expenses.js",
+        "client/js/pages/income-form.js",
+        "client/js/pages/income.js",
+        "client/js/pages/group-create.js",
+        "client/js/pages/group-detail.js",
+        "client/js/pages/shared-expense-form.js",
+        "client/js/pages/shopping-form.js",
+        "client/js/pages/shopping-detail.js",
+        "client/js/pages/budgets.js",
+        "client/js/pages/recurring.js",
+        "client/js/pages/categories.js",
+        "client/js/pages/profile.js",
+        "tests/client/forms.test.mjs"
+      ],
+      "result": "Implemented reusable form validation and accessible error UI helper module (client/js/ui/forms.js) with rupeesToPaise and setButtonLoading; added authGuard in app.js; created form page scripts for login, register, expense create/edit, income create, group create, shared expense with equal/custom splits, shopping list create; wired CRUD actions across existing pages (delete expenses/income with confirmDialog, budget create/remove, recurring create/toggle/delete, category create/delete, group add-member/leave, shopping items/convert-to-expense, profile update/change-password); added comprehensive automated test suite (30 passing tests).",
+      "verification": "77 total client tests passing across data-layer.test.mjs, render.test.mjs, and forms.test.mjs; npm run lint:html passing with 0 errors across 25 HTML files."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 2",
-      "title": "Forms, validation and CRUD flows",
-      "type": "Planned prompt",
-      "prompt": "Wire every form (register, login, expense add/edit, income, budget, recurring, category, group create, add member, shared expense, shopping list and item, profile, change password) to api.js. Use the Constraint Validation API plus custom rules (passwords match, date not in the future, budget greater than zero) with inline error messages linked by aria-describedby, and move focus to the first invalid field. Show a toast after each save and redirect afterwards (Post/Redirect/Get). Add password show/hide toggles with aria-pressed. Protect app pages: redirect to login.html when nobody is signed in.",
-      "purpose": "Cover the core JavaScript skills examiners look for: events, DOM manipulation, validation.",
-      "files": [
-        "client/js/pages/*.js",
-        "client/js/ui/forms.js"
-      ]
-    },
     {
       "stage": "Review 2",
       "title": "Group splitting and the debt-simplification algorithm",

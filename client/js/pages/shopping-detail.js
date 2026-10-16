@@ -1,13 +1,30 @@
 /**
- * Shopping list detail page module (Review 2, Step P3).
+ * Shopping list detail page module (Review 2, Steps P3 & P4).
  * Connects shopping-detail.html to api.js to render items checklist,
- * live toggle purchased status, and recompute estimated vs actual totals.
+ * live toggle purchased status, recompute totals, add items with validation,
+ * delete items, delete the list with confirmation, and convert the list to an expense.
  */
 
-import { getShoppingList, toggleShoppingItem } from '../data/api.js';
+import {
+  getShoppingList,
+  toggleShoppingItem,
+  addShoppingItem,
+  removeShoppingItem,
+  removeShoppingList,
+  convertShoppingListToExpense
+} from '../data/api.js';
 import { qs, createEl, on } from '../core/dom.js';
 import { formatINR } from '../core/format.js';
 import { setLoading, clearElement, renderErrorState } from '../core/render.js';
+import { confirmDialog } from '../ui/confirm.js';
+import { showToast } from '../ui/toast.js';
+import {
+  rupeesToPaise,
+  clearFieldErrors,
+  showFieldError,
+  setButtonLoading,
+  focusFirstInvalid
+} from '../ui/forms.js';
 
 /**
  * Recompute and update summary stat cards.
@@ -40,41 +57,44 @@ function updateTotals(items) {
     headerP.textContent = `${boughtCount} of ${items.length} items bought`;
   }
 
-  // Cards
-  const estTotalVal = qs('.stat.tone-primary .stat-value');
-  const estTotalMeta = qs('.stat.tone-primary .stat-meta');
-  if (estTotalVal) estTotalVal.textContent = formatINR(estimatedTotal);
-  if (estTotalMeta) estTotalMeta.textContent = `All ${items.length} items`;
+  // Estimated total card
+  const estVal = qs('article[aria-label="List totals"] article.tone-primary .stat-value');
+  const estMeta = qs('article[aria-label="List totals"] article.tone-primary .stat-meta');
+  if (estVal) estVal.textContent = formatINR(estimatedTotal);
+  if (estMeta) estMeta.textContent = `All ${items.length} items`;
 
-  const estBoughtVal = qs('.stat.tone-info .stat-value');
-  const estBoughtMeta = qs('.stat.tone-info .stat-meta');
-  if (estBoughtVal) estBoughtVal.textContent = formatINR(estimateForBought);
-  if (estBoughtMeta) estBoughtMeta.textContent = `${boughtCount} items`;
+  // Estimate for bought card
+  const boughtEstVal = qs('article[aria-label="List totals"] article.tone-info .stat-value');
+  const boughtEstMeta = qs('article[aria-label="List totals"] article.tone-info .stat-meta');
+  if (boughtEstVal) boughtEstVal.textContent = formatINR(estimateForBought);
+  if (boughtEstMeta) boughtEstMeta.textContent = `${boughtCount} items`;
 
-  const actualPaidVal = qs('.stat.tone-success .stat-value');
-  const actualPaidMeta = qs('.stat.tone-success .stat-meta');
-  if (actualPaidVal) actualPaidVal.textContent = formatINR(actuallyPaid);
-  if (actualPaidMeta) actualPaidMeta.textContent = `${boughtCount} items`;
+  // Actually paid card
+  const paidVal = qs('article[aria-label="List totals"] article.tone-success .stat-value');
+  const paidMeta = qs('article[aria-label="List totals"] article.tone-success .stat-meta');
+  if (paidVal) paidVal.textContent = formatINR(actuallyPaid);
+  if (paidMeta) paidMeta.textContent = `${boughtCount} items`;
 
-  const varianceVal = qs('.stat.tone-danger .stat-value');
-  const varianceMeta = qs('.stat.tone-danger .stat-meta');
-  if (varianceVal) {
-    varianceVal.className = `stat-value num ${isOver ? 'text-danger' : 'text-success'}`;
-    const prefix = isOver ? '+' : '−';
-    varianceVal.textContent = `${prefix}${formatINR(Math.abs(variancePaise))}`;
+  // Variance card
+  const varVal = qs('article[aria-label="List totals"] article.tone-danger .stat-value');
+  const varMeta = qs('article[aria-label="List totals"] article.tone-danger .stat-meta');
+  if (varVal) {
+    varVal.className = `stat-value num ${isOver ? 'text-danger' : 'text-success'}`;
+    varVal.textContent = `${isOver ? '+' : ''}${formatINR(variancePaise)}`;
   }
-  if (varianceMeta) {
-    const pct = estimateForBought > 0 ? Math.abs((variancePaise / estimateForBought) * 100).toFixed(1) : '0.0';
-    varianceMeta.textContent = `${pct}% ${isOver ? 'over estimate' : 'under estimate'}`;
+  if (varMeta) {
+    const pct = estimateForBought > 0 ? ((Math.abs(variancePaise) / estimateForBought) * 100).toFixed(1) : '0.0';
+    varMeta.textContent = `${pct}% ${isOver ? 'over' : 'under'} estimate`;
   }
 }
 
 /**
  * Render items checklist.
  * @param {Object} shoppingList
+ * @param {Function} [onRefresh]
  */
-function renderChecklist(shoppingList) {
-  const ul = qs('section[aria-labelledby="items-title"] ul.checklist');
+function renderChecklist(shoppingList, onRefresh) {
+  const ul = qs('ul.checklist');
   if (!ul) return;
 
   clearElement(ul);
@@ -107,6 +127,24 @@ function renderChecklist(shoppingList) {
       }
     });
 
+    const removeBtn = createEl('button', {
+      className: 'icon-btn sm danger hide-sm',
+      type: 'button',
+      'aria-label': `Remove ${item.name}`
+    }, [
+      createEl('i', { className: 'fa-solid fa-xmark', 'aria-hidden': 'true' })
+    ]);
+
+    on(removeBtn, 'click', async () => {
+      try {
+        await removeShoppingItem(shoppingList.id, item.id);
+        showToast(`Removed "${item.name}"`, 'info');
+        if (onRefresh) await onRefresh();
+      } catch (err) {
+        showToast(err.message || 'Failed to remove item', 'danger');
+      }
+    });
+
     const li = createEl('li', { className: 'check-item' }, [
       checkbox,
       createEl('label', { for: inputId }, [
@@ -121,13 +159,7 @@ function renderChecklist(shoppingList) {
         className: 'price num fw-600',
         textContent: formatINR((item.actualPrice || item.estimatedPrice || 0) * (item.quantity || 1))
       }),
-      createEl('button', {
-        className: 'icon-btn sm danger hide-sm',
-        type: 'button',
-        'aria-label': `Remove ${item.name}`
-      }, [
-        createEl('i', { className: 'fa-solid fa-xmark', 'aria-hidden': 'true' })
-      ])
+      removeBtn
     ]);
 
     ul.appendChild(li);
@@ -135,31 +167,150 @@ function renderChecklist(shoppingList) {
 }
 
 /**
+ * Fetch and render all shopping list details.
+ * @param {string} listId
+ */
+async function loadAndRenderShoppingList(listId) {
+  const shoppingList = await getShoppingList(listId);
+
+  // Update header and breadcrumbs
+  const breadcrumbCurrent = qs('.breadcrumbs li[aria-current="page"]');
+  if (breadcrumbCurrent) breadcrumbCurrent.textContent = shoppingList.name;
+
+  const h1 = qs('.page-header h1');
+  if (h1) h1.textContent = shoppingList.name;
+
+  renderChecklist(shoppingList, () => loadAndRenderShoppingList(listId));
+  updateTotals(shoppingList.items || []);
+
+  return shoppingList;
+}
+
+/**
  * Initialize shopping-detail page.
  */
 export async function init() {
   const main = qs('main#main');
+  setLoading(main, true);
+
   const url = new URL(window.location.href);
   const listId = url.searchParams.get('id') || 'shop_1';
 
-  setLoading(main, true);
-
   try {
-    const shoppingList = await getShoppingList(listId);
+    const shoppingList = await loadAndRenderShoppingList(listId);
 
-    // Update breadcrumb and header title
-    const breadcrumbCurrent = qs('.breadcrumbs li[aria-current="page"]');
-    if (breadcrumbCurrent) breadcrumbCurrent.textContent = shoppingList.name;
+    // Wire "Add an item" form
+    const addItemForm = qs('aside[aria-labelledby="add-item-title"] form');
+    if (addItemForm) {
+      const nameInput = qs('#i-name', addItemForm);
+      const qtyInput = qs('#i-qty', addItemForm);
+      const priceInput = qs('#i-price', addItemForm);
+      const assignSelect = qs('#i-assign', addItemForm);
+      const submitBtn = qs('button[type="submit"]', addItemForm);
 
-    const h1 = qs('.page-header h1');
-    if (h1) h1.textContent = shoppingList.name;
+      on(addItemForm, 'submit', async (e) => {
+        e.preventDefault();
+        clearFieldErrors(addItemForm);
 
-    renderChecklist(shoppingList);
-    updateTotals(shoppingList.items || []);
+        const nameVal = nameInput?.value.trim() || '';
+        if (!nameVal) {
+          showFieldError(nameInput, 'Item name is required');
+          focusFirstInvalid(addItemForm);
+          return;
+        }
+
+        const quantity = parseInt(qtyInput?.value || '1', 10) || 1;
+        let estimatedPricePaise = 0;
+        const priceVal = priceInput?.value.trim();
+        if (priceVal) {
+          try {
+            estimatedPricePaise = rupeesToPaise(priceVal);
+          } catch (err) {
+            showFieldError(priceInput, err.message);
+            focusFirstInvalid(addItemForm);
+            return;
+          }
+        }
+
+        const assignedTo = assignSelect?.value || null;
+
+        setButtonLoading(submitBtn, true, 'Adding...');
+
+        try {
+          await addShoppingItem(listId, {
+            name: nameVal,
+            quantity,
+            estimatedPrice: estimatedPricePaise,
+            assignedTo
+          });
+
+          showToast(`Added "${nameVal}"!`, 'success');
+          nameInput.value = '';
+          if (qtyInput) qtyInput.value = '1';
+          if (priceInput) priceInput.value = '';
+          await loadAndRenderShoppingList(listId);
+        } catch (err) {
+          showFieldError(nameInput, err.message || 'Failed to add item');
+          focusFirstInvalid(addItemForm);
+        } finally {
+          setButtonLoading(submitBtn, false);
+        }
+      });
+    }
+
+    // Wire "Convert to expense" button
+    const convertForm = qs('.page-actions form[action="expenses.html"]');
+    if (convertForm) {
+      on(convertForm, 'submit', async (e) => {
+        e.preventDefault();
+        const confirmed = await confirmDialog({
+          title: 'Convert to expense',
+          message: 'Convert purchased items from this shopping list into an expense record?',
+          confirmText: 'Convert',
+          danger: false
+        });
+        if (!confirmed) return;
+
+        try {
+          await convertShoppingListToExpense(listId, 'cat_shopping');
+          showToast('Converted shopping list to an expense!', 'success');
+          setTimeout(() => {
+            window.location.href = 'expenses.html';
+          }, 600);
+        } catch (err) {
+          showToast(err.message || 'Failed to convert shopping list to expense', 'danger');
+        }
+      });
+    }
+
+    // Wire "Delete list" button
+    const deleteListForm = qs('.page-actions form[action="shopping.html"]');
+    if (deleteListForm) {
+      on(deleteListForm, 'submit', async (e) => {
+        e.preventDefault();
+        const confirmed = await confirmDialog({
+          title: 'Delete shopping list',
+          message: `Delete shopping list "${shoppingList.name}"? This action cannot be undone.`,
+          confirmText: 'Delete',
+          danger: true
+        });
+        if (!confirmed) return;
+
+        try {
+          await removeShoppingList(listId);
+          showToast('Shopping list deleted', 'info');
+          setTimeout(() => {
+            window.location.href = 'shopping.html';
+          }, 500);
+        } catch (err) {
+          showToast(err.message || 'Failed to delete shopping list', 'danger');
+        }
+      });
+    }
   } catch (err) {
-    console.warn('[SplitStack] Error loading shopping list detail:', err);
+    console.warn('[SplitStack] Error loading shopping list:', err);
     clearElement(main);
-    renderErrorState(main, `Shopping list "${listId}" not found.`, () => {
+    renderErrorState(main, `Shopping list "${listId}" could not be found.`, () => {
       window.location.href = 'shopping.html';
     });
   } finally {

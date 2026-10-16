@@ -4,10 +4,12 @@
  * 10-per-page pagination, and accessible empty/loading states.
  */
 
-import { listExpenses, listCategories } from '../data/api.js';
+import { listExpenses, listCategories, removeExpense } from '../data/api.js';
 import { qs, qsa, on, createEl } from '../core/dom.js';
 import { formatINR, formatDate } from '../core/format.js';
 import { setLoading, clearElement, renderEmptyState, renderErrorState } from '../core/render.js';
+import { confirmDialog } from '../ui/confirm.js';
+import { showToast } from '../ui/toast.js';
 
 let categoryMap = new Map();
 let debounceTimer = null;
@@ -141,6 +143,23 @@ function renderExpenseRow(expense) {
     action: '#',
     method: 'post'
   }, [deleteBtn]);
+
+  deleteForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const confirmed = await confirmDialog({
+      title: 'Delete expense',
+      message: `Are you sure you want to delete "${expense.description || 'this expense'}"? This action cannot be undone.`,
+      confirmText: 'Delete'
+    });
+    if (!confirmed) return;
+    try {
+      await removeExpense(expense.id);
+      showToast('Expense deleted', 'info');
+      await loadAndRenderExpenses();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete expense', 'danger');
+    }
+  });
 
   const actionsWrapper = createEl('div', { className: 'row-actions' }, [editLink, deleteForm]);
   const actionsTd = createEl('td', { 'data-label': 'Actions', className: 'end' }, [actionsWrapper]);

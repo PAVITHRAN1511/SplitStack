@@ -1,13 +1,14 @@
 /**
  * SplitStack application entry point.
- * Initializes shared UI components (theme, accessible navigation, confirm modal)
- * and dynamically loads the page-specific module when available.
+ * Initializes shared UI components (theme, accessible navigation, confirm modal, user header),
+ * checks authentication on protected pages, and dynamically loads the page-specific module.
  */
 
 import { initTheme } from './ui/theme.js';
 import { initNav } from './ui/nav.js';
 import { initConfirm } from './ui/confirm.js';
 import { initUser } from './ui/user.js';
+import { authGuard } from './ui/forms.js';
 
 async function bootstrap() {
   // Initialize shared UI
@@ -15,6 +16,10 @@ async function bootstrap() {
   initNav();
   initConfirm();
   await initUser();
+
+  // Route authentication guard
+  const isAllowed = await authGuard();
+  if (!isAllowed) return;
 
   // Read page name from body dataset
   const pageName = document.body.dataset.page;

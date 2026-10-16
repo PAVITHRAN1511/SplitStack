@@ -1060,13 +1060,22 @@ export async function createSharedExpense(groupId, { title, amount, categoryId, 
   // Validate shares
   let computedShares = shares;
   if (splitType === 'equal') {
-    const memberCount = group.members.length;
+    const participantIds = Array.isArray(shares) && shares.length > 0
+      ? shares.map((s) => s.userId)
+      : group.members.map((m) => m.userId);
+
+    const memberCount = participantIds.length;
+    if (memberCount === 0) {
+      throw new ApiError('At least one participant is required for split', { field: 'participants' });
+    }
+
     const baseShare = Math.floor(amount / memberCount);
     const remainder = amount % memberCount;
+    const remainderTarget = participantIds.includes(payerId) ? payerId : participantIds[0];
 
-    computedShares = group.members.map((m, idx) => ({
-      userId: m.userId,
-      amount: m.userId === payerId ? baseShare + remainder : baseShare
+    computedShares = participantIds.map((pId) => ({
+      userId: pId,
+      amount: pId === remainderTarget ? baseShare + remainder : baseShare
     }));
   } else {
     const totalShares = shares.reduce((sum, s) => sum + s.amount, 0);
@@ -1091,6 +1100,27 @@ export async function createSharedExpense(groupId, { title, amount, categoryId, 
   store.sharedExpenses.unshift(newShared);
   saveStore(store);
   return newShared;
+}
+
+/**
+ * Delete a shared expense from a group.
+ * @param {string} id - Shared expense ID
+ * @returns {Promise<{ ok: boolean }>}
+ */
+export async function removeSharedExpense(id) {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  const idx = store.sharedExpenses.findIndex((se) => se.id === id);
+  if (idx === -1) throw new ApiError('Shared expense not found', { status: 404 });
+
+  const se = store.sharedExpenses[idx];
+  const group = store.groups.find((g) => g.id === se.groupId && g.members.some((m) => m.userId === user.id));
+  if (!group) throw new ApiError('Not authorized to delete this shared expense', { status: 403 });
+
+  store.sharedExpenses.splice(idx, 1);
+  saveStore(store);
+  return { ok: true };
 }
 
 /**
