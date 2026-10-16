@@ -527,23 +527,50 @@
       ],
       "result": "Created domain modules splits.js (equal split with deterministic remainder paise to payer, custom shares validation) and settle.js (canonical calculateNetBalances with strict zero-sum conservation invariant, greedy simplifyDebts minimizing payments to at most N-1); integrated into api.js (createSharedExpense, updateSharedExpense, getGroupBalances, getGroupMemberStats, getSuggestedSettlements, recordSettlement with debt-limit validation, removeSettlement); wired live remaining tracker in shared-expense-form.js; updated group-detail.js to show member paid/share/net and suggested settlements; updated settlements.js with confirmDialog, toast notifications, loading states, and settlement removal; added 27 comprehensive automated tests.",
       "verification": "104 total client tests passing across 4 test suites (data-layer.test.mjs, render.test.mjs, forms.test.mjs, splits-settle.test.mjs); npm run lint:html passing with 0 errors across 25 HTML files."
-    }
-  ],
-  "planned": [
+    },
     {
+      "id": 32,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "Request: proceed with Review 2 Step P6",
+      "type": "User prompt",
+      "prompt": "# SplitStack — P6: Analytics, Charts, Forecasts, Insights, Search & Notifications\n\nYou are continuing development of SplitStack, a personal finance and expense-sharing application. P1–P5 are reported complete. Implement only P6, following the project handover instructions.\n\n1. Mandatory preflight: read P6 in SplitStack_Handover_Prompts.pdf; inspect project structure, REFURBISH_PLAN.md, analytics/budget/recurring/search/notification modules, api.js, store.js, seed.js, splits.js, settle.js, analytics.js, budgets.js, dashboard.js, HTML/CSS, and tests; verify git branch refurbish and latest commit; preserve docs/audit/.\n2. Scope and boundaries: implement financial analytics/charts, budget tracking/forecasting, explainable spending insights, search/filter improvements, and in-app notifications. Do not implement P7 OCR or backend P9+.\n3. Analytics data layer: improve reusable functions behind api.js; keep calculations independent of DOM; integer paise for stored amounts; respect active user and data isolation; distinguish personal transactions from group expenses; handle sparse data.\n4. Financial analytics and charts: implement visualizations using real data (trends, category spend, net savings, budget usage); dynamic updates on filter changes; accessible titles/legends/tables; prevent duplicate chart instances.\n5. Budget tracking and forecasting: linear spending velocity projection in domain/forecast.js; minimum 3 transactions data sufficiency rule; explainable estimates; risk classification (danger, warning, caution, ok).\n6. Spending insights: deterministic insights from real data in domain/insights.js (budget danger/warning, >=20% month-over-month category trend, upcoming recurring bills in 7 days, group balances).\n7. Search and filtering: topbar global combobox search in ui/search.js with 200ms debounce across expenses, income, groups, shopping lists; case-insensitive; clear filters restoration; pagination consistency.\n8. In-app notifications: topbar bell indicator in ui/notifications.js; dropdown panel; read status persistence per user in store.js.\n9. Automated tests: add forecast, insights, and search/notification tests; run all client tests; run npm run lint:html; update documentation and prompt log; commit locally with message: Review 2: charts, budgets, forecast, insights, search, notifications.",
+      "purpose": "Authorize implementation of Step P6: Analytics, Charts, Forecasts, Insights, Search & Notifications.",
+      "files": [],
+      "result": "Authorized Step P6 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 33,
+      "date": "2026-10-16",
       "stage": "Review 2",
       "title": "Charts, budgets, forecast, insights, search and notifications",
-      "type": "Planned prompt",
+      "type": "Working prompt",
       "prompt": "Render the dashboard and analytics charts with Chart.js 4 loaded from a pinned CDN URL, reading colours from the CSS custom properties so both themes work, and keep the CSS charts as a fallback. Compute budget status (ok under 75%, caution 75-90%, warning 90-100%, danger over 100%) and update the meters. Port the spending forecast (average daily spend multiplied by the days in the month) to client/js/domain/forecast.js. Generate smart insights from the data (over-budget categories, month-over-month change, upcoming recurring bills). Make the topbar search show live results across expenses, groups and lists in a listbox with keyboard navigation, and make the bell open a notifications panel built from the insights with an unread count.",
       "purpose": "Finish the interactive features that were disconnected in the original app.",
       "files": [
+        "client/js/domain/forecast.js",
+        "client/js/domain/insights.js",
+        "client/js/ui/charts.js",
+        "client/js/ui/search.js",
+        "client/js/ui/notifications.js",
         "client/js/pages/dashboard.js",
         "client/js/pages/analytics.js",
-        "client/js/domain/forecast.js",
-        "client/js/ui/search.js",
-        "client/js/ui/notifications.js"
-      ]
-    },
+        "client/js/pages/budgets.js",
+        "client/js/data/api.js",
+        "client/js/app.js",
+        "client/css/components.css",
+        "package.json",
+        "tests/client/forecast.test.mjs",
+        "tests/client/insights.test.mjs",
+        "tests/client/search-notifications.test.mjs",
+        "client/README.md"
+      ],
+      "result": "Created forecast.js domain module with daily velocity model, data sufficiency threshold (>= 3 transactions), and budget risk classification; created insights.js domain module with deterministic budget alerts, month-over-month category trend tracking (>= 20%), upcoming recurring bills (next 7 days), and group balance alerts; created charts.js with Chart.js 4 dynamic loader, token palette extraction via getComputedStyle, theme observer, canvas aria-label, and CSS chart fallbacks; created search.js with 200ms debounce, WAI-ARIA combobox/listbox pattern, and keyboard navigation across expenses, income, groups, and shopping lists; created notifications.js with topbar bell badge and dropdown panel with read-state persistence in user preferences; updated dashboard.js, analytics.js, budgets.js, and app.js; added test:client script to package.json; added 41 new automated tests.",
+      "verification": "145 total client tests passing across 7 test suites (data-layer.test.mjs, render.test.mjs, forms.test.mjs, splits-settle.test.mjs, forecast.test.mjs, insights.test.mjs, search-notifications.test.mjs); npm run lint:html passing with 0 errors across 25 HTML files."
+    }
+  ],
+  "planned": [
     {
       "stage": "Review 2",
       "title": "Shopping checklist and receipt scan preview",

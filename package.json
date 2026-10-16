@@ -6,7 +6,8 @@
   "scripts": {
     "client": "node scripts/serve-client.js",
     "log": "node docs/tools/build-prompt-log.js && py -3 docs/tools/build_prompt_pdf.py",
-    "lint:html": "html-validate \"client/**/*.html\""
+    "lint:html": "html-validate \"client/**/*.html\"",
+    "test:client": "node --test \"tests/client/**/*.test.mjs\""
   },
   "devDependencies": {
     "docx": "^9.5.1",

@@ -13,12 +13,15 @@ import {
   getGroupBalances,
   insights,
   forecast,
-  listCategories
+  listCategories,
+  monthlySummary,
+  byCategory
 } from '../data/api.js';
 
 import { qs, createEl } from '../core/dom.js';
 import { formatINR } from '../core/format.js';
 import { setLoading, clearElement } from '../core/render.js';
+import { renderMonthlyTrendBar, renderCategoryDoughnut } from '../ui/charts.js';
 
 let categoryMap = new Map();
 
@@ -328,19 +331,29 @@ function renderForecast(forecastData) {
 
   clearElement(container);
 
+  if (forecastData.hasSufficientData === false) {
+    container.appendChild(createEl('p', {
+      className: 'text-dim text-xs text-center p-4',
+      textContent: forecastData.reason || 'Insufficient data to compute monthly spending forecast (minimum 3 transactions needed).'
+    }));
+    return;
+  }
+
   const projectedPaise = forecastData.projectedSpend || 0;
   const budgetPaise = forecastData.monthlyBudget || 4000000;
-  const percent = forecastData.projectedPercentage || Math.round((projectedPaise / budgetPaise) * 100);
-  const dailyAveragePaise = forecastData.dailyAverage || Math.round(projectedPaise / 31);
+  const percent = forecastData.projectedPercentage || (budgetPaise > 0 ? Math.round((projectedPaise / budgetPaise) * 100) : 0);
+  const dailyAveragePaise = forecastData.dailyAverage || (forecastData.daysPassed > 0 ? Math.round(projectedPaise / forecastData.daysPassed) : 0);
   const daysPassed = forecastData.daysPassed || 28;
-  const onTrack = percent <= 100;
+  const status = forecastData.status || (percent > 100 ? 'danger' : percent >= 85 ? 'caution' : 'ok');
 
   const topDiv = createEl('div', {}, [
     createEl('p', { className: 'text-xs text-dim', textContent: 'Projected monthly spend' }),
     createEl('p', { className: 'forecast-figure num', textContent: formatINR(projectedPaise) })
   ]);
 
-  const meterTone = percent > 100 ? 'is-danger' : percent > 85 ? 'is-caution' : '';
+  const meterTone = status === 'danger' ? 'is-danger' :
+                    status === 'warning' ? 'is-warning' :
+                    status === 'caution' ? 'is-caution' : '';
 
   const meter = createEl('div', {
     className: `meter ${meterTone}`,
@@ -348,14 +361,22 @@ function renderForecast(forecastData) {
     'aria-label': 'Projected spend against budget',
     'aria-valuemin': '0',
     'aria-valuemax': '100',
-    'aria-valuenow': String(Math.min(100, percent))
+    'aria-valuenow': String(Math.min(100, percent)),
+    'aria-valuetext': `${percent}% of ${formatINR(budgetPaise)}`
   }, [
     createEl('span', { style: { '--value': `${Math.min(100, percent)}%` } })
   ]);
 
+  const statusLabel = status === 'danger' ? 'over budget' :
+                      status === 'warning' ? 'warning' :
+                      status === 'caution' ? 'at risk' : 'on track';
+
+  const statusClass = status === 'danger' ? 'text-danger' :
+                      status === 'warning' || status === 'caution' ? 'text-warning' : 'text-success';
+
   const statusStrong = createEl('strong', {
-    className: onTrack ? 'text-success' : 'text-danger',
-    textContent: onTrack ? 'on track' : 'over budget'
+    className: statusClass,
+    textContent: statusLabel
   });
 
   const descP = createEl('p', { className: 'text-xs' }, [
@@ -368,6 +389,52 @@ function renderForecast(forecastData) {
 }
 
 /**
+ * Render dynamic monthly table for accessibility details.
+ * @param {Array} months
+ */
+function renderTrendTable(months) {
+  const tbody = qs('section[aria-labelledby="trend-title"] details table.table tbody');
+  if (!tbody || !Array.isArray(months) || months.length === 0) return;
+
+  clearElement(tbody);
+
+  for (const m of months) {
+    const saved = (m.income || 0) - (m.expenses || 0);
+    const tr = createEl('tr', {}, [
+      createEl('th', { scope: 'row', textContent: m.label || `${m.monthName} ${m.year}` }),
+      createEl('td', { className: 'end num', textContent: formatINR(m.income) }),
+      createEl('td', { className: 'end num', textContent: formatINR(m.expenses) }),
+      createEl('td', { className: 'end num', textContent: formatINR(saved) })
+    ]);
+    tbody.appendChild(tr);
+  }
+}
+
+/**
+ * Render dynamic category legend.
+ * @param {Array} breakdown
+ * @param {number} totalPaise
+ */
+function renderCategoryLegend(breakdown, totalPaise) {
+  const legendEl = qs('section[aria-labelledby="cat-title"] ul.legend');
+  if (!legendEl || !Array.isArray(breakdown)) return;
+
+  clearElement(legendEl);
+
+  for (const item of breakdown) {
+    const rawId = (item.categoryId || '').replace(/^cat_/, '');
+    const pct = totalPaise > 0 ? ((item.total / totalPaise) * 100).toFixed(1) : '0.0';
+    const li = createEl('li', {
+      style: { '--cat': `var(--cat-${rawId}, var(--cat-other))` }
+    }, [
+      item.name || item.categoryId,
+      createEl('span', { className: 'num', textContent: `${pct}%` })
+    ]);
+    legendEl.appendChild(li);
+  }
+}
+
+/**
  * Initialize dashboard module.
  */
 export async function init() {
@@ -375,7 +442,7 @@ export async function init() {
   setLoading(main, true);
 
   try {
-    const [user, cats, expResult, incResult, budgets, groups, insightList, fc] = await Promise.all([
+    const [user, cats, expResult, incResult, budgets, groups, insightList, fc, summaryResult, catBreakdown] = await Promise.all([
       currentUser(),
       listCategories(),
       listExpenses({ limit: 100 }),
@@ -383,7 +450,9 @@ export async function init() {
       listBudgets(),
       listGroups(),
       insights(),
-      forecast()
+      forecast(),
+      monthlySummary({ months: 6 }),
+      byCategory({ month: 10, year: 2026 })
     ]);
 
     categoryMap = new Map((cats || []).map((c) => [c.id, c]));
@@ -417,9 +486,24 @@ export async function init() {
     await renderGroups(groups || []);
     renderInsights(insightList || []);
     renderForecast(fc);
+
+    // Render charts & accessibility tables (Review 2, Step P6)
+    const trendContainer = qs('section[aria-labelledby="trend-title"] .card-body');
+    if (trendContainer && summaryResult?.months) {
+      renderTrendTable(summaryResult.months);
+      await renderMonthlyTrendBar(trendContainer, summaryResult.months, { id: 'dash-monthly-trend' });
+    }
+
+    const catContainer = qs('section[aria-labelledby="cat-title"] .card-body');
+    if (catContainer && catBreakdown) {
+      const octTotal = catBreakdown.reduce((sum, c) => sum + (c.total || 0), 0);
+      renderCategoryLegend(catBreakdown, octTotal);
+      await renderCategoryDoughnut(catContainer, catBreakdown, { id: 'dash-category-doughnut', monthName: 'October' });
+    }
   } catch (err) {
     console.warn('[SplitStack] Error rendering dashboard:', err);
   } finally {
     setLoading(main, false);
   }
 }
+

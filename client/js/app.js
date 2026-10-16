@@ -9,6 +9,8 @@ import { initNav } from './ui/nav.js';
 import { initConfirm } from './ui/confirm.js';
 import { initUser } from './ui/user.js';
 import { authGuard } from './ui/forms.js';
+import { initSearch } from './ui/search.js';
+import { initNotifications } from './ui/notifications.js';
 
 async function bootstrap() {
   // Initialize shared UI
@@ -20,6 +22,10 @@ async function bootstrap() {
   // Route authentication guard
   const isAllowed = await authGuard();
   if (!isAllowed) return;
+
+  // Initialize authenticated shell features (Review 2, Step P6)
+  initSearch();
+  initNotifications();
 
   // Read page name from body dataset
   const pageName = document.body.dataset.page;

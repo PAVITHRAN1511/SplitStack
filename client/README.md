@@ -147,3 +147,45 @@ Settlements are recorded via `api.recordSettlement(groupId, { payerId, payeeId, 
 - **Paise integrity**: All settlements are positive integer paise ($> 0$).
 - **Duplicate debounce**: Rapid identical submissions ($< 2000\text{ms}$) are rejected to prevent accidental double-clicks.
 - **Balance recalculation**: Recording or removing (`api.removeSettlement`) a settlement updates group balances immediately while leaving original shared expense records intact.
+
+## Analytics, Forecasts, Insights, Search & Notifications (Review 2, Step P6)
+
+Step P6 introduces comprehensive financial analytics, linear velocity forecasting, explainable insights, global cross-collection search, and in-app notifications:
+
+### 1. Analytics & Visualizations (`client/js/ui/charts.js`)
+- **Chart.js 4 Integration**: Dynamically loads pinned Chart.js 4 (`https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js`) with complete offline and failure fallback to pure CSS charts (`.bar-chart` and `.donut`).
+- **Dynamic Theme Palette**: Extracts active design tokens (`--primary`, `--success`, `--danger`, `--warning`, `--text`, `--border`, `--cat-*`) via `window.getComputedStyle(document.documentElement)`.
+- **Automatic Theme Synchronization**: Watches `<html data-theme>` changes via `MutationObserver` and updates rendered chart palettes automatically.
+- **Accessibility**: Each canvas is configured with `role="img"`, a detailed programmatic `aria-label`, and is paired with a visually hidden or expandable data table.
+- **Lifecycle Management**: Tracks active chart instances and executes `chart.destroy()` before re-rendering or upon filter changes to prevent duplicate instances and memory leaks.
+
+### 2. Spending Velocity Forecasting (`client/js/domain/forecast.js`)
+- **Velocity Model**: Calculates current daily velocity ($\text{dailyAverage} = \lfloor \text{currentSpent} / \text{daysPassed} \rfloor$) and projects month-end totals ($\text{projectedTotal} = \text{dailyAverage} \times \text{totalDaysInMonth}$).
+- **Data Sufficiency Rule**: Requires at least 3 transactions in the current month (`hasSufficientData: true`) before making linear predictions. Sparse or empty datasets cleanly report insufficient data rather than generating spurious predictions.
+- **Calendar Boundary Accuracy**: Uses local calendar dates to prevent UTC timezone shifts from misclassifying month boundaries. Handles leap years and month ends cleanly.
+- **Strict Integer-Paise Arithmetic**: All financial values, daily rates, and projected totals are calculated and stored as integer paise.
+- **Budget Risk Classification**:
+  - `danger`: Projected spend $> 100\%$ of budget.
+  - `warning`: Projected spend between $90\%$ and $100\%$ of budget.
+  - `caution`: Projected spend between $75\%$ and $89\%$ of budget.
+  - `ok`: Projected spend $< 75\%$ of budget.
+
+### 3. Smart Spending Insights (`client/js/domain/insights.js`)
+- **Deterministic & Explainable**: Every insight is derived strictly from real user records and transparent arithmetic without external AI services or data transmission.
+- **Budget Alerts**: Highlights categories approaching or exceeding limits with exact over/under paise figures.
+- **Month-over-Month Category Trends**: Detects spending changes $\ge 20\%$ compared with the previous calendar month. Safely handles zero-spending baseline periods without division-by-zero errors.
+- **Upcoming Recurring Payments**: Flags active recurring bills due within the next 7 days, computing relative days remaining and formatted due dates.
+- **Group Balance Summaries**: Alerts users when they have net outstanding debts or credits across shared groups.
+- **Deduplication & Isolation**: Insights have deterministic IDs and are strictly isolated to the authenticated user.
+
+### 4. Global Search & Autocomplete (`client/js/ui/search.js`)
+- **Debounced Combobox**: 200ms input debounce calling `api.search(query)`.
+- **Full WAI-ARIA Combobox Pattern**: `role="combobox"`, `aria-autocomplete="list"`, `aria-expanded`, `aria-controls="global-search-listbox"`, and `aria-activedescendant`.
+- **Keyboard Navigation**: ArrowDown / ArrowUp moves selection, Enter navigates directly to the selected resource, and Escape closes the dropdown.
+- **Multi-Domain Results**: Searches case-insensitively across expenses, income, groups, and shopping lists, matching descriptions, notes, and category names.
+
+### 5. In-App Notifications (`client/js/ui/notifications.js`)
+- **Topbar Bell Indicator**: Connects the bell icon to live notifications derived from active insights. Dynamically toggles unread dot indicator and updates `aria-label`.
+- **Accessible Panel**: Toggles an accessible notification list panel with item tones (`danger`, `warning`, `info`, `success`) and timestamps.
+- **Persistence**: Persists individual read states and "Mark all as read" in `user.preferences.readNotifications` through `api.js`.
+

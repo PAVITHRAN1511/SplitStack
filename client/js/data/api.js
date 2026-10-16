@@ -10,9 +10,19 @@
 import { loadStore, saveStore, generateId, reset as resetStore, getSessionUserId, setSessionUserId } from './store.js';
 import { calculateEqualSplit, validateCustomShares } from '../domain/splits.js';
 import { calculateNetBalances, simplifyDebts } from '../domain/settle.js';
+import { calculateForecast, assessBudgetRisk } from '../domain/forecast.js';
+import { generateInsights } from '../domain/insights.js';
 
 // Re-export domain logic for page modules and external callers
-export { calculateEqualSplit, validateCustomShares, calculateNetBalances, simplifyDebts };
+export {
+  calculateEqualSplit,
+  validateCustomShares,
+  calculateNetBalances,
+  simplifyDebts,
+  calculateForecast,
+  assessBudgetRisk,
+  generateInsights
+};
 
 /**
  * Standard API error structure matching the backend response.
@@ -252,12 +262,13 @@ export async function listExpenses(filters = {}) {
   const {
     page = 1,
     limit = 10,
-    search = '',
-    categoryId = '',
-    category = '',
-    paymentMethod = '',
-    startDate = '',
-    endDate = '',
+    search = filters.q || '',
+    categoryId = filters.category || '',
+    paymentMethod = filters.method || '',
+    startDate = filters.from || '',
+    endDate = filters.to || '',
+    minAmount = filters.minPaise ?? null,
+    maxAmount = filters.maxPaise ?? null,
     sort = 'date_desc'
   } = filters;
   const store = loadStore();
@@ -270,7 +281,7 @@ export async function listExpenses(filters = {}) {
     list = list.filter((e) => (e.description || '').toLowerCase().includes(q) || (e.notes || '').toLowerCase().includes(q));
   }
 
-  const cat = categoryId || category;
+  const cat = categoryId;
   if (cat) {
     list = list.filter((e) => e.categoryId === cat);
   }
@@ -285,6 +296,14 @@ export async function listExpenses(filters = {}) {
 
   if (endDate) {
     list = list.filter((e) => e.date <= endDate);
+  }
+
+  if (minAmount !== null && !isNaN(minAmount)) {
+    list = list.filter((e) => e.amount >= minAmount);
+  }
+
+  if (maxAmount !== null && !isNaN(maxAmount)) {
+    list = list.filter((e) => e.amount <= maxAmount);
   }
 
   // Sorting
@@ -411,11 +430,12 @@ export async function listIncome(filters = {}) {
   const {
     page = 1,
     limit = 10,
-    search = '',
-    categoryId = '',
-    category = '',
-    startDate = '',
-    endDate = '',
+    search = filters.q || '',
+    categoryId = filters.category || '',
+    startDate = filters.from || '',
+    endDate = filters.to || '',
+    minAmount = filters.minPaise ?? null,
+    maxAmount = filters.maxPaise ?? null,
     sort = 'date_desc'
   } = filters;
   const store = loadStore();
@@ -428,10 +448,17 @@ export async function listIncome(filters = {}) {
     list = list.filter((i) => (i.source || '').toLowerCase().includes(q) || (i.notes || '').toLowerCase().includes(q));
   }
 
-  const cat = categoryId || category;
+  const cat = categoryId;
   if (cat) list = list.filter((i) => i.categoryId === cat);
   if (startDate) list = list.filter((i) => i.date >= startDate);
   if (endDate) list = list.filter((i) => i.date <= endDate);
+
+  if (minAmount !== null && !isNaN(minAmount)) {
+    list = list.filter((i) => i.amount >= minAmount);
+  }
+  if (maxAmount !== null && !isNaN(maxAmount)) {
+    list = list.filter((i) => i.amount <= maxAmount);
+  }
 
   list.sort((a, b) => {
     if (sort === 'date_asc') return a.date.localeCompare(b.date);
@@ -1772,6 +1799,14 @@ export async function monthlySummary(arg = {}) {
  * @param {'expense'|'income'} [arg3='expense']
  * @returns {Promise<Object[]>} Array of { category, amount, percentage }
  */
+/**
+ * Get category breakdown for a month with month-over-month trend comparison.
+ * Supports both positional (month, year) and options object ({ month, year, type }).
+ * @param {number|Object} [arg1=10]
+ * @param {number} [arg2=2026]
+ * @param {'expense'|'income'} [arg3='expense']
+ * @returns {Promise<Object[]>} Array of { category, amount, total, percentage, prevAmount, changePercent }
+ */
 export async function byCategory(arg1 = 10, arg2 = 2026, arg3 = 'expense') {
   let month = 10;
   let year = 2026;
@@ -1790,24 +1825,57 @@ export async function byCategory(arg1 = 10, arg2 = 2026, arg3 = 'expense') {
   const store = loadStore();
   const user = requireAuth(store);
 
-  const prefix = `${year}-${String(month).padStart(2, '0')}`;
-  const list =
+  const currPrefix = `${year}-${String(month).padStart(2, '0')}`;
+  const currList =
     type === 'expense'
-      ? store.expenses.filter((e) => e.userId === user.id && e.date.startsWith(prefix))
-      : store.income.filter((i) => i.userId === user.id && i.date.startsWith(prefix));
+      ? store.expenses.filter((e) => e.userId === user.id && e.date.startsWith(currPrefix))
+      : store.income.filter((i) => i.userId === user.id && i.date.startsWith(currPrefix));
 
-  const total = list.reduce((sum, item) => sum + item.amount, 0);
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevPrefix = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+  const prevList =
+    type === 'expense'
+      ? store.expenses.filter((e) => e.userId === user.id && e.date.startsWith(prevPrefix))
+      : store.income.filter((i) => i.userId === user.id && i.date.startsWith(prevPrefix));
+
+  const total = currList.reduce((sum, item) => sum + item.amount, 0);
+
   const byCat = {};
-
-  for (const item of list) {
+  for (const item of currList) {
     byCat[item.categoryId] = (byCat[item.categoryId] || 0) + item.amount;
+  }
+
+  const prevByCat = {};
+  for (const item of prevList) {
+    prevByCat[item.categoryId] = (prevByCat[item.categoryId] || 0) + item.amount;
   }
 
   const result = [];
   for (const [catId, amount] of Object.entries(byCat)) {
-    const category = store.categories.find((c) => c.id === catId) || { name: 'Other', color: '#64748b', icon: 'ellipsis' };
+    const category = store.categories.find((c) => c.id === catId) || {
+      id: catId,
+      name: catId.replace(/^cat_/, ''),
+      color: '#64748b',
+      icon: 'fa-tag'
+    };
     const percentage = total > 0 ? Number(((amount / total) * 100).toFixed(1)) : 0;
-    result.push({ category, amount, percentage });
+    const prevAmount = prevByCat[catId] || 0;
+    let changePercent = null;
+    if (prevAmount > 0) {
+      changePercent = Number((((amount - prevAmount) / prevAmount) * 100).toFixed(1));
+    }
+
+    result.push({
+      category,
+      categoryId: catId,
+      name: category.name,
+      amount,
+      total: amount,
+      percentage,
+      prevAmount,
+      changePercent
+    });
   }
 
   result.sort((a, b) => b.amount - a.amount);
@@ -1815,9 +1883,9 @@ export async function byCategory(arg1 = 10, arg2 = 2026, arg3 = 'expense') {
 }
 
 /**
- * Calculate month-end spending forecast based on daily run rate.
+ * Calculate month-end spending forecast based on daily velocity model.
  * Projected spend = (average daily spend so far) * days in month.
- * Supports both positional (month, year) and options object ({ month, year }).
+ * Supports both positional (month, year) and options object ({ month, year, referenceDate }).
  * @param {number|Object} [arg1=10]
  * @param {number} [arg2=2026]
  * @returns {Promise<Object>}
@@ -1825,10 +1893,12 @@ export async function byCategory(arg1 = 10, arg2 = 2026, arg3 = 'expense') {
 export async function forecast(arg1 = 10, arg2 = 2026) {
   let month = 10;
   let year = 2026;
+  let referenceDate = '2026-10-28';
 
   if (typeof arg1 === 'object' && arg1 !== null) {
     month = arg1.month ?? 10;
     year = arg1.year ?? 2026;
+    referenceDate = arg1.referenceDate || '2026-10-28';
   } else {
     if (typeof arg1 === 'number') month = arg1;
     if (typeof arg2 === 'number') year = arg2;
@@ -1837,41 +1907,132 @@ export async function forecast(arg1 = 10, arg2 = 2026) {
   const store = loadStore();
   const user = requireAuth(store);
 
-  const prefix = `${year}-${String(month).padStart(2, '0')}`;
-  const expenses = store.expenses.filter((e) => e.userId === user.id && e.date.startsWith(prefix));
+  const userExpenses = store.expenses.filter((e) => e.userId === user.id);
+  const userBudget = user.preferences?.monthlyBudget || 4000000;
 
-  const totalSoFar = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const fc = calculateForecast({
+    expenses: userExpenses,
+    month,
+    year,
+    referenceDate,
+    monthlyBudget: userBudget
+  });
 
-  // Total days in the month
-  const daysInMonth = new Date(year, month, 0).getDate();
-
-  // Current day of month (or 28 for demo October 2026)
-  const now = new Date();
-  const currentDay = (now.getFullYear() === year && now.getMonth() + 1 === month)
-    ? Math.max(1, now.getDate())
-    : 28;
-
-  const dailyAverage = currentDay > 0 ? Math.round(totalSoFar / currentDay) : 0;
-  const projectedTotal = dailyAverage * daysInMonth;
-
+  // Provide backward-compatible aliases for P2/P3 callers
   return {
-    totalSoFar,
-    currentDay,
-    daysInMonth,
-    dailyAverage,
-    projectedTotal
+    ...fc,
+    totalSoFar: fc.currentSpent,
+    currentDay: fc.daysPassed,
+    projectedSpend: fc.projectedTotal,
+    monthlyBudget: userBudget
   };
 }
 
 /**
- * List smart notifications and insights for the user.
+ * List smart, data-driven notifications and insights for the user.
  * @returns {Promise<Object[]>}
  */
 export async function insights() {
   const store = loadStore();
   const user = requireAuth(store);
 
-  return store.insights.filter((ins) => ins.userId === user.id);
+  const userBudgets = await listBudgets(10, 2026);
+  const userGroups = store.groups.filter((g) => g.members.some((m) => m.userId === user.id));
+
+  const groupBalancesMap = {};
+  for (const g of userGroups) {
+    try {
+      const balances = await getGroupBalances(g.id);
+      groupBalancesMap[g.id] = balances[user.id] || 0;
+    } catch {
+      groupBalancesMap[g.id] = 0;
+    }
+  }
+
+  const generated = generateInsights({
+    user,
+    expenses: store.expenses,
+    income: store.income,
+    budgets: userBudgets,
+    categories: store.categories,
+    recurring: store.recurring,
+    groups: userGroups,
+    groupBalancesMap,
+    referenceDate: '2026-10-28'
+  });
+
+  return generated;
+}
+
+/**
+ * Get in-app notifications with read status and unread badge count.
+ * @returns {Promise<{ notifications: Object[], unreadCount: number }>}
+ */
+export async function getNotifications() {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  const insList = await insights();
+  const readList = user.preferences?.readNotifications || [];
+  const readSet = new Set(readList);
+
+  const notifications = insList.map((ins) => {
+    const isRead = readSet.has(ins.id);
+    return {
+      ...ins,
+      read: isRead,
+      isRead: isRead
+    };
+  });
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+  return { notifications, unreadCount };
+}
+
+/**
+ * Mark a specific notification as read.
+ * @param {string} id - Notification ID
+ * @returns {Promise<{ ok: boolean }>}
+ */
+export async function markNotificationRead(id) {
+  if (!id) return { ok: false };
+
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  const targetUser = store.users.find((u) => u.id === user.id);
+  if (!targetUser) throw new ApiError('User not found', { status: 404 });
+
+  if (!targetUser.preferences) targetUser.preferences = {};
+  if (!Array.isArray(targetUser.preferences.readNotifications)) {
+    targetUser.preferences.readNotifications = [];
+  }
+
+  if (!targetUser.preferences.readNotifications.includes(id)) {
+    targetUser.preferences.readNotifications.push(id);
+    saveStore(store);
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Mark all notifications as read for current user.
+ * @returns {Promise<{ ok: boolean }>}
+ */
+export async function markAllNotificationsRead() {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  const targetUser = store.users.find((u) => u.id === user.id);
+  if (!targetUser) throw new ApiError('User not found', { status: 404 });
+
+  const insList = await insights();
+  if (!targetUser.preferences) targetUser.preferences = {};
+  targetUser.preferences.readNotifications = insList.map((ins) => ins.id);
+
+  saveStore(store);
+  return { ok: true };
 }
 
 // =============================================================================
@@ -1881,38 +2042,72 @@ export async function insights() {
 /**
  * Search across expenses, income, groups, and shopping lists.
  * @param {string} query
- * @returns {Promise<{ expenses: Object[], income: Object[], groups: Object[], shoppingLists: Object[] }>}
+ * @returns {Promise<{ expenses: Object[], income: Object[], groups: Object[], shoppingLists: Object[], shopping: Object[], total: number }>}
  */
 export async function search(query) {
   if (!query || !query.trim()) {
-    return { expenses: [], income: [], groups: [], shoppingLists: [] };
+    return { expenses: [], income: [], groups: [], shopping: [], shoppingLists: [], total: 0 };
   }
 
   const q = query.trim().toLowerCase();
   const store = loadStore();
   const user = requireAuth(store);
 
+  const categoryNameMap = new Map((store.categories || []).map((c) => [c.id, (c.name || '').toLowerCase()]));
+
   const matchedExpenses = store.expenses
-    .filter((e) => e.userId === user.id && ((e.description || '').toLowerCase().includes(q) || (e.notes || '').toLowerCase().includes(q)))
+    .filter((e) => {
+      if (e.userId !== user.id) return false;
+      const desc = (e.description || '').toLowerCase();
+      const notes = (e.notes || '').toLowerCase();
+      const catName = categoryNameMap.get(e.categoryId) || '';
+      return desc.includes(q) || notes.includes(q) || catName.includes(q);
+    })
     .slice(0, 5);
 
   const matchedIncome = store.income
-    .filter((i) => i.userId === user.id && ((i.source || '').toLowerCase().includes(q) || (i.notes || '').toLowerCase().includes(q)))
+    .filter((i) => {
+      if (i.userId !== user.id) return false;
+      const src = (i.source || '').toLowerCase();
+      const notes = (i.notes || '').toLowerCase();
+      const catName = categoryNameMap.get(i.categoryId) || '';
+      return src.includes(q) || notes.includes(q) || catName.includes(q);
+    })
     .slice(0, 5);
 
   const matchedGroups = store.groups
-    .filter((g) => g.members.some((m) => m.userId === user.id) && (g.name.toLowerCase().includes(q) || (g.description || '').toLowerCase().includes(q)))
+    .filter((g) => {
+      const isMember = g.members?.some((m) => m.userId === user.id);
+      if (!isMember) return false;
+      const name = (g.name || '').toLowerCase();
+      const desc = (g.description || '').toLowerCase();
+      return name.includes(q) || desc.includes(q);
+    })
     .slice(0, 5);
 
+  const userGroupIds = new Set(
+    store.groups.filter((g) => g.members?.some((m) => m.userId === user.id)).map((g) => g.id)
+  );
+
   const matchedShopping = store.shoppingLists
-    .filter((sl) => sl.ownerId === user.id && sl.name.toLowerCase().includes(q))
+    .filter((sl) => {
+      const hasAccess = sl.ownerId === user.id || (sl.groupId && userGroupIds.has(sl.groupId));
+      if (!hasAccess) return false;
+      const name = (sl.name || '').toLowerCase();
+      const itemsMatch = Array.isArray(sl.items) && sl.items.some((it) => (it.name || '').toLowerCase().includes(q));
+      return name.includes(q) || itemsMatch;
+    })
     .slice(0, 5);
+
+  const total = matchedExpenses.length + matchedIncome.length + matchedGroups.length + matchedShopping.length;
 
   return {
     expenses: matchedExpenses,
     income: matchedIncome,
     groups: matchedGroups,
-    shoppingLists: matchedShopping
+    shopping: matchedShopping,
+    shoppingLists: matchedShopping,
+    total
   };
 }
 
