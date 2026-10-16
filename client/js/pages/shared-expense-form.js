@@ -4,7 +4,7 @@
  * dynamic group member population, integer paise validation, and accessible feedback.
  */
 
-import { getGroup, currentUser, createSharedExpense } from '../data/api.js';
+import { getGroup, currentUser, createSharedExpense, validateCustomShares } from '../data/api.js';
 import { qs, qsa, on, createEl } from '../core/dom.js';
 import { setLoading, clearElement, renderErrorState } from '../core/render.js';
 import { showToast } from '../ui/toast.js';
@@ -111,10 +111,54 @@ export async function init() {
       }
     }
 
-    // Split type toggle visibility
+    // Split type toggle visibility and live custom allocation tracker
     const splitTypeRadios = qsa('input[name="split_type"]', form);
     const equalSection = qs('.equal-split', form);
     const customSection = qs('.custom-split', form);
+    const amountInput = qs('#s-amount', form);
+
+    function updateCustomRemaining() {
+      const selected = form.querySelector('input[name="split_type"]:checked')?.value || 'equal';
+      if (selected !== 'custom' || !customContainer) return;
+
+      let totalPaise = 0;
+      try {
+        if (amountInput?.value) totalPaise = rupeesToPaise(amountInput.value);
+      } catch (_) {
+        totalPaise = 0;
+      }
+
+      const shareInputs = qsa('.share-input', customContainer);
+      let assignedPaise = 0;
+      for (const inp of shareInputs) {
+        if (inp.value) {
+          try {
+            assignedPaise += rupeesToPaise(inp.value);
+          } catch (_) {}
+        }
+      }
+
+      const remainingPaise = totalPaise - assignedPaise;
+      let trackerEl = qs('.custom-split-tracker', customContainer);
+      if (!trackerEl) {
+        trackerEl = createEl('div', { className: 'custom-split-tracker alert alert-info mt-2' });
+        customContainer.appendChild(trackerEl);
+      }
+
+      if (totalPaise <= 0) {
+        trackerEl.textContent = 'Enter a valid total amount above to calculate custom shares.';
+        trackerEl.className = 'custom-split-tracker alert alert-info mt-2';
+      } else if (remainingPaise === 0) {
+        trackerEl.textContent = `✓ Perfect! Total assigned matches ₹${(totalPaise / 100).toFixed(2)}.`;
+        trackerEl.className = 'custom-split-tracker alert alert-success mt-2';
+      } else if (remainingPaise > 0) {
+        trackerEl.textContent = `₹${(remainingPaise / 100).toFixed(2)} remaining to assign (Total: ₹${(totalPaise / 100).toFixed(2)}, Assigned: ₹${(assignedPaise / 100).toFixed(2)}).`;
+        trackerEl.className = 'custom-split-tracker alert alert-warning mt-2';
+      } else {
+        trackerEl.textContent = `Over-allocated by ₹${(Math.abs(remainingPaise) / 100).toFixed(2)}! Total is ₹${(totalPaise / 100).toFixed(2)}, but assigned is ₹${(assignedPaise / 100).toFixed(2)}.`;
+        trackerEl.className = 'custom-split-tracker alert alert-danger mt-2';
+      }
+    }
 
     function updateSplitVisibility() {
       const selected = form.querySelector('input[name="split_type"]:checked')?.value || 'equal';
@@ -123,6 +167,7 @@ export async function init() {
       }
       if (customSection) {
         customSection.style.display = selected === 'custom' ? '' : 'none';
+        if (selected === 'custom') updateCustomRemaining();
       }
     }
 
@@ -131,10 +176,20 @@ export async function init() {
     }
     updateSplitVisibility();
 
+    if (amountInput) {
+      on(amountInput, 'input', updateCustomRemaining);
+    }
+    if (customContainer) {
+      on(customContainer, 'input', (e) => {
+        if (e.target && e.target.classList.contains('share-input')) {
+          updateCustomRemaining();
+        }
+      });
+    }
+
     // Wire submit handler
     const submitBtn = qs('button[type="submit"]', form);
     const titleInput = qs('#s-title', form);
-    const amountInput = qs('#s-amount', form);
     const catSelect = qs('#s-cat', form);
     const dateInput = qs('#s-date', form);
 
@@ -187,7 +242,6 @@ export async function init() {
       } else {
         // Custom split: collect each member's amount
         const shareInputs = qsa('.share-input', form);
-        let customTotalPaise = 0;
         const customShares = [];
 
         for (const sInp of shareInputs) {
@@ -202,20 +256,18 @@ export async function init() {
               hasError = true;
             }
           }
-          customTotalPaise += sharePaise;
           customShares.push({ userId: uId, amount: sharePaise });
         }
 
         if (!hasError) {
-          if (customTotalPaise !== amountPaise) {
-            const diffPaise = Math.abs(amountPaise - customTotalPaise);
-            const diffRupees = (diffPaise / 100).toFixed(2);
-            const sumRupees = (customTotalPaise / 100).toFixed(2);
-            const totalRupees = (amountPaise / 100).toFixed(2);
-            showFieldError(
-              amountInput,
-              `Custom shares sum to ₹${sumRupees}, but total is ₹${totalRupees} (difference: ₹${diffRupees})`
-            );
+          const customRes = validateCustomShares({
+            amount: amountPaise,
+            shares: customShares,
+            allowedMemberIds: group.members.map((m) => m.userId)
+          });
+
+          if (!customRes.isValid) {
+            showFieldError(amountInput, customRes.error);
             hasError = true;
           } else {
             shares = customShares;

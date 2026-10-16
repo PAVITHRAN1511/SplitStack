@@ -106,3 +106,44 @@ Each page module exports an `init()` function loaded dynamically by `app.js` usi
 | `profile.js` | `profile.html` | User profile details, account statistics, "Reset demo data" action connected to `resetDemoData()`, and session logout. |
 | `analytics.js` | `analytics.html` | 6-month summary stat cards, monthly trend table, category spending rankings with share progress meters. |
 | `expense-edit.js` | `expense-edit.html?id=...` | Reads expense ID from query string, pre-fills form fields from `getExpense(id)` or displays graceful not-found alert. |
+
+## Group Splitting and Debt Simplification (Review 2, Step P5)
+
+Step P5 introduces the authoritative group accounting and debt simplification engine in `client/js/domain/`:
+- `splits.js`: Domain functions for equal splits and custom split validation.
+- `settle.js`: Domain functions for net balance aggregation and greedy minimum-cash-flow debt simplification.
+
+### 1. Balance Sign Convention
+- **Positive balance (`> 0`)**: The member is a **creditor**. They have paid more than their allocated share and the group owes them money.
+- **Negative balance (`< 0`)**: The member is a **debtor**. They have paid less than their allocated share and owe money to the group.
+- **Zero balance (`= 0`)**: The member is **settled**. They neither owe nor are owed money.
+
+#### Mathematical Conservation Invariant
+In every valid closed group, the sum of all members' net balances is identically zero:
+$$\sum_{m \in \text{members}} \text{netBalance}(m) = 0$$
+This is strictly verified in `calculateNetBalances()` and guaranteed in integer paise arithmetic.
+
+### 2. Equal Split Remainder Policy
+When dividing an expense amount in integer paise among $N$ participants where $A \pmod N \neq 0$:
+- Each participant receives a base share of $\lfloor A / N \rfloor$ paise.
+- The leftover remainder paise $R = A \pmod N$ is deterministically allocated to the **paying member** (if the payer is among participants), or to the **first participant** in the list.
+- This policy guarantees that every member share is an exact integer number of paise, and $\sum \text{shares} \equiv \text{total expense amount}$ without rounding drift or lost paise.
+
+### 3. Greedy Minimum-Cash-Flow Simplification Algorithm
+The simplification algorithm (`simplifyDebts`) converts net balances into an optimized payment plan:
+1. Partitions members into debtors ($B < 0$) and creditors ($B > 0$).
+2. Sorts debtors descending by absolute debt, and creditors descending by credit (with stable tie-breaking by member ID).
+3. Repeatedly matches the largest debtor with the largest creditor, transfers $\min(\text{debt}, \text{credit})$, and updates both balances until all debts reach zero.
+4. Produces at most $N - 1$ transfers for $N$ members.
+
+#### Algorithmic Note on Optimality & Limitations
+The greedy approach provides an efficient $O(N \log N)$ algorithm that drastically minimizes transactions (e.g., reducing 6 pairwise debts to 3 payments in a 4-person group). However, finding the globally absolute minimum number of transactions across arbitrary subsets is an **NP-hard problem** (reducible to the subset-sum partition problem). The greedy simplification approach is the established industry standard (used by Splitwise and similar applications) for predictable, deterministic settlements.
+
+### 4. Settlement Rules & Validation
+Settlements are recorded via `api.recordSettlement(groupId, { payerId, payeeId, amount })`:
+- **Group membership**: Both payer and payee must be valid, distinct members of the group (`payerId !== payeeId`).
+- **Directional validity**: The payer must currently be a debtor (`net < 0`) and the payee must currently be a creditor (`net > 0`).
+- **Debt limit**: The payment amount cannot exceed the minimum of the payer's outstanding debt and the payee's outstanding credit ($\le \min(-\text{payerNet}, \text{payeeNet})$).
+- **Paise integrity**: All settlements are positive integer paise ($> 0$).
+- **Duplicate debounce**: Rapid identical submissions ($< 2000\text{ms}$) are rejected to prevent accidental double-clicks.
+- **Balance recalculation**: Recording or removing (`api.removeSettlement`) a settlement updates group balances immediately while leaving original shared expense records intact.

@@ -494,21 +494,42 @@
       ],
       "result": "Implemented reusable form validation and accessible error UI helper module (client/js/ui/forms.js) with rupeesToPaise and setButtonLoading; added authGuard in app.js; created form page scripts for login, register, expense create/edit, income create, group create, shared expense with equal/custom splits, shopping list create; wired CRUD actions across existing pages (delete expenses/income with confirmDialog, budget create/remove, recurring create/toggle/delete, category create/delete, group add-member/leave, shopping items/convert-to-expense, profile update/change-password); added comprehensive automated test suite (30 passing tests).",
       "verification": "77 total client tests passing across data-layer.test.mjs, render.test.mjs, and forms.test.mjs; npm run lint:html passing with 0 errors across 25 HTML files."
-    }
-  ],
-  "planned": [
+    },
     {
+      "id": 30,
+      "date": "2026-10-16",
       "stage": "Review 2",
-      "title": "Group splitting and the debt-simplification algorithm",
-      "type": "Planned prompt",
+      "title": "Request: proceed with Review 2 Step P5",
+      "type": "User prompt",
+      "prompt": "# SplitStack — P5: Group Splitting and Debt Simplification\n\nYou are continuing development of SplitStack, a finance and expense-sharing application. Steps P1–P4 are reported complete. Implement only Step P5: Group Splitting and Debt Simplification.\n\n1. Mandatory preflight: read P5 instructions in SplitStack_Handover_Prompts.pdf; inspect api.js, store.js, seed.js, groups.js, group-detail.js, settlements.js, shared-expense-form.js, relevant HTML pages, and existing tests; confirm public API signatures and data schema; preserve docs/audit/.\n2. Group expense calculations: handle equal splits with deterministic remainder paise allocation, custom splits with explicit member shares, payer and participant validation, integer-paise conservation, and deletion/editing recalculations.\n3. Net balances: implement single authoritative balance-calculation function (calculateNetBalances) with sign convention (positive = creditor / to receive, negative = debtor / owes, zero = settled), zero-sum invariant across group.\n4. Minimum-cash-flow debt simplification: implement greedy approach matching largest debtor with largest creditor, transferring min(debt, credit), positive integer paise, stable deterministic output, at most N-1 transfers.\n5. Settlement recording: validate group membership, distinct payer/payee, positive integer paise, cannot exceed outstanding debt, duplicate debounce, balance recalculation.\n6. Page integration: connect group-detail and settlements pages to canonical calculation and debt simplification logic with confirmation dialogs and toast feedback.\n7. Automated tests: add comprehensive test suite for splits, balances, simplification, and settlements; run regression suite and HTML lint; update documentation and prompt log; commit locally with message: Review 2: group splitting and debt simplification.",
+      "purpose": "Authorize implementation of Step P5: Group Splitting and Debt Simplification.",
+      "files": [],
+      "result": "Authorized Step P5 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 31,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "Group splitting and debt simplification",
+      "type": "Working prompt",
       "prompt": "In client/js/domain/splits.js implement equal splits in integer paise with the leftover paise assigned to the payer, and custom splits that must sum exactly to the total. On the shared-expense form show a live \"remaining to assign\" counter and disable submit until it reaches zero. In client/js/domain/settle.js implement net balances (paid minus share) and the greedy minimum-cash-flow algorithm: repeatedly match the largest debtor with the largest creditor and transfer min(debt, credit) until every balance is within one paisa; return the transfer list and the number of original pairwise debts. Render the settle-up page from it, and make \"Mark paid\" record a settlement and recompute balances. Add unit tests runnable with node --test using the Goa Trip example (balances +1700, -2500, +5700, -4900 give 3 transfers).",
-      "purpose": "Show algorithmic JavaScript, the core idea of SplitStack.",
+      "purpose": "Implement authoritative group expense accounting, deterministic integer-paise remainder allocation, greedy minimum-cash-flow debt simplification, and settlement validation.",
       "files": [
         "client/js/domain/splits.js",
         "client/js/domain/settle.js",
-        "tests/client/*.test.js"
-      ]
-    },
+        "client/js/data/api.js",
+        "client/js/pages/group-detail.js",
+        "client/js/pages/shared-expense-form.js",
+        "client/js/pages/settlements.js",
+        "tests/client/splits-settle.test.mjs",
+        "client/README.md"
+      ],
+      "result": "Created domain modules splits.js (equal split with deterministic remainder paise to payer, custom shares validation) and settle.js (canonical calculateNetBalances with strict zero-sum conservation invariant, greedy simplifyDebts minimizing payments to at most N-1); integrated into api.js (createSharedExpense, updateSharedExpense, getGroupBalances, getGroupMemberStats, getSuggestedSettlements, recordSettlement with debt-limit validation, removeSettlement); wired live remaining tracker in shared-expense-form.js; updated group-detail.js to show member paid/share/net and suggested settlements; updated settlements.js with confirmDialog, toast notifications, loading states, and settlement removal; added 27 comprehensive automated tests.",
+      "verification": "104 total client tests passing across 4 test suites (data-layer.test.mjs, render.test.mjs, forms.test.mjs, splits-settle.test.mjs); npm run lint:html passing with 0 errors across 25 HTML files."
+    }
+  ],
+  "planned": [
     {
       "stage": "Review 2",
       "title": "Charts, budgets, forecast, insights, search and notifications",

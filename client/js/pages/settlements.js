@@ -1,68 +1,26 @@
 /**
- * Settlements page module (Review 2, Step P3).
+ * Settlements page module (Review 2, Steps P3 & P5).
  * Connects settlements.html to api.js to render debt simplification statistics,
- * optimised transfer payment plan, member net balances, and settlement history.
+ * canonical payment plan from greedy minimum-cash-flow, member net balances,
+ * and settlement history with confirmation and deletion.
  */
 
-import { getGroup, getGroupBalances, getSettlements, recordSettlement } from '../data/api.js';
+import {
+  getGroup,
+  getGroupBalances,
+  getSettlements,
+  recordSettlement,
+  removeSettlement,
+  getSuggestedSettlements
+} from '../data/api.js';
 import { qs, createEl, on } from '../core/dom.js';
 import { formatINR } from '../core/format.js';
 import { getInitials } from '../ui/user.js';
 import { setLoading, clearElement, renderEmptyState, renderErrorState } from '../core/render.js';
+import { confirmDialog } from '../ui/confirm.js';
+import { showToast } from '../ui/toast.js';
 
 const AVATAR_COLORS = ['#0ea5e9', '#db2777', '#d97706', '#059669', '#7c3aed', '#e11d48'];
-
-/**
- * Compute greedy debt simplification transfers between creditors and debtors.
- * @param {Array} members
- * @param {Record<string, number>} balancesRecord
- * @returns {Array} List of transfers { from, fromName, to, toName, amount }
- */
-function computeTransfers(members, balancesRecord) {
-  const creditors = [];
-  const debtors = [];
-
-  for (const m of members) {
-    const bal = balancesRecord[m.userId] || 0;
-    if (bal > 0) {
-      creditors.push({ userId: m.userId, name: m.name, amount: bal });
-    } else if (bal < 0) {
-      debtors.push({ userId: m.userId, name: m.name, amount: -bal });
-    }
-  }
-
-  // Sort descending by amount
-  creditors.sort((a, b) => b.amount - a.amount);
-  debtors.sort((a, b) => b.amount - a.amount);
-
-  const transfers = [];
-  let cIdx = 0;
-  let dIdx = 0;
-
-  while (cIdx < creditors.length && dIdx < debtors.length) {
-    const cred = creditors[cIdx];
-    const debt = debtors[dIdx];
-    const settledAmount = Math.min(cred.amount, debt.amount);
-
-    if (settledAmount > 0) {
-      transfers.push({
-        from: debt.userId,
-        fromName: debt.name,
-        to: cred.userId,
-        toName: cred.name,
-        amount: settledAmount
-      });
-    }
-
-    cred.amount -= settledAmount;
-    debt.amount -= settledAmount;
-
-    if (cred.amount <= 0) cIdx++;
-    if (debt.amount <= 0) dIdx++;
-  }
-
-  return transfers;
-}
 
 /**
  * Render debt optimization KPI cards.
@@ -83,9 +41,9 @@ function renderStats(pairwiseCount, optimizedCount, savedPercent) {
 
 /**
  * Render payment plan transfers list.
- * @param {Array} transfers
+ * @param {Array<{ from: string, fromName: string, to: string, toName: string, amount: number }>} transfers
  * @param {string} groupId
- * @param {() => void} onRefresh
+ * @param {() => Promise<void>} onRefresh
  */
 function renderPaymentPlan(transfers, groupId, onRefresh) {
   const container = qs('section[aria-labelledby="plan-title"] .card-body');
@@ -93,7 +51,7 @@ function renderPaymentPlan(transfers, groupId, onRefresh) {
 
   clearElement(container);
 
-  if (transfers.length === 0) {
+  if (!transfers || transfers.length === 0) {
     renderEmptyState(container, {
       icon: 'fa-handshake',
       title: 'All debts settled!',
@@ -115,15 +73,32 @@ function renderPaymentPlan(transfers, groupId, onRefresh) {
     ]);
 
     on(markPaidBtn, 'click', async () => {
+      const confirmed = await confirmDialog({
+        title: 'Record settlement payment',
+        message: `Confirm that ${payerName} paid ${formatINR(t.amount)} to ${payeeName}?`,
+        confirmText: 'Record payment',
+        confirmClass: 'btn-success'
+      });
+      if (!confirmed) return;
+
+      markPaidBtn.disabled = true;
+      markPaidBtn.setAttribute('aria-busy', 'true');
+      const originalHtml = markPaidBtn.innerHTML;
+      markPaidBtn.textContent = 'Recording...';
+
       try {
         await recordSettlement(groupId, {
           payerId: t.from,
           payeeId: t.to,
           amount: t.amount
         });
-        onRefresh();
+        showToast(`Settlement recorded: ${payerName} paid ${payeeName}`, 'success');
+        await onRefresh();
       } catch (err) {
-        console.warn('[SplitStack] Failed to record settlement:', err);
+        showToast(err.message || 'Failed to record settlement', 'danger');
+        markPaidBtn.disabled = false;
+        markPaidBtn.removeAttribute('aria-busy');
+        markPaidBtn.innerHTML = originalHtml;
       }
     });
 
@@ -202,8 +177,9 @@ function renderNetBalances(members, balancesRecord) {
  * Render settlement history.
  * @param {Array} history
  * @param {Map<string, string>} memberNameMap
+ * @param {() => Promise<void>} onRefresh
  */
-function renderHistory(history, memberNameMap) {
+function renderHistory(history, memberNameMap, onRefresh) {
   const container = qs('section[aria-labelledby="hist-title"] .card-body');
   if (!container) return;
 
@@ -223,12 +199,37 @@ function renderHistory(history, memberNameMap) {
     const payer = memberNameMap.get(h.payerId) || h.payerId;
     const payee = memberNameMap.get(h.payeeId) || h.payeeId;
 
+    const delBtn = createEl('button', {
+      className: 'icon-btn sm danger',
+      type: 'button',
+      'aria-label': `Delete settlement: ${payer} paid ${payee}`
+    }, [
+      createEl('i', { className: 'fa-solid fa-trash', 'aria-hidden': 'true' })
+    ]);
+
+    on(delBtn, 'click', async () => {
+      const confirmed = await confirmDialog({
+        title: 'Delete settlement',
+        message: `Remove this settlement of ${formatINR(h.amount)} from ${payer} to ${payee}? This will recalculate group balances.`,
+        confirmText: 'Delete'
+      });
+      if (!confirmed) return;
+      try {
+        await removeSettlement(h.id);
+        showToast('Settlement removed', 'info');
+        await onRefresh();
+      } catch (err) {
+        showToast(err.message || 'Failed to remove settlement', 'danger');
+      }
+    });
+
     const li = createEl('li', { className: 'list-item' }, [
       createEl('span', { className: 'grow' }, [
         createEl('span', { className: 'list-title', textContent: `${payer} paid ${payee}` }),
         createEl('span', { className: 'list-sub', textContent: formatINR(h.amount) })
       ]),
-      createEl('span', { className: 'badge badge-success', textContent: 'Completed' })
+      createEl('span', { className: 'badge badge-success mr-2', textContent: 'Completed' }),
+      delBtn
     ]);
     ul.appendChild(li);
   }
@@ -246,10 +247,11 @@ async function loadSettlements() {
   setLoading(main, true);
 
   try {
-    const [group, balances, history] = await Promise.all([
+    const [group, balances, history, suggested] = await Promise.all([
       getGroup(groupId),
       getGroupBalances(groupId),
-      getSettlements(groupId)
+      getSettlements(groupId),
+      getSuggestedSettlements(groupId)
     ]);
 
     const memberNameMap = new Map((group.members || []).map((m) => [m.userId, m.name]));
@@ -261,18 +263,14 @@ async function loadSettlements() {
       groupLink.href = `group-detail.html?id=${encodeURIComponent(group.id)}`;
     }
 
-    const memberCount = group.members?.length || 1;
-    const pairwiseDebtsCount = memberCount > 1 ? (memberCount * (memberCount - 1)) / 2 : 0;
-    const transfers = computeTransfers(group.members || [], balances || {});
-    const optimizedCount = transfers.length;
-    const savedPercent = pairwiseDebtsCount > 0
-      ? Math.max(0, Math.round(((pairwiseDebtsCount - optimizedCount) / pairwiseDebtsCount) * 100))
-      : 0;
-
-    renderStats(pairwiseDebtsCount, optimizedCount, savedPercent);
-    renderPaymentPlan(transfers, groupId, loadSettlements);
+    renderStats(
+      suggested.pairwiseDebtsCount,
+      suggested.optimizedCount,
+      suggested.savedPercent
+    );
+    renderPaymentPlan(suggested.transfers, groupId, loadSettlements);
     renderNetBalances(group.members || [], balances || {});
-    renderHistory(history || [], memberNameMap);
+    renderHistory(history || [], memberNameMap, loadSettlements);
   } catch (err) {
     console.warn('[SplitStack] Error loading settlements:', err);
     clearElement(main);

@@ -9,6 +9,8 @@ import {
   getGroup,
   listSharedExpenses,
   getGroupBalances,
+  getGroupMemberStats,
+  getSuggestedSettlements,
   currentUser,
   listCategories,
   removeSharedExpense,
@@ -160,13 +162,13 @@ function renderExpensesTable(expenses, group, onRefresh) {
 }
 
 /**
- * Render group member balances card.
- * @param {Record<string, number>} balances
- * @param {Array} expenses
+ * Render group member balances card with per-member stats and suggested settlements.
+ * @param {Record<string, { paid: number, share: number, net: number }>} memberStats
+ * @param {Object} suggested - Result from getSuggestedSettlements ({ transfers, ... })
  * @param {Object} group
  * @param {Object} currentUserData
  */
-function renderBalancesCard(balances, expenses, group, currentUserData) {
+function renderBalancesCard(memberStats, suggested, group, currentUserData) {
   const container = qs('section[aria-labelledby="bal-title"] .card-body.stack');
   if (!container) return;
 
@@ -176,9 +178,10 @@ function renderBalancesCard(balances, expenses, group, currentUserData) {
     const isMe = member.userId === currentUserData.id;
     const isAdmin = member.role === 'admin';
 
-    const netPaise = (balances && typeof balances === 'object') ? (balances[member.userId] || 0) : 0;
-    const paidPaise = (expenses || []).filter((e) => e.paidBy === member.userId).reduce((s, e) => s + (e.amount || 0), 0);
-    const sharePaise = paidPaise - netPaise;
+    const stats = memberStats?.[member.userId] || { paid: 0, share: 0, net: 0 };
+    const netPaise = stats.net;
+    const paidPaise = stats.paid;
+    const sharePaise = stats.share;
 
     const titleSpans = [member.name];
     if (isMe && isAdmin) {
@@ -223,6 +226,38 @@ function renderBalancesCard(balances, expenses, group, currentUserData) {
     className: 'text-xs',
     textContent: 'Balance = amount paid − your share. Positive means the group owes you.'
   }));
+
+  // Suggested settlements section
+  const transfers = suggested?.transfers || [];
+  if (transfers.length > 0) {
+    const settleSection = createEl('div', { className: 'suggested-settlements pt-3 border-t mt-2' }, [
+      createEl('h3', { className: 'text-sm font-semibold mb-2', textContent: 'Suggested settlements' })
+    ]);
+
+    const list = createEl('ul', { className: 'list list-compact' });
+    for (const t of transfers) {
+      const li = createEl('li', { className: 'list-item text-xs flex justify-between items-center py-1' }, [
+        createEl('span', {}, [
+          createEl('strong', { textContent: t.fromName }),
+          ' owes ',
+          createEl('strong', { textContent: t.toName })
+        ]),
+        createEl('span', { className: 'num font-semibold', textContent: formatINR(t.amount) })
+      ]);
+      list.appendChild(li);
+    }
+    settleSection.appendChild(list);
+
+    settleSection.appendChild(createEl('div', { className: 'mt-2' }, [
+      createEl('a', {
+        className: 'text-xs link font-medium',
+        href: `settlements.html?groupId=${encodeURIComponent(group.id)}`,
+        textContent: 'Go to Settle up →'
+      })
+    ]));
+
+    container.appendChild(settleSection);
+  }
 }
 
 /**
@@ -230,10 +265,11 @@ function renderBalancesCard(balances, expenses, group, currentUserData) {
  * @param {string} groupId
  */
 async function loadAndRenderGroup(groupId) {
-  const [group, expenses, balances, user, cats] = await Promise.all([
+  const [group, expenses, stats, suggested, user, cats] = await Promise.all([
     getGroup(groupId),
     listSharedExpenses(groupId),
-    getGroupBalances(groupId),
+    getGroupMemberStats(groupId),
+    getSuggestedSettlements(groupId),
     currentUser(),
     listCategories()
   ]);
@@ -243,7 +279,7 @@ async function loadAndRenderGroup(groupId) {
   const totalSpentPaise = (expenses || []).reduce((sum, e) => sum + (e.amount || 0), 0);
   renderHeader({ ...group, sharedExpensesCount: expenses?.length || 0 }, totalSpentPaise);
   renderExpensesTable(expenses || [], group, () => loadAndRenderGroup(groupId));
-  renderBalancesCard(balances || {}, expenses || [], group, user);
+  renderBalancesCard(stats?.memberStats || {}, suggested, group, user);
 }
 
 /**

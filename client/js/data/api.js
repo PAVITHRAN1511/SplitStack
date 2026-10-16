@@ -8,6 +8,11 @@
  */
 
 import { loadStore, saveStore, generateId, reset as resetStore, getSessionUserId, setSessionUserId } from './store.js';
+import { calculateEqualSplit, validateCustomShares } from '../domain/splits.js';
+import { calculateNetBalances, simplifyDebts } from '../domain/settle.js';
+
+// Re-export domain logic for page modules and external callers
+export { calculateEqualSplit, validateCustomShares, calculateNetBalances, simplifyDebts };
 
 /**
  * Standard API error structure matching the backend response.
@@ -1037,16 +1042,16 @@ export async function listSharedExpenses(groupId) {
  * @param {Object} params
  * @param {string} params.title
  * @param {number} params.amount - Integer paise
- * @param {string} params.categoryId
- * @param {string} params.date
- * @param {'equal'|'custom'} params.splitType
- * @param {Object[]} params.shares - [{ userId, amount }]
+ * @param {string} [params.categoryId='cat_food']
+ * @param {string} [params.date]
+ * @param {'equal'|'custom'} [params.splitType='equal']
+ * @param {Object[]} [params.shares=[]] - [{ userId, amount }]
  * @param {string} [params.paidBy]
  * @returns {Promise<Object>}
  */
 export async function createSharedExpense(groupId, { title, amount, categoryId, date, splitType = 'equal', shares = [], paidBy }) {
   if (!title || !title.trim()) throw new ApiError('Title is required', { field: 'title' });
-  if (!amount || amount <= 0 || !Number.isInteger(amount)) {
+  if (amount === null || amount === undefined || !Number.isInteger(amount) || amount <= 0) {
     throw new ApiError('Amount must be positive integer paise', { field: 'amount' });
   }
 
@@ -1056,32 +1061,45 @@ export async function createSharedExpense(groupId, { title, amount, categoryId, 
   if (!group) throw new ApiError('Group not found', { status: 404 });
 
   const payerId = paidBy || user.id;
+  if (!group.members.some((m) => m.userId === payerId)) {
+    throw new ApiError('Payer must be a member of the group', { field: 'paidBy', status: 400 });
+  }
 
-  // Validate shares
-  let computedShares = shares;
+  const groupMemberIds = group.members.map((m) => m.userId);
+  let computedShares;
+
   if (splitType === 'equal') {
     const participantIds = Array.isArray(shares) && shares.length > 0
-      ? shares.map((s) => s.userId)
-      : group.members.map((m) => m.userId);
+      ? shares.map((s) => (typeof s === 'string' ? s.trim() : s.userId?.trim()))
+      : groupMemberIds;
 
-    const memberCount = participantIds.length;
-    if (memberCount === 0) {
-      throw new ApiError('At least one participant is required for split', { field: 'participants' });
+    for (const pId of participantIds) {
+      if (!pId || !groupMemberIds.includes(pId)) {
+        throw new ApiError(`Participant "${pId}" is not a member of this group`, { field: 'shares', status: 400 });
+      }
     }
 
-    const baseShare = Math.floor(amount / memberCount);
-    const remainder = amount % memberCount;
-    const remainderTarget = participantIds.includes(payerId) ? payerId : participantIds[0];
-
-    computedShares = participantIds.map((pId) => ({
-      userId: pId,
-      amount: pId === remainderTarget ? baseShare + remainder : baseShare
-    }));
+    try {
+      computedShares = calculateEqualSplit({
+        amount,
+        participants: participantIds,
+        payerId
+      });
+    } catch (err) {
+      throw new ApiError(err.message, { field: 'shares', status: 400 });
+    }
+  } else if (splitType === 'custom') {
+    const customResult = validateCustomShares({
+      amount,
+      shares,
+      allowedMemberIds: groupMemberIds
+    });
+    if (!customResult.isValid) {
+      throw new ApiError(customResult.error, { field: 'shares', status: 400 });
+    }
+    computedShares = shares;
   } else {
-    const totalShares = shares.reduce((sum, s) => sum + s.amount, 0);
-    if (totalShares !== amount) {
-      throw new ApiError(`Custom shares must sum exactly to total amount (${amount} paise)`, { field: 'shares' });
-    }
+    throw new ApiError(`Unsupported split type: ${splitType}`, { field: 'splitType', status: 400 });
   }
 
   const newShared = {
@@ -1089,7 +1107,7 @@ export async function createSharedExpense(groupId, { title, amount, categoryId, 
     groupId,
     title: title.trim(),
     amount,
-    categoryId,
+    categoryId: categoryId || 'cat_food',
     date: date || new Date().toISOString().slice(0, 10),
     splitType,
     paidBy: payerId,
@@ -1100,6 +1118,95 @@ export async function createSharedExpense(groupId, { title, amount, categoryId, 
   store.sharedExpenses.unshift(newShared);
   saveStore(store);
   return newShared;
+}
+
+/**
+ * Update a shared expense in a group.
+ * @param {string} id - Shared expense ID
+ * @param {Object} updates
+ * @returns {Promise<Object>}
+ */
+export async function updateSharedExpense(id, updates = {}) {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  const idx = store.sharedExpenses.findIndex((se) => se.id === id);
+  if (idx === -1) throw new ApiError('Shared expense not found', { status: 404 });
+
+  const se = store.sharedExpenses[idx];
+  const group = store.groups.find((g) => g.id === se.groupId && g.members.some((m) => m.userId === user.id));
+  if (!group) throw new ApiError('Not authorized to update this shared expense', { status: 403 });
+
+  const title = updates.title !== undefined ? updates.title : se.title;
+  const amount = updates.amount !== undefined ? updates.amount : se.amount;
+  const categoryId = updates.categoryId !== undefined ? updates.categoryId : se.categoryId;
+  const date = updates.date !== undefined ? updates.date : se.date;
+  const splitType = updates.splitType !== undefined ? updates.splitType : se.splitType;
+  const paidBy = updates.paidBy !== undefined ? updates.paidBy : se.paidBy;
+
+  if (!title || !title.trim()) throw new ApiError('Title is required', { field: 'title' });
+  if (amount === null || amount === undefined || !Number.isInteger(amount) || amount <= 0) {
+    throw new ApiError('Amount must be positive integer paise', { field: 'amount' });
+  }
+
+  if (!group.members.some((m) => m.userId === paidBy)) {
+    throw new ApiError('Payer must be a member of the group', { field: 'paidBy', status: 400 });
+  }
+
+  const groupMemberIds = group.members.map((m) => m.userId);
+  let computedShares;
+
+  if (splitType === 'equal') {
+    const rawShares = updates.shares !== undefined ? updates.shares : se.shares;
+    const participantIds = Array.isArray(rawShares) && rawShares.length > 0
+      ? rawShares.map((s) => (typeof s === 'string' ? s.trim() : s.userId?.trim()))
+      : groupMemberIds;
+
+    for (const pId of participantIds) {
+      if (!pId || !groupMemberIds.includes(pId)) {
+        throw new ApiError(`Participant "${pId}" is not a member of this group`, { field: 'shares', status: 400 });
+      }
+    }
+
+    try {
+      computedShares = calculateEqualSplit({
+        amount,
+        participants: participantIds,
+        payerId: paidBy
+      });
+    } catch (err) {
+      throw new ApiError(err.message, { field: 'shares', status: 400 });
+    }
+  } else if (splitType === 'custom') {
+    const rawShares = updates.shares !== undefined ? updates.shares : se.shares;
+    const customResult = validateCustomShares({
+      amount,
+      shares: rawShares,
+      allowedMemberIds: groupMemberIds
+    });
+    if (!customResult.isValid) {
+      throw new ApiError(customResult.error, { field: 'shares', status: 400 });
+    }
+    computedShares = rawShares;
+  } else {
+    throw new ApiError(`Unsupported split type: ${splitType}`, { field: 'splitType', status: 400 });
+  }
+
+  const updated = {
+    ...se,
+    title: title.trim(),
+    amount,
+    categoryId: categoryId || se.categoryId,
+    date: date || se.date,
+    splitType,
+    paidBy,
+    shares: computedShares,
+    updatedAt: new Date().toISOString()
+  };
+
+  store.sharedExpenses[idx] = updated;
+  saveStore(store);
+  return updated;
 }
 
 /**
@@ -1124,11 +1231,11 @@ export async function removeSharedExpense(id) {
 }
 
 /**
- * Get net member balances for a group.
- * Balance = amount paid - amount owed.
- * Positive = is owed money (creditor); Negative = owes money (debtor).
+ * Get net member balances for a group using the canonical domain calculation.
+ * Balance = amount paid - allocated share (+ received settlements - paid settlements).
+ * Positive = is owed money (creditor); Negative = owes money (debtor); Zero = settled.
  * @param {string} groupId
- * @returns {Promise<Record<string, number>>} Map of userId -> balance in paise
+ * @returns {Promise<Record<string, number>>} Map of userId -> balance in integer paise
  */
 export async function getGroupBalances(groupId) {
   const store = loadStore();
@@ -1137,27 +1244,71 @@ export async function getGroupBalances(groupId) {
   const group = store.groups.find((g) => g.id === groupId && g.members.some((m) => m.userId === user.id));
   if (!group) throw new ApiError('Group not found', { status: 404 });
 
-  const balances = {};
-  group.members.forEach((m) => {
-    balances[m.userId] = 0;
+  const shared = store.sharedExpenses.filter((se) => se.groupId === groupId);
+  const completed = store.settlements.filter((s) => s.groupId === groupId && s.status === 'completed');
+
+  const { balances } = calculateNetBalances({
+    members: group.members,
+    expenses: shared,
+    settlements: completed
   });
 
-  const shared = store.sharedExpenses.filter((se) => se.groupId === groupId);
-  for (const se of shared) {
-    balances[se.paidBy] = (balances[se.paidBy] || 0) + se.amount;
-    for (const share of se.shares) {
-      balances[share.userId] = (balances[share.userId] || 0) - share.amount;
-    }
-  }
-
-  // Adjust for completed settlements
-  const completed = store.settlements.filter((s) => s.groupId === groupId && s.status === 'completed');
-  for (const stl of completed) {
-    balances[stl.payerId] = (balances[stl.payerId] || 0) + stl.amount;
-    balances[stl.payeeId] = (balances[stl.payeeId] || 0) - stl.amount;
-  }
-
   return balances;
+}
+
+/**
+ * Get comprehensive member statistics (amount paid, share owed, net balance) for a group.
+ * @param {string} groupId
+ * @returns {Promise<{
+ *   balances: Record<string, number>,
+ *   memberStats: Record<string, { paid: number, share: number, net: number }>,
+ *   netSum: number
+ * }>}
+ */
+export async function getGroupMemberStats(groupId) {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  const group = store.groups.find((g) => g.id === groupId && g.members.some((m) => m.userId === user.id));
+  if (!group) throw new ApiError('Group not found', { status: 404 });
+
+  const shared = store.sharedExpenses.filter((se) => se.groupId === groupId);
+  const completed = store.settlements.filter((s) => s.groupId === groupId && s.status === 'completed');
+
+  return calculateNetBalances({
+    members: group.members,
+    expenses: shared,
+    settlements: completed
+  });
+}
+
+/**
+ * Get suggested settlement payment plan using the greedy minimum-cash-flow algorithm.
+ * @param {string} groupId
+ * @returns {Promise<{
+ *   transfers: Array<{ from: string, fromName: string, to: string, toName: string, amount: number }>,
+ *   pairwiseDebtsCount: number,
+ *   optimizedCount: number,
+ *   savedPercent: number
+ * }>}
+ */
+export async function getSuggestedSettlements(groupId) {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  const group = store.groups.find((g) => g.id === groupId && g.members.some((m) => m.userId === user.id));
+  if (!group) throw new ApiError('Group not found', { status: 404 });
+
+  const shared = store.sharedExpenses.filter((se) => se.groupId === groupId);
+  const completed = store.settlements.filter((s) => s.groupId === groupId && s.status === 'completed');
+
+  const { balances } = calculateNetBalances({
+    members: group.members,
+    expenses: shared,
+    settlements: completed
+  });
+
+  return simplifyDebts(group.members, balances);
 }
 
 /**
@@ -1176,18 +1327,21 @@ export async function getSettlements(groupId) {
 }
 
 /**
- * Record a payment / settle up transaction.
+ * Record a payment / settle up transaction with debt limit validation.
  * @param {string} groupId
  * @param {Object} params
- * @param {string} params.payerId
- * @param {string} params.payeeId
+ * @param {string} params.payerId - Debtor paying money
+ * @param {string} params.payeeId - Creditor receiving money
  * @param {number} params.amount - Integer paise
- * @returns {Promise<Object>}
+ * @returns {Promise<Object>} Recorded settlement record
  */
 export async function recordSettlement(groupId, { payerId, payeeId, amount }) {
-  if (!payerId || !payeeId) throw new ApiError('Payer and payee are required');
-  if (!amount || amount <= 0 || !Number.isInteger(amount)) {
-    throw new ApiError('Amount must be positive integer paise');
+  if (!payerId || !payeeId) throw new ApiError('Payer and payee are required', { status: 400 });
+  if (payerId === payeeId) {
+    throw new ApiError('Payer and payee cannot be the same member', { status: 400 });
+  }
+  if (amount === null || amount === undefined || !Number.isInteger(amount) || amount <= 0) {
+    throw new ApiError('Amount must be positive integer paise', { status: 400 });
   }
 
   const store = loadStore();
@@ -1200,6 +1354,48 @@ export async function recordSettlement(groupId, { payerId, payeeId, amount }) {
   const isPayeeMember = group.members.some((m) => m.userId === payeeId);
   if (!isPayerMember || !isPayeeMember) {
     throw new ApiError('Payer and payee must be members of the group', { status: 400 });
+  }
+
+  // Calculate current net balances before recording this settlement
+  const shared = store.sharedExpenses.filter((se) => se.groupId === groupId);
+  const completed = store.settlements.filter((s) => s.groupId === groupId && s.status === 'completed');
+
+  const { balances } = calculateNetBalances({
+    members: group.members,
+    expenses: shared,
+    settlements: completed
+  });
+
+  const payerNet = balances[payerId] ?? 0;
+  const payeeNet = balances[payeeId] ?? 0;
+
+  if (payerNet >= 0) {
+    throw new ApiError('Payer does not have an outstanding debt in this group', { status: 400 });
+  }
+  if (payeeNet <= 0) {
+    throw new ApiError('Payee is not owed money in this group', { status: 400 });
+  }
+
+  const maxAllowableTransfer = Math.min(-payerNet, payeeNet);
+  if (amount > maxAllowableTransfer) {
+    throw new ApiError(
+      `Settlement amount (${amount} paise) exceeds maximum allowable debt transfer (${maxAllowableTransfer} paise)`,
+      { status: 400 }
+    );
+  }
+
+  // Prevent duplicate submissions within a short window (2000ms)
+  const now = Date.now();
+  const recentDuplicate = completed.find(
+    (s) =>
+      s.payerId === payerId &&
+      s.payeeId === payeeId &&
+      s.amount === amount &&
+      s.completedAt &&
+      now - new Date(s.completedAt).getTime() < 2000
+  );
+  if (recentDuplicate) {
+    throw new ApiError('Duplicate settlement detected. Please wait before submitting again.', { status: 409 });
   }
 
   const settlement = {
@@ -1215,6 +1411,27 @@ export async function recordSettlement(groupId, { payerId, payeeId, amount }) {
   store.settlements.push(settlement);
   saveStore(store);
   return settlement;
+}
+
+/**
+ * Remove a settlement record from a group (recalculating balances).
+ * @param {string} id - Settlement ID
+ * @returns {Promise<{ ok: boolean }>}
+ */
+export async function removeSettlement(id) {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  const idx = store.settlements.findIndex((s) => s.id === id);
+  if (idx === -1) throw new ApiError('Settlement not found', { status: 404 });
+
+  const settlement = store.settlements[idx];
+  const group = store.groups.find((g) => g.id === settlement.groupId && g.members.some((m) => m.userId === user.id));
+  if (!group) throw new ApiError('Not authorized to delete this settlement', { status: 403 });
+
+  store.settlements.splice(idx, 1);
+  saveStore(store);
+  return { ok: true };
 }
 
 // =============================================================================
