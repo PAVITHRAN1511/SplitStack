@@ -373,21 +373,40 @@
       ],
       "result": "Created client/js architecture with DOM/format utilities, theme toggle (dark/light/system with head flash-prevention script), accessible mobile drawer with focus trap and ARIA attributes, toast notifications, and dialog-based confirm. Added data-page, inline theme scripts, theme buttons, and app.js script tags to all 25 HTML pages while preserving no-JS CSS fallbacks.",
       "verification": "html-validate passes with 0 errors across client/**/*.html; node automated assertions pass for formatINR, formatDate, formatRelativeDate, HTML structure, and CSS layer definitions; static client preview verified over HTTP on localhost:5500."
+    },
+    {
+      "id": 24,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "Request: proceed with Review 2 Step P2",
+      "type": "User prompt",
+      "prompt": "Proceed to Step P2: Client data layer backed by localStorage, following the project handover PDF. 1. Read the P2 instructions in the handover PDF and inspect the committed P1 architecture before making changes. 2. Implement only the P2 data layer. Keep storage and data operations separate from UI rendering and page-specific behavior. 3. Use a consistent, versioned storage structure and handle missing, malformed, or unsupported stored data safely. Avoid silently overwriting recoverable user data. 4. Follow the existing JavaScript module conventions and use the existing utilities where appropriate. 5. Add focused automated tests for storage initialization, read/write behavior, invalid data, and error handling where practical. 6. Run the relevant tests and npm run lint:html. Report exactly what passed and failed. 7. Update the prompt log and regenerate its DOCX/PDF using the existing project workflow. 8. Review the final diff for scope and regressions. Preserve docs/audit/ and all legacy Flask files. 9. Commit the completed P2 work on refurbish only after the checks pass. Use the commit message specified by the handover PDF, if one is provided; otherwise use P2: Client data layer backed by localStorage. Do not begin P3 or P4, implement Express/MongoDB, push to origin or upstream, or delete legacy files. Finish by reporting the changed files, tests, commit hash, and any remaining limitations.",
+      "purpose": "Authorize execution of Step P2 to establish the client data layer backed by localStorage with realistic seed data and API contracts.",
+      "files": [],
+      "result": "Implemented store.js with versioned schema and fallback, seed.js with October 2026 and historical data, and api.js with 58 async API functions matching the future REST API.",
+      "verification": "26 automated tests passing in tests/client/data-layer.test.mjs; npm run lint:html passing with 0 errors across all HTML pages."
+    },
+    {
+      "id": 25,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "Client data layer backed by localStorage",
+      "type": "Working prompt",
+      "prompt": "Step P2 (Review 2): client data layer backed by localStorage.\n\nCreate client/js/data/ with:\n- store.js: keeps collections (users, categories, expenses, income, budgets, recurring, groups, sharedExpenses, settlements, shoppingLists, receipts, insights) in localStorage under one versioned key (e.g. \"splitstack:v1\"), generates ids (crypto.randomUUID), handles a missing/corrupt store by reseeding, and has a reset() used by a \"Reset demo data\" button on the profile page.\n- seed.js: the SAME sample data the Review 1 pages show. Read the HTML pages (dashboard, expenses, income, budgets, recurring, categories, groups, group-detail, settlements, shopping, shopping-detail, profile) and transcribe their data: demo user Priya Raman, October 2026, the groups (incl. Goa Trip) and their members, the shopping lists and items. Add a few earlier months so analytics has history. Amounts in integer paise. Demo login: demo@splitstack.app / Demo@1234 (show this on login.html).\n- api.js: async functions with the shape the future REST API will have, grouped as auth (register, login, logout, currentUser, updateProfile, changePassword), expenses and income (list with filter/sort/pagination, get, create, update, remove), categories, budgets, recurring (incl. toggle), groups (list, get, create, addMember, removeMember, leave, sharedExpenses, balances, settlements, recordSettlement), shopping (lists, items, toggleItem, convertToExpense), analytics (monthlySummary, byCategory, forecast, insights) and search(query). Every function returns a Promise, validates its input and throws an ApiError {field, message, status} for bad input, missing records or records owned by someone else. Passwords: hash with crypto.subtle SHA-256 + salt (demo only; note in a comment that the server uses bcrypt). Page code must import ONLY from api.js, never from store.js.\n- Write a short JSDoc block above each function describing arguments and return value. These docs become the contract the Review 3 REST API must match.",
+      "purpose": "Create a complete, modular, resilient client data layer with realistic seed data and REST-shaped async API functions, preparing the application for full interactivity without requiring a backend server.",
+      "files": [
+        "client/js/data/store.js",
+        "client/js/data/seed.js",
+        "client/js/data/api.js",
+        "client/pages/login.html",
+        "client/README.md",
+        "tests/client/data-layer.test.mjs"
+      ],
+      "result": "Implemented store.js with versioning (splitstack:v1), corruption recovery, and in-memory fallback; seed.js with Priya Raman sample data in integer paise across all collections and historical months; api.js with 58 JSDoc-documented async functions covering auth, CRUD, group splitting balances, shopping lists, and analytics; updated login.html with demo credentials callout; documented data layer in client/README.md; added automated tests.",
+      "verification": "Node.js test suite with 26/26 tests passing covering storage recovery, authentication, integer-paise validation, CRUD, group balances, and shopping list conversions; npm run lint:html passing with 0 errors."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 2",
-      "title": "Client data layer backed by localStorage",
-      "type": "Planned prompt",
-      "prompt": "Create client/js/data/api.js exposing async functions with the same shape the future REST API will have: auth (register, login, logout, currentUser), expenses and income CRUD with filtering, sorting and pagination, categories, budgets, recurring payments, groups (members, shared expenses, balances, settlements), shopping lists and items, and analytics summaries. Back it with client/js/data/store.js, which keeps collections in localStorage under a versioned key, generates ids, and seeds the same sample data used in Review 1 (Priya Raman, October 2026) on first run. Every function returns a Promise and validates its input, throwing errors with a field and a message, so Review 3 can swap the implementation to fetch() without touching page code.",
-      "purpose": "Make the whole app genuinely interactive before a backend exists.",
-      "files": [
-        "client/js/data/api.js",
-        "client/js/data/store.js",
-        "client/js/data/seed.js"
-      ]
-    },
     {
       "stage": "Review 2",
       "title": "Render pages from data",

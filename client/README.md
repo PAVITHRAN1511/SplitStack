@@ -48,3 +48,26 @@ npx html-validate "client/**/*.html"
 ```
 
 All pages validate with zero errors (config in `.htmlvalidate.json`). Text colours meet WCAG AA contrast.
+
+## Data layer (Review 2)
+
+SplitStack's front end uses a modular client data layer in `client/js/data/`:
+- `store.js`: Manages collections in `localStorage` under the versioned key `splitstack:v1`. Resilient to private browsing modes (in-memory fallback), quota limits, and corrupted storage (automatic reseed).
+- `seed.js`: Realistic sample data matching Review 1 screens (Priya Raman, October 2026, 6 months historical analytics, groups, shared expenses, settlements, and shopping lists). All currency values are strictly stored as **integer paise** (₹1 = 100 paise).
+- `api.js`: Asynchronous API module exposing Promises and structured `ApiError { field, message, status }` objects. This forms the exact contract that the Review 3 Node.js + Express REST API will implement.
+
+### `api.js` API Contract Functions
+
+| Module | Functions |
+|---|---|
+| **Auth & Profile** | `register({ name, email, password })`, `login({ email, password })`, `logout()`, `currentUser()`, `updateProfile({ name, email, preferences })`, `changePassword({ currentPassword, newPassword })` |
+| **Expenses** | `listExpenses(filters)` *(search, category, paymentMethod, startDate, endDate, sort, page, limit)*, `getExpense(id)`, `createExpense(data)`, `updateExpense(id, data)`, `removeExpense(id)` |
+| **Income** | `listIncome(filters)`, `getIncome(id)`, `createIncome(data)`, `updateIncome(id, data)`, `removeIncome(id)` |
+| **Categories** | `listCategories(type)`, `getCategory(id)`, `createCategory(data)`, `updateCategory(id, data)`, `removeCategory(id)` |
+| **Budgets** | `listBudgets({ month, year })`, `createBudget(data)`, `updateBudget(id, data)`, `removeBudget(id)` |
+| **Recurring** | `listRecurring()`, `createRecurring(data)`, `toggleRecurring(id)`, `removeRecurring(id)` |
+| **Groups & Splitting** | `listGroups()`, `getGroup(id)`, `createGroup(data)`, `addMember(groupId, member)`, `removeMember(groupId, userId)`, `leaveGroup(groupId)`, `listSharedExpenses(groupId)`, `createSharedExpense(groupId, data)`, `getGroupBalances(groupId)`, `getSettlements(groupId)`, `recordSettlement(groupId, data)` |
+| **Shopping Lists** | `listShoppingLists(groupId)`, `getShoppingList(id)`, `createShoppingList(data)`, `updateShoppingList(id, data)`, `removeShoppingList(id)`, `addShoppingItem(listId, item)`, `updateShoppingItem(listId, itemId, data)`, `toggleShoppingItem(listId, itemId)`, `removeShoppingItem(listId, itemId)`, `convertShoppingListToExpense(listId, categoryId)` |
+| **Analytics & Insights** | `monthlySummary(monthsBack)`, `byCategory(month, year)`, `forecast()`, `insights()` |
+| **Search & System** | `search(query)`, `resetDemoData()` |
+
