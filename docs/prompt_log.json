@@ -404,20 +404,54 @@
       ],
       "result": "Implemented store.js with versioning (splitstack:v1), corruption recovery, and in-memory fallback; seed.js with Priya Raman sample data in integer paise across all collections and historical months; api.js with 58 JSDoc-documented async functions covering auth, CRUD, group splitting balances, shopping lists, and analytics; updated login.html with demo credentials callout; documented data layer in client/README.md; added automated tests.",
       "verification": "Node.js test suite with 26/26 tests passing covering storage recovery, authentication, integer-paise validation, CRUD, group balances, and shopping list conversions; npm run lint:html passing with 0 errors."
+    },
+    {
+      "id": 26,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "Request: proceed with Review 2 Step P3",
+      "type": "User prompt",
+      "prompt": "Proceed to Step P3: Render pages from data, following the project handover PDF.\n\nBefore coding, inspect the current refurbish branch and read the exact P3 requirements. Build on the committed P1 architecture and P2 data layer, including the fixes in commit 89c3081.\n\nRequirements:\n1. Implement only P3: connect the existing HTML pages to client/js/data/api.js and render their content from returned data.\n2. Page modules must import data operations only from api.js, never directly from store.js or seed.js.\n3. Preserve the existing design, responsive layouts, accessibility, and useful empty states.\n4. Handle loading, errors, and missing records gracefully. Do not show hardcoded success messages for operations that have not occurred.\n5. Keep static HTML fallbacks usable where practical. Avoid duplicating business logic across page modules.\n6. Follow the handover's page/module organization and update documentation only where needed for P3.\n7. Add focused tests for rendering and error states where practical. Run the relevant tests and npm run lint:html.\n8. Update the prompt log and regenerate its DOCX/PDF using the existing workflow.\n9. Review the diff and report which pages are connected, which remain static, test results, and known limitations.\n\nPreserve docs/audit/ and all legacy Flask files. Do not begin P4 forms/CRUD, Express/MongoDB, or deployment work. Do not push to origin or upstream. Commit P3 locally on refurbish only after the checks pass, using the commit message specified in the handover or P3: render pages from data if none is specified.",
+      "purpose": "Authorize execution of Step P3 to connect the existing HTML pages to client/js/data/api.js and dynamically render their content from data.",
+      "files": [],
+      "result": "Authorized Step P3 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 27,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "Render pages from data",
+      "type": "Working prompt",
+      "prompt": "Replace the hard-coded sample rows in the dashboard, expenses, income, budgets, recurring, categories, groups, group detail, settlements, shopping and profile pages with markup rendered by JavaScript from api.js, using <template> elements and textContent (never innerHTML with user data). Keep the static markup as the no-JavaScript fallback. Implement the expenses filter bar (search, category, method, date range, sort) with debounced live filtering and query-string sync, pagination, and empty states.",
+      "purpose": "Turn the static Review 1 HTML pages into interactive screens rendered from the Review 2 client data layer, adhering to strict XSS safety and accessible empty/loading states.",
+      "files": [
+        "client/js/pages/dashboard.js",
+        "client/js/pages/expenses.js",
+        "client/js/pages/income.js",
+        "client/js/pages/budgets.js",
+        "client/js/pages/recurring.js",
+        "client/js/pages/categories.js",
+        "client/js/pages/groups.js",
+        "client/js/pages/group-detail.js",
+        "client/js/pages/settlements.js",
+        "client/js/pages/shopping.js",
+        "client/js/pages/shopping-detail.js",
+        "client/js/pages/profile.js",
+        "client/js/pages/analytics.js",
+        "client/js/pages/expense-edit.js",
+        "client/js/core/render.js",
+        "client/js/ui/user.js",
+        "client/js/app.js",
+        "client/pages/profile.html",
+        "client/README.md",
+        "tests/client/render.test.mjs"
+      ],
+      "result": "Created 14 modular page scripts in client/js/pages/ importing exclusively from api.js; implemented live debounced expenses filter bar with URL sync and pagination; created core rendering helpers for safe XSS-free DOM creation, aria-busy loading states, and accessible empty/error states; wired user profile display and reset demo data; added comprehensive rendering test suite.",
+      "verification": "All 47 unit/integration tests passing (30 data layer + 17 rendering/UI); npm run lint:html passing with 0 errors across all 25 HTML files."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 2",
-      "title": "Render pages from data",
-      "type": "Planned prompt",
-      "prompt": "Replace the hard-coded sample rows in the dashboard, expenses, income, budgets, recurring, categories, groups, group detail, settlements, shopping and profile pages with markup rendered by JavaScript from api.js, using <template> elements and textContent (never innerHTML with user data). Keep the static markup as the no-JavaScript fallback. Implement the expenses filter bar (search, category, method, date range, sort) with debounced live filtering and query-string sync, pagination, and empty states.",
-      "purpose": "Turn the static pages into working screens.",
-      "files": [
-        "client/js/pages/*.js",
-        "client/pages/*.html"
-      ]
-    },
     {
       "stage": "Review 2",
       "title": "Forms, validation and CRUD flows",

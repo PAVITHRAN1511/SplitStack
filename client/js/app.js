@@ -7,12 +7,14 @@
 import { initTheme } from './ui/theme.js';
 import { initNav } from './ui/nav.js';
 import { initConfirm } from './ui/confirm.js';
+import { initUser } from './ui/user.js';
 
 async function bootstrap() {
   // Initialize shared UI
   initTheme();
   initNav();
   initConfirm();
+  await initUser();
 
   // Read page name from body dataset
   const pageName = document.body.dataset.page;

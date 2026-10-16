@@ -74,11 +74,11 @@
         </div>
       </header>
       <main id="main" class="content">
-<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="groups.html">Groups</a></li><li><a href="group-detail.html">Goa Trip 2026</a></li><li aria-current="page">Add expense</li></ol></nav>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="groups.html">Groups</a></li><li><a href="group-detail.html?id=grp_goa">Goa Trip 2026</a></li><li aria-current="page">Add expense</li></ol></nav>
         <div class="page-header"><div><h1>Add a shared expense</h1><p>Split equally between the people involved, or enter exact amounts.</p></div></div>
         <section class="card max-860" aria-label="Shared expense details">
           <div class="card-body">
-            <form class="form" action="group-detail.html" method="get">
+            <form class="form" action="group-detail.html?id=grp_goa" method="get">
               <div class="form-grid">
                 <div class="field span-2"><label for="s-title">What was it for? <span class="req" aria-hidden="true">*</span></label><input class="input" id="s-title" name="title" type="text" maxlength="120" placeholder="e.g. Beach shack dinner" required></div>
                 <div class="field"><label for="s-amount">Total amount <span class="req" aria-hidden="true">*</span></label><div class="input-group"><span class="addon" aria-hidden="true">₹</span><input class="input" id="s-amount" name="amount" type="number" min="0.01" step="0.01" required></div></div>
@@ -115,7 +115,7 @@
                 <div class="alert alert-info"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><div>The individual amounts must add up to the total. Leave a person at 0 to exclude them.</div></div>
               </fieldset>
 
-              <div class="form-actions"><a class="btn btn-ghost" href="group-detail.html">Cancel</a><button class="btn btn-primary" type="submit">Add expense</button></div>
+              <div class="form-actions"><a class="btn btn-ghost" href="group-detail.html?id=grp_goa">Cancel</a><button class="btn btn-primary" type="submit">Add expense</button></div>
             </form>
           </div>
         </section>
