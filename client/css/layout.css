@@ -232,6 +232,15 @@
   background: var(--surface-2);
   color: var(--text-muted);
   cursor: pointer;
+  font: inherit;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-btn:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--ring);
 }
 
 /* ---------- Page header ---------- */
@@ -429,9 +438,12 @@
     transition: opacity var(--dur) var(--ease);
   }
 
-  /* CSS-only drawer: the hidden checkbox controls it (replaced by JS in Review 2) */
+  /* Drawer: controlled by JS (.nav-open) or CSS fallback (#nav-toggle:checked) */
+  body.nav-open .sidebar,
   body:has(#nav-toggle:checked) .sidebar { transform: none; }
+  body.nav-open .scrim,
   body:has(#nav-toggle:checked) .scrim { opacity: 1; pointer-events: auto; }
+  body.nav-open,
   body:has(#nav-toggle:checked) { overflow: hidden; }
   body:has(#nav-toggle:focus-visible) .menu-btn { box-shadow: var(--ring); }
 

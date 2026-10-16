@@ -12,8 +12,14 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
 </head>
-<body>
+<body data-page="404">
   <a class="skip-link" href="#main">Skip to main content</a>
 <header class="public-header">
     <div class="inner">
@@ -21,6 +27,7 @@
       <nav class="public-nav" aria-label="Main">
         <a class="nav-text" href="../index.html#features">Features</a>
         <a class="nav-text" href="../index.html#how">How it works</a>
+        <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
         <a class="btn btn-ghost" href="../pages/login.html">Sign in</a>
         <a class="btn btn-primary" href="../pages/register.html">Get started</a>
       </nav>
@@ -47,5 +54,6 @@
       </ul>
     </div>
   </footer>
+  <script type="module" src="../js/app.js"></script>
 </body>
 </html>

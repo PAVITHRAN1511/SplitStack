@@ -336,22 +336,46 @@
       ],
       "result": "14-page PDF created. Changes against the planned prompts: P1 adds data-page attributes and client/js/package.json (type module) for node --test; P13 keeps the localStorage implementation as a demo mode (api-local.js chosen when /api/health does not answer) so the GitHub Pages site keeps working, instead of deleting it; P9 replaces deprecated csurf with a synchronizer token; P14 uses MongoMemoryReplSet because the API uses transactions; P15 asks for confirmation before deleting the Flask files and leaves Render account steps to the student.",
       "verification": "Rendered pages with PyMuPDF and checked the layout of the setup, Prompt 0, step and utility pages."
+    },
+    {
+      "id": 22,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "Request: proceed with Review 2 Step P1",
+      "type": "User prompt",
+      "prompt": "Proceed with P1 — JavaScript architecture and app shell — from the handover PDF. Preconditions: Confirm the current branch is refurbish and the working tree has no unexpected changes. Preserve the untracked docs/audit/ directory. Install the root npm dependencies using the existing package.json. For this PowerShell session, set $env:PY_PYTHON3 = \"3.12\" so py -3 resolves correctly. Check whether ReportLab is installed; if not, install it for Python 3.12. Do not change Git remotes, push to a different repository, or alter package scripts to work around environment issues. Implement only P1 as specified in SplitStack_Handover_Prompts.pdf. Read the relevant HTML and CSS before editing. Preserve the existing design and no-JavaScript fallback. Follow the PDF's accessibility, theme, navigation, toast, confirmation-dialog, logging, and verification requirements. Run npm run lint:html and the P1 manual checks you can perform. Record anything you could not verify honestly. Before committing, show me the proposed changed-file list and verification results. Do not commit or push until I approve. Do not start P2.",
+      "purpose": "Authorize execution of Step P1 with strict preconditions and manual approval gate.",
+      "files": [],
+      "result": "Confirmed clean refurbish branch, installed dependencies and ReportLab, and executed Step P1 implementation.",
+      "verification": "npm run lint:html, automated unit tests, and serve-client HTTP validation."
+    },
+    {
+      "id": 23,
+      "date": "2026-10-16",
+      "stage": "Review 2",
+      "title": "JavaScript architecture and app shell",
+      "type": "Working prompt",
+      "prompt": "Step P1 (Review 2): JavaScript architecture and app shell.\nAdd vanilla JavaScript to the Review 1 pages as native ES modules.\n1. Add data-page=\"<page-name>\" to the <body> of index.html and every file in client/pages/ (e.g. data-page=\"dashboard\", data-page=\"expense-form\"). Load one entry script at the end of each page: <script type=\"module\" src=\"../js/app.js\"></script> (index.html: src=\"js/app.js\").\n2. Create client/js/ with:\n- app.js: entry point. Reads document.body.dataset.page, initialises the shared UI, then dynamically imports ./pages/<page>.js if it exists and calls its exported init(). A missing page module is not an error.\n- core/dom.js: qs, qsa, on, delegate, createEl helpers.\n- core/format.js: formatINR(paise) using Intl.NumberFormat('en-IN', {style:'currency', currency:'INR'}), formatDate / formatRelativeDate helpers.\n- ui/theme.js: dark / light / system toggle saved in localStorage, applied to <html data-theme>. Add a tiny inline script in each page's <head> that applies the saved theme before first paint (no flash). Wire it to a theme button in the topbar (add the button if missing, matching existing button styles).\n- ui/nav.js: replace the CSS checkbox drawer with a real <button aria-expanded aria-controls=\"sidebar\">. Close on Escape, scrim click and nav-link click; trap focus inside while open; return focus to the button when closed. Keep the page usable without JS.\n- ui/toast.js: accessible toasts (role=\"status\", aria-live=\"polite\"), auto-dismiss, dismiss button.\n- ui/confirm.js: a <dialog>-based confirm that replaces window.confirm for every delete button/form.\n3. Add client/js/package.json containing {\"type\": \"module\"} so Node (used for unit tests later) treats these files as ES modules.\n4. All wrapped in try/catch where localStorage is touched (private windows can throw).",
+      "purpose": "Establish the client JavaScript ES module foundation, theme switching, accessible drawer, toast notifications, and confirm dialog.",
+      "files": [
+        "client/js/package.json",
+        "client/js/app.js",
+        "client/js/core/dom.js",
+        "client/js/core/format.js",
+        "client/js/ui/theme.js",
+        "client/js/ui/nav.js",
+        "client/js/ui/toast.js",
+        "client/js/ui/confirm.js",
+        "client/css/layout.css",
+        "client/css/components.css",
+        "client/index.html",
+        "client/pages/*.html"
+      ],
+      "result": "Created client/js architecture with DOM/format utilities, theme toggle (dark/light/system with head flash-prevention script), accessible mobile drawer with focus trap and ARIA attributes, toast notifications, and dialog-based confirm. Added data-page, inline theme scripts, theme buttons, and app.js script tags to all 25 HTML pages while preserving no-JS CSS fallbacks.",
+      "verification": "html-validate passes with 0 errors across client/**/*.html; node automated assertions pass for formatINR, formatDate, formatRelativeDate, HTML structure, and CSS layer definitions; static client preview verified over HTTP on localhost:5500."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 2",
-      "title": "JavaScript architecture and app shell",
-      "type": "Planned prompt",
-      "prompt": "Add vanilla JavaScript to the Review 1 pages as native ES modules loaded with <script type=\"module\" src=\"../js/app.js\">. Create client/js/ with: app.js (entry; detects the page from <body data-page> and calls that page's init), core/dom.js (qs, qsa, on, delegate, createEl helpers), core/format.js (formatINR with Intl.NumberFormat(\"en-IN\", {style: \"currency\", currency: \"INR\"}), date formatting), ui/theme.js (dark/light/system toggle stored in localStorage and applied to <html data-theme> by a tiny inline script in <head> so there is no flash), ui/nav.js (replace the CSS checkbox drawer with a real <button aria-expanded aria-controls>, close on Escape, scrim click and link click, keep focus inside while open), ui/toast.js (accessible role=status toasts) and ui/confirm.js (a <dialog> element replacing window.confirm for every delete form). No jQuery and no frameworks.",
-      "purpose": "Lay the foundation for Review 2 with a clean module structure.",
-      "files": [
-        "client/js/app.js",
-        "client/js/core/*.js",
-        "client/js/ui/*.js",
-        "client/pages/*.html"
-      ]
-    },
     {
       "stage": "Review 2",
       "title": "Client data layer backed by localStorage",

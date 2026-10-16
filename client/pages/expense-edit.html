@@ -12,8 +12,14 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
 </head>
-<body>
+<body data-page="expense-edit">
   <a class="skip-link" href="#main">Skip to main content</a>
   <input type="checkbox" id="nav-toggle" class="visually-hidden" aria-label="Show navigation menu">
   <div class="app-shell">
@@ -62,6 +68,7 @@
             <input id="global-search" type="search" name="q" placeholder="Search expenses, groups, lists">
             <button class="visually-hidden" type="submit">Search</button>
           </form>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
           <a class="icon-btn" href="dashboard.html#insights" aria-label="Notifications, 3 new" title="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i><span class="dot"></span></a>
           <a class="avatar" href="profile.html" aria-label="Your profile" title="Priya Raman">PR</a>
         </div>
@@ -124,5 +131,6 @@
       <footer class="app-footer">&copy; 2026 SplitStack &middot; Personal &amp; group expense management</footer>
     </div>
   </div>
+  <script type="module" src="../js/app.js"></script>
 </body>
 </html>
