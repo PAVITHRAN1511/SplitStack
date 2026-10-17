@@ -6,7 +6,7 @@
  */
 
 import { qs, createEl, on } from '../core/dom.js';
-import { createExpense, createReceipt } from '../data/api.js';
+import { createExpense, createReceipt, confirmReceipt, getReceiptImageUrl, getApiMode } from '../data/api.js';
 import { showToast } from '../ui/toast.js';
 import {
   rupeesToPaise,
@@ -62,30 +62,63 @@ export async function init() {
     const sizeStr = pendingData.formattedSize || formatFileSize(pendingData.fileSize);
 
     if (figcaption) {
-      figcaption.textContent = `Uploaded image · ${cleanName} (${sizeStr})`;
+      figcaption.textContent = pendingData.serverProcessed
+        ? `Uploaded & server-scanned receipt · ${cleanName} (${sizeStr})`
+        : `Uploaded image · ${cleanName} (${sizeStr})`;
     }
 
-    if (previewImg && pendingDataUrl) {
-      previewImg.src = pendingDataUrl;
-      previewImg.alt = `Receipt preview for ${cleanName}`;
+    if (previewImg) {
+      if (pendingData.receiptId && getApiMode() === 'api') {
+        previewImg.src = getReceiptImageUrl(pendingData.receiptId);
+        previewImg.alt = `Receipt image for ${cleanName}`;
+      } else if (pendingDataUrl) {
+        previewImg.src = pendingDataUrl;
+        previewImg.alt = `Receipt preview for ${cleanName}`;
+      }
     }
 
-    // Honest badge
+    // Populate extracted OCR candidate fields as unverified suggestions
+    if (pendingData.candidate) {
+      const cand = pendingData.candidate;
+      if (descInput && !descInput.value && (cand.merchant || cand.description)) {
+        descInput.value = cand.merchant || cand.description;
+      }
+      if (amountInput && !amountInput.value && cand.amount) {
+        amountInput.value = (cand.amount / 100).toFixed(2);
+      }
+      if (dateInput && cand.date) {
+        dateInput.value = cand.date;
+      }
+    }
+
+    // Contextual badge
     if (badge) {
-      badge.className = 'badge badge-warning';
-      badge.textContent = 'Manual review (OCR pending)';
+      if (pendingData.serverProcessed) {
+        const conf = pendingData.candidate?.confidence;
+        const pct = conf ? Math.round(conf * 100) : 85;
+        badge.className = 'badge badge-success';
+        badge.textContent = `OCR candidate: ${pct}% confidence (Unverified)`;
+      } else {
+        badge.className = 'badge badge-warning';
+        badge.textContent = 'Manual review (OCR pending)';
+      }
     }
 
     // Insert honest notice above form fields
     const formCardBody = form?.parentElement;
     if (formCardBody && !qs('#ocr-notice', formCardBody)) {
+      const isServer = pendingData.serverProcessed && getApiMode() === 'api';
       const notice = createEl('div', { id: 'ocr-notice', className: 'alert alert-info mb-4' }, [
         createEl('i', { className: 'fa-solid fa-circle-info', 'aria-hidden': 'true' }),
         createEl('div', {}, [
-          createEl('strong', { textContent: 'Client-side preview mode' }),
+          createEl('strong', {
+            textContent: isServer ? 'OCR suggestion ready for review' : 'Client-side preview mode'
+          }),
           createEl('p', {
             className: 'text-xs',
-            textContent: 'Automated OCR extraction is scheduled for Review 3. Review your receipt image on the right and adjust the expense details below before saving.'
+            textContent: isServer
+              ? 'Server OCR has suggested merchant, amount, and date. Review and edit any field below before confirming.'
+              : 'Automated OCR extraction is scheduled for Review 3. Review your receipt image on the right and adjust the expense details below before saving.'
           })
         ])
       ]);
@@ -169,28 +202,40 @@ export async function init() {
       setButtonLoading(submitBtn, true, 'Saving expense...');
 
       try {
-        // Create expense in data layer
-        const createdExpense = await createExpense({
-          categoryId,
-          amount: amountPaise,
-          date: dateVal,
-          description,
-          paymentMethod,
-          notes: pendingData
-            ? `Created from receipt: ${sanitizeReceiptFilename(pendingData.fileName)}`
-            : 'Created from sample receipt'
-        });
+        let createdExpense;
+        if (pendingData?.receiptId && getApiMode() === 'api') {
+          // Confirm receipt on server via POST /api/receipts/:id/confirm
+          const res = await confirmReceipt(pendingData.receiptId, {
+            description,
+            amount: amountPaise,
+            date: dateVal,
+            categoryId,
+            paymentMethod
+          });
+          createdExpense = res.expense;
+        } else {
+          // Local store mode
+          createdExpense = await createExpense({
+            categoryId,
+            amount: amountPaise,
+            date: dateVal,
+            description,
+            paymentMethod,
+            notes: pendingData
+              ? `Created from receipt: ${sanitizeReceiptFilename(pendingData.fileName)}`
+              : 'Created from sample receipt'
+          });
 
-        // Also record receipt entry in store
-        await createReceipt({
-          merchant: description,
-          amount: amountPaise,
-          date: dateVal,
-          status: 'confirmed',
-          rawText: pendingData ? `Receipt: ${pendingData.fileName}` : 'Sample receipt',
-          confidence: pendingData ? null : 0.94,
-          imageUrl: pendingDataUrl || '../assets/sample-receipt.webp'
-        });
+          await createReceipt({
+            merchant: description,
+            amount: amountPaise,
+            date: dateVal,
+            status: 'confirmed',
+            rawText: pendingData ? `Receipt: ${pendingData.fileName}` : 'Sample receipt',
+            confidence: pendingData ? null : 0.94,
+            imageUrl: pendingDataUrl || '../assets/sample-receipt.webp'
+          });
+        }
 
         // Clean up session storage
         try {
@@ -200,14 +245,18 @@ export async function init() {
           }
         } catch (_) {}
 
-        showToast(`Expense "${createdExpense.description}" saved!`, 'success');
+        showToast(`Expense "${createdExpense.description}" confirmed and saved!`, 'success');
 
         setTimeout(() => {
           window.location.href = 'expenses.html';
         }, 500);
       } catch (err) {
         setButtonLoading(submitBtn, false);
-        showToast(err.message || 'Failed to save expense from receipt', 'danger');
+        if (err.status === 409) {
+          showToast('This receipt has already been confirmed.', 'warning');
+        } else {
+          showToast(err.message || 'Failed to save expense from receipt', 'danger');
+        }
         if (err.field === 'description' && descInput) {
           showFieldError(descInput, err.message);
         } else if (err.field === 'amount' && amountInput) {

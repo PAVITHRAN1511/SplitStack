@@ -823,19 +823,46 @@
       ],
       "result": "Implemented secure receipt upload pipeline with Multer and binary magic byte verification (PNG, JPEG, WEBP); MongoDB GridFS binary storage and streaming; server-side OCR via Tesseract.js with candidate extraction; duplicate-protected confirmation into linked Expense; all 123 server tests passing across 43 suites; client test suite (176 tests) and HTML linter (25 files) clean; documentation and audit updated.",
       "verification": "npm run test:server (123 passed, 0 failed); npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors)."
+    },
+    {
+      "id": 46,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Request: proceed with Review 3 Step P13",
+      "type": "User prompt",
+      "prompt": "# SplitStack — P13: Frontend API Integration (Review 3)\n\nImplement P13 only of the SplitStack refurbishment roadmap on the existing refurbish branch.\n\n## 1. Mandatory safety checks\nBefore editing: Confirm branch refurbish and expected starting commit eef27b7 (Review 3: receipt upload and server-side OCR). Run git status and inspect recent commits. Do not push to any remote. Do not reset, rebase, amend commits, or discard existing work. Preserve all existing files under docs/audit/, including untracked evidence. Stage only intended files. Preserve the legacy Flask application and its files. Work only on refurbish. Do not begin P14 or P15.\n\n## 2. Inspect the existing architecture first\nReview client/js/data/api.js, store abstraction, page rendering, session behavior, server routers, receipt scanning UI, READMEs, and prior audit reports.\n\n## 3. Integrate the frontend data layer\nReplace or extend existing client API/data adapter so UI can use backend REST API while preserving page and domain contracts. Centralize API base URL and fetch behavior. Send authentication credentials supported by existing server. Do not store passwords or long-lived authentication tokens in localStorage. Handle HTTP errors, network failures, expired sessions, and validation errors consistently. Avoid silently treating failed API requests as successful empty data. Keep currency amounts in integer paise. Prevent duplicate form submissions.\n\n## 4. Authentication and session behavior\nIntegrate registration, login, logout, current-user, profile, and password-change endpoints. Restore session state using server's current-user endpoint. Do not expose passwords or tokens in UI state, logs, or persisted browser storage.\n\n## 5. Resource integration\nConnect expenses, income, categories, budgets, recurring items, groups, members, shared expenses, balances, settlements, shopping lists, analytics, forecast, insights, notifications, search, and receipts. Match existing server route contracts exactly.\n\n## 6. Data migration and offline behavior\nDo not silently discard or overwrite existing localStorage data. Provide deliberate, recoverable migration flow. Never fall back to local data after a server error in a way that falsely implies data was saved to the server.\n\n## 7. Receipt upload integration\nConnect receipt scan/review UI to backend: upload image as multipart form data with field name receipt, do not manually set multipart boundary header, display upload/OCR progress, show OCR candidates as unverified suggestions, confirm expense only after user confirmation, display failures clearly and allow safe retry, prevent duplicate expenses.\n\n## 8. Testing\nAdd or update tests for base URL, JSON/multipart requests, HTTP/network errors, authentication restoration, resource payloads, receipt upload/review, and prevention of silent fallback. Run npm run test:client, npm run test:server, npm run lint:html.\n\n## 9. Documentation and audit\nUpdate client README, docs/audit/P13_FRONTEND_API_INTEGRATION_AUDIT.md, and docs/prompt_log.json. Regenerate prompt-log DOCX/PDF via npm run log.\n\n## 10. Final review and commit\nCommit with exact message: Review 3: frontend API integration. Do not push.\n\n## 11. Final report",
+      "purpose": "Authorize execution of Step P13: Frontend API Integration.",
+      "files": [],
+      "result": "Authorized Step P13 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 47,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Frontend API integration",
+      "type": "Working prompt",
+      "prompt": "Create client/js/data/api-http.js with centralized request() dispatcher, base URL management, query serialization, credentials: 'include', in-memory Bearer token management (tab-scoped sessionStorage), ApiError { field, message, status } mapping, and full resource methods for auth, expenses, income, categories, budgets, recurring, groups, shopping, analytics, search, receipts, and migration; update client/js/data/api.js with dual-mode dispatch (defaulting to 'api' in browser on http/https and 'local' in Node test runners); update client/js/pages/receipt-scan.js to upload receipts via POST /api/receipts/upload with button loading indicators; update client/js/pages/receipt-confirm.js to pre-fill OCR candidates as unverified suggestions, confirm via POST /api/receipts/:id/confirm with integer paise, handle 409 Conflict duplicate guards, and stream receipt image binary; update client/js/pages/group-detail.js and settlements.js with proper group context on deletion; create tests/client/api-http.test.mjs with 25 unit tests; update client/README.md, docs/audit/P13_FRONTEND_API_INTEGRATION_AUDIT.md, and prompt logs.",
+      "purpose": "Integrate the client data layer with the Express backend REST API while preserving existing page rendering and domain contracts without silent fallback or local data loss.",
+      "files": [
+        "client/js/data/api-http.js",
+        "client/js/data/api.js",
+        "client/js/pages/receipt-scan.js",
+        "client/js/pages/receipt-confirm.js",
+        "client/js/pages/group-detail.js",
+        "client/js/pages/settlements.js",
+        "tests/client/api-http.test.mjs",
+        "client/README.md",
+        "docs/audit/P13_FRONTEND_API_INTEGRATION_AUDIT.md",
+        "docs/prompt_log.json",
+        "docs/SplitStack_Prompt_Log.docx",
+        "docs/SplitStack_Prompt_Log.pdf"
+      ],
+      "result": "Implemented client REST API client and dual-mode dispatching with zero silent fallback; HttpOnly credentials transport and in-memory tab-scoped Bearer token management; end-to-end receipt scanning and server OCR confirmation pipeline; 201 client tests passing across 59 suites (including 25 new tests in api-http.test.mjs); 123 server tests passing; HTML validation clean; documentation and audit updated.",
+      "verification": "npm run test:client (201 passed, 0 failed across 59 suites); npm run test:server (123 passed, 0 failed across 43 suites); npm run lint:html (25 files clean)."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 3",
-      "title": "Connect the client to the API",
-      "type": "Planned prompt",
-      "prompt": "Re-implement client/js/data/api.js with fetch() against /api, sending credentials and the CSRF token header, mapping HTTP errors to the same {field, message} errors the pages already handle, and showing a toast when offline. Remove the localStorage store except for the theme preference. Because the page code depends only on api.js, no page module should need changes; confirm this by running every flow end to end against a local server connected to Atlas.",
-      "purpose": "Finish the full-stack integration.",
-      "files": [
-        "client/js/data/api.js"
-      ]
-    },
     {
       "stage": "Review 3",
       "title": "Seed data and automated tests",

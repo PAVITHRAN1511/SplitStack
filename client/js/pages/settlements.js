@@ -179,7 +179,7 @@ function renderNetBalances(members, balancesRecord) {
  * @param {Map<string, string>} memberNameMap
  * @param {() => Promise<void>} onRefresh
  */
-function renderHistory(history, memberNameMap, onRefresh) {
+function renderHistory(history, memberNameMap, onRefresh, groupId) {
   const container = qs('section[aria-labelledby="hist-title"] .card-body');
   if (!container) return;
 
@@ -215,7 +215,7 @@ function renderHistory(history, memberNameMap, onRefresh) {
       });
       if (!confirmed) return;
       try {
-        await removeSettlement(h.id);
+        await removeSettlement(groupId || h.groupId, h.id);
         showToast('Settlement removed', 'info');
         await onRefresh();
       } catch (err) {
@@ -270,7 +270,7 @@ async function loadSettlements() {
     );
     renderPaymentPlan(suggested.transfers, groupId, loadSettlements);
     renderNetBalances(group.members || [], balances || {});
-    renderHistory(history || [], memberNameMap, loadSettlements);
+    renderHistory(history || [], memberNameMap, loadSettlements, groupId);
   } catch (err) {
     console.warn('[SplitStack] Error loading settlements:', err);
     clearElement(main);

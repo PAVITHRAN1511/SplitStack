@@ -118,7 +118,7 @@ function renderExpensesTable(expenses, group, onRefresh) {
       });
       if (!confirmed) return;
       try {
-        await removeSharedExpense(exp.id);
+        await removeSharedExpense(groupId, exp.id);
         showToast('Shared expense deleted', 'info');
         if (onRefresh) await onRefresh();
       } catch (err) {

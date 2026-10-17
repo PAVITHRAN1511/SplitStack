@@ -9,6 +9,8 @@
 import { qs, createEl, on } from '../core/dom.js';
 import { showToast } from '../ui/toast.js';
 import { validateReceiptFile, formatFileSize } from '../domain/receipt.js';
+import { uploadReceipt, getApiMode } from '../data/api.js';
+import { setButtonLoading } from '../ui/forms.js';
 
 let currentObjectURL = null;
 let selectedFile = null;
@@ -106,10 +108,14 @@ function showPreview(file, details, fileInput, previewContainer, submitBtn) {
     createEl('div', { className: 'alert alert-info mt-3' }, [
       createEl('i', { className: 'fa-solid fa-circle-info', 'aria-hidden': 'true' }),
       createEl('div', {}, [
-        createEl('strong', { textContent: 'Client-side preview mode' }),
+        createEl('strong', {
+          textContent: getApiMode() === 'api' ? 'Server-side OCR ready' : 'Client-side preview mode'
+        }),
         createEl('p', {
           className: 'text-xs',
-          textContent: 'Automated OCR extraction is scheduled for Review 3. Click "Read receipt" to review and enter expense details manually.'
+          textContent: getApiMode() === 'api'
+            ? 'Click "Read receipt" to upload your image and extract merchant, amount, and date suggestions via server-side OCR.'
+            : 'Automated OCR extraction is scheduled for Review 3. Click "Read receipt" to review and enter expense details manually.'
         })
       ])
     ])
@@ -247,12 +253,44 @@ export async function init() {
       return;
     }
 
-    // Save temporary metadata to sessionStorage
+    // In API mode, upload receipt directly to server via POST /api/receipts/upload
+    if (getApiMode() === 'api') {
+      setButtonLoading(submitBtn, true, 'Uploading & scanning receipt...');
+      try {
+        const result = await uploadReceipt(file);
+        const pendingData = {
+          receiptId: result.receipt.id,
+          fileName: validation.details.name,
+          fileSize: validation.details.size,
+          fileType: validation.details.type,
+          formattedSize: validation.details.formattedSize,
+          candidate: result.candidate,
+          serverProcessed: true,
+          timestamp: Date.now()
+        };
+
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem('splitstack_pending_receipt', JSON.stringify(pendingData));
+        }
+
+        showToast('Receipt uploaded and scanned successfully!', 'success');
+        window.location.href = 'receipt-confirm.html';
+        return;
+      } catch (err) {
+        setButtonLoading(submitBtn, false);
+        const msg = err.message || 'Failed to upload receipt. Please try again.';
+        showToast(msg, 'danger');
+        return;
+      }
+    }
+
+    // Local / offline fallback preview mode
     const pendingData = {
       fileName: validation.details.name,
       fileSize: validation.details.size,
       fileType: validation.details.type,
       formattedSize: validation.details.formattedSize,
+      serverProcessed: false,
       timestamp: Date.now()
     };
 

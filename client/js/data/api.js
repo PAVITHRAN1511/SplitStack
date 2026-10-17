@@ -13,7 +13,89 @@ import { calculateNetBalances, simplifyDebts } from '../domain/settle.js';
 import { calculateForecast, assessBudgetRisk } from '../domain/forecast.js';
 import { generateInsights } from '../domain/insights.js';
 
-// Re-export domain logic for page modules and external callers
+import {
+  ApiError,
+  getApiBaseUrl,
+  setApiBaseUrl,
+  getAuthToken,
+  setAuthToken,
+  request,
+  httpRegister,
+  httpLogin,
+  httpLogout,
+  httpCurrentUser,
+  httpUpdateProfile,
+  httpChangePassword,
+  httpListExpenses,
+  httpGetExpense,
+  httpCreateExpense,
+  httpUpdateExpense,
+  httpRemoveExpense,
+  httpListIncome,
+  httpGetIncome,
+  httpCreateIncome,
+  httpUpdateIncome,
+  httpRemoveIncome,
+  httpListCategories,
+  httpGetCategory,
+  httpCreateCategory,
+  httpUpdateCategory,
+  httpRemoveCategory,
+  httpListBudgets,
+  httpCreateBudget,
+  httpUpdateBudget,
+  httpRemoveBudget,
+  httpListRecurring,
+  httpCreateRecurring,
+  httpToggleRecurring,
+  httpUpdateRecurring,
+  httpRemoveRecurring,
+  httpListGroups,
+  httpGetGroup,
+  httpCreateGroup,
+  httpUpdateGroup,
+  httpRemoveGroup,
+  httpAddMember,
+  httpRemoveMember,
+  httpLeaveGroup,
+  httpListSharedExpenses,
+  httpCreateSharedExpense,
+  httpRemoveSharedExpense,
+  httpGetGroupBalances,
+  httpGetGroupMemberStats,
+  httpGetSuggestedSettlements,
+  httpListSettlements,
+  httpRecordSettlement,
+  httpRemoveSettlement,
+  httpListShoppingLists,
+  httpGetShoppingList,
+  httpCreateShoppingList,
+  httpUpdateShoppingList,
+  httpRemoveShoppingList,
+  httpAddShoppingItem,
+  httpToggleShoppingItem,
+  httpUpdateShoppingItem,
+  httpRemoveShoppingItem,
+  httpConvertShoppingListToExpense,
+  httpMonthlySummary,
+  httpByCategory,
+  httpForecast,
+  httpInsights,
+  httpGetNotifications,
+  httpMarkNotificationRead,
+  httpMarkAllNotificationsRead,
+  httpSearch,
+  httpListReceipts,
+  httpGetReceipt,
+  httpGetReceiptImageUrl,
+  httpUploadReceipt,
+  httpConfirmReceipt,
+  httpRemoveReceipt,
+  exportLocalData,
+  importLocalDataToServer
+} from './api-http.js';
+
+// Re-export domain logic and API helpers for page modules and callers
 export {
   calculateEqualSplit,
   validateCustomShares,
@@ -21,25 +103,54 @@ export {
   simplifyDebts,
   calculateForecast,
   assessBudgetRisk,
-  generateInsights
+  generateInsights,
+  ApiError,
+  getApiBaseUrl,
+  setApiBaseUrl,
+  getAuthToken,
+  setAuthToken,
+  request,
+  exportLocalData,
+  importLocalDataToServer
 };
 
+let currentApiMode = null;
+
 /**
- * Standard API error structure matching the backend response.
+ * Get current API operating mode ('api' or 'local').
+ * In browser under http/https, defaults to 'api'.
+ * In test or local file environments, defaults to 'local'.
+ * @returns {'api'|'local'}
  */
-export class ApiError extends Error {
-  /**
-   * @param {string} message - Human-readable error message
-   * @param {Object} [options]
-   * @param {string|null} [options.field=null] - Form field name associated with the error
-   * @param {number} [options.status=400] - HTTP status code equivalent
-   */
-  constructor(message, { field = null, status = 400 } = {}) {
-    super(message);
-    this.name = 'ApiError';
-    this.field = field;
-    this.status = status;
+export function getApiMode() {
+  if (currentApiMode !== null) return currentApiMode;
+  if (typeof window !== 'undefined') {
+    try {
+      const explicit = localStorage.getItem('splitstack_mode');
+      if (explicit === 'api' || explicit === 'local') return explicit;
+    } catch (_) {}
+    const isNode = typeof process !== 'undefined' && process.versions && Boolean(process.versions.node);
+    if (!isNode && window.location && typeof window.location.protocol === 'string' && window.location.protocol.startsWith('http')) {
+      return 'api';
+    }
   }
+  return 'local';
+}
+
+/**
+ * Explicitly switch operating mode.
+ * @param {'api'|'local'} mode
+ */
+export function setApiMode(mode) {
+  if (mode !== 'api' && mode !== 'local') {
+    throw new Error('Invalid API mode: must be "api" or "local"');
+  }
+  currentApiMode = mode;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('splitstack_mode', mode);
+    }
+  } catch (_) {}
 }
 
 /**
@@ -86,6 +197,8 @@ function requireAuth(store) {
  * @returns {Promise<{ user: Object, token: string }>}
  */
 export async function register({ name, email, password }) {
+  if (getApiMode() === 'api') return httpRegister({ name, email, password });
+
   if (!name || !name.trim()) {
     throw new ApiError('Full name is required', { field: 'name', status: 400 });
   }
@@ -132,6 +245,8 @@ export async function register({ name, email, password }) {
  * @returns {Promise<{ user: Object, token: string }>}
  */
 export async function login({ email, password }) {
+  if (getApiMode() === 'api') return httpLogin({ email, password });
+
   if (!email) throw new ApiError('Email is required', { field: 'email', status: 400 });
   if (!password) throw new ApiError('Password is required', { field: 'password', status: 400 });
 
@@ -159,6 +274,8 @@ export async function login({ email, password }) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function logout() {
+  if (getApiMode() === 'api') return httpLogout();
+
   setSessionUserId(null);
   return { ok: true };
 }
@@ -168,6 +285,8 @@ export async function logout() {
  * @returns {Promise<Object|null>} Safe user object or null
  */
 export async function currentUser() {
+  if (getApiMode() === 'api') return httpCurrentUser();
+
   const store = loadStore();
   const userId = getSessionUserId();
   if (!userId) return null;
@@ -188,6 +307,8 @@ export async function currentUser() {
  * @returns {Promise<Object>} Updated safe user
  */
 export async function updateProfile({ name, email, preferences } = {}) {
+  if (getApiMode() === 'api') return httpUpdateProfile({ name, email, preferences });
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -221,6 +342,8 @@ export async function updateProfile({ name, email, preferences } = {}) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function changePassword({ currentPassword, newPassword }) {
+  if (getApiMode() === 'api') return httpChangePassword({ currentPassword, newPassword });
+
   if (!currentPassword) throw new ApiError('Current password required', { field: 'currentPassword' });
   if (!newPassword || newPassword.length < 8) {
     throw new ApiError('New password must be at least 8 characters', { field: 'newPassword' });
@@ -259,6 +382,8 @@ export async function changePassword({ currentPassword, newPassword }) {
  * @returns {Promise<{ items: Object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listExpenses(filters = {}) {
+  if (getApiMode() === 'api') return httpListExpenses(filters);
+
   const {
     page = 1,
     limit = 10,
@@ -329,6 +454,8 @@ export async function listExpenses(filters = {}) {
  * @returns {Promise<Object>}
  */
 export async function getExpense(id) {
+  if (getApiMode() === 'api') return httpGetExpense(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -349,6 +476,8 @@ export async function getExpense(id) {
  * @returns {Promise<Object>}
  */
 export async function createExpense({ categoryId, amount, date, description, paymentMethod = 'UPI', notes = '' }) {
+  if (getApiMode() === 'api') return httpCreateExpense({ categoryId, amount, date, description, paymentMethod, notes });
+
   if (!categoryId) throw new ApiError('Category is required', { field: 'categoryId' });
   if (!amount || amount <= 0 || !Number.isInteger(amount)) {
     throw new ApiError('Amount must be a positive integer in paise', { field: 'amount' });
@@ -385,6 +514,8 @@ export async function createExpense({ categoryId, amount, date, description, pay
  * @returns {Promise<Object>}
  */
 export async function updateExpense(id, data) {
+  if (getApiMode() === 'api') return httpUpdateExpense(id, data);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -406,6 +537,8 @@ export async function updateExpense(id, data) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function removeExpense(id) {
+  if (getApiMode() === 'api') return httpRemoveExpense(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -427,6 +560,8 @@ export async function removeExpense(id) {
  * @returns {Promise<{ items: Object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listIncome(filters = {}) {
+  if (getApiMode() === 'api') return httpListIncome(filters);
+
   const {
     page = 1,
     limit = 10,
@@ -482,6 +617,8 @@ export async function listIncome(filters = {}) {
  * @returns {Promise<Object>}
  */
 export async function getIncome(id) {
+  if (getApiMode() === 'api') return httpGetIncome(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -502,6 +639,8 @@ export async function getIncome(id) {
  * @returns {Promise<Object>}
  */
 export async function createIncome({ categoryId, amount, date, source, paymentMethod = 'Net banking', notes = '' }) {
+  if (getApiMode() === 'api') return httpCreateIncome({ categoryId, amount, date, source, paymentMethod, notes });
+
   if (!categoryId) throw new ApiError('Category is required', { field: 'categoryId' });
   if (!amount || amount <= 0 || !Number.isInteger(amount)) {
     throw new ApiError('Amount must be positive integer paise', { field: 'amount' });
@@ -536,6 +675,8 @@ export async function createIncome({ categoryId, amount, date, source, paymentMe
  * @returns {Promise<Object>}
  */
 export async function updateIncome(id, data) {
+  if (getApiMode() === 'api') return httpUpdateIncome(id, data);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -557,6 +698,8 @@ export async function updateIncome(id, data) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function removeIncome(id) {
+  if (getApiMode() === 'api') return httpRemoveIncome(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -579,6 +722,8 @@ export async function removeIncome(id) {
  * @returns {Promise<Object[]>}
  */
 export async function listCategories(filter = {}) {
+  if (getApiMode() === 'api') return httpListCategories(filter);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -596,6 +741,8 @@ export async function listCategories(filter = {}) {
  * @returns {Promise<Object>}
  */
 export async function getCategory(id) {
+  if (getApiMode() === 'api') return httpGetCategory(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -614,6 +761,8 @@ export async function getCategory(id) {
  * @returns {Promise<Object>}
  */
 export async function createCategory({ name, type, icon = 'tag', color = '#6366f1' }) {
+  if (getApiMode() === 'api') return httpCreateCategory({ name, type, icon, color });
+
   if (!name || !name.trim()) throw new ApiError('Category name required', { field: 'name' });
   if (type !== 'expense' && type !== 'income') throw new ApiError('Invalid category type', { field: 'type' });
 
@@ -641,6 +790,8 @@ export async function createCategory({ name, type, icon = 'tag', color = '#6366f
  * @returns {Promise<Object>}
  */
 export async function updateCategory(id, data) {
+  if (getApiMode() === 'api') return httpUpdateCategory(id, data);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -658,6 +809,8 @@ export async function updateCategory(id, data) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function removeCategory(id) {
+  if (getApiMode() === 'api') return httpRemoveCategory(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -681,6 +834,8 @@ export async function removeCategory(id) {
  * @returns {Promise<Object[]>}
  */
 export async function listBudgets(arg1 = 10, arg2 = 2026) {
+  if (getApiMode() === 'api') return httpListBudgets(arg1, arg2);
+
   let month = 10;
   let year = 2026;
   if (typeof arg1 === 'object' && arg1 !== null) {
@@ -735,6 +890,8 @@ export async function listBudgets(arg1 = 10, arg2 = 2026) {
  * @returns {Promise<Object>}
  */
 export async function createBudget({ categoryId = null, month, year, limit }) {
+  if (getApiMode() === 'api') return httpCreateBudget({ categoryId, month, year, limit });
+
   if (!month || month < 1 || month > 12) throw new ApiError('Invalid month', { field: 'month' });
   if (!year || year < 2000) throw new ApiError('Invalid year', { field: 'year' });
   if (!limit || limit <= 0 || !Number.isInteger(limit)) throw new ApiError('Limit must be positive integer paise', { field: 'limit' });
@@ -773,6 +930,8 @@ export async function createBudget({ categoryId = null, month, year, limit }) {
  * @returns {Promise<Object>}
  */
 export async function updateBudget(id, data) {
+  if (getApiMode() === 'api') return httpUpdateBudget(id, data);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -796,6 +955,8 @@ export async function updateBudget(id, data) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function removeBudget(id) {
+  if (getApiMode() === 'api') return httpRemoveBudget(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -816,6 +977,8 @@ export async function removeBudget(id) {
  * @returns {Promise<Object[]>}
  */
 export async function listRecurring() {
+  if (getApiMode() === 'api') return httpListRecurring();
+
   const store = loadStore();
   const user = requireAuth(store);
   return store.recurring.filter((r) => r.userId === user.id);
@@ -827,6 +990,8 @@ export async function listRecurring() {
  * @returns {Promise<Object>}
  */
 export async function createRecurring({ name, amount, categoryId, frequency, startDate, nextDueDate, active = true }) {
+  if (getApiMode() === 'api') return httpCreateRecurring({ name, amount, categoryId, frequency, startDate, nextDueDate, active });
+
   if (!name || !name.trim()) throw new ApiError('Name is required', { field: 'name' });
   if (!amount || amount <= 0 || !Number.isInteger(amount)) throw new ApiError('Amount must be positive integer paise', { field: 'amount' });
   if (!frequency) throw new ApiError('Frequency is required', { field: 'frequency' });
@@ -857,6 +1022,8 @@ export async function createRecurring({ name, amount, categoryId, frequency, sta
  * @returns {Promise<Object>}
  */
 export async function toggleRecurring(id) {
+  if (getApiMode() === 'api') return httpToggleRecurring(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -874,6 +1041,8 @@ export async function toggleRecurring(id) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function removeRecurring(id) {
+  if (getApiMode() === 'api') return httpRemoveRecurring(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -894,6 +1063,8 @@ export async function removeRecurring(id) {
  * @returns {Promise<Object[]>}
  */
 export async function listGroups() {
+  if (getApiMode() === 'api') return httpListGroups();
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -906,6 +1077,8 @@ export async function listGroups() {
  * @returns {Promise<Object>}
  */
 export async function getGroup(id) {
+  if (getApiMode() === 'api') return httpGetGroup(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -923,6 +1096,8 @@ export async function getGroup(id) {
  * @returns {Promise<Object>}
  */
 export async function createGroup({ name, description = '', memberEmails = [] }) {
+  if (getApiMode() === 'api') return httpCreateGroup({ name, description, memberEmails });
+
   if (!name || !name.trim()) throw new ApiError('Group name is required', { field: 'name' });
 
   const store = loadStore();
@@ -973,6 +1148,8 @@ export async function createGroup({ name, description = '', memberEmails = [] })
  * @returns {Promise<Object>}
  */
 export async function addMember(groupId, member) {
+  if (getApiMode() === 'api') return httpAddMember(groupId, member);
+
   const rawEmail = typeof member === 'string' ? member : member?.email;
   if (!rawEmail || !rawEmail.includes('@')) throw new ApiError('Valid email is required', { field: 'email' });
 
@@ -1015,6 +1192,8 @@ export async function addMember(groupId, member) {
  * @returns {Promise<Object>}
  */
 export async function removeMember(groupId, userId) {
+  if (getApiMode() === 'api') return httpRemoveMember(groupId, userId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1037,6 +1216,8 @@ export async function removeMember(groupId, userId) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function leaveGroup(groupId) {
+  if (getApiMode() === 'api') return httpLeaveGroup(groupId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1054,6 +1235,8 @@ export async function leaveGroup(groupId) {
  * @returns {Promise<Object[]>}
  */
 export async function listSharedExpenses(groupId) {
+  if (getApiMode() === 'api') return httpListSharedExpenses(groupId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1077,6 +1260,8 @@ export async function listSharedExpenses(groupId) {
  * @returns {Promise<Object>}
  */
 export async function createSharedExpense(groupId, { title, amount, categoryId, date, splitType = 'equal', shares = [], paidBy }) {
+  if (getApiMode() === 'api') return httpCreateSharedExpense(groupId, { title, amount, categoryId, date, splitType, shares, paidBy });
+
   if (!title || !title.trim()) throw new ApiError('Title is required', { field: 'title' });
   if (amount === null || amount === undefined || !Number.isInteger(amount) || amount <= 0) {
     throw new ApiError('Amount must be positive integer paise', { field: 'amount' });
@@ -1154,6 +1339,8 @@ export async function createSharedExpense(groupId, { title, amount, categoryId, 
  * @returns {Promise<Object>}
  */
 export async function updateSharedExpense(id, updates = {}) {
+  if (getApiMode() === 'api') throw new ApiError('Editing shared expenses is not supported by the server. Please remove and re-create the expense.', { status: 501 });
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1241,7 +1428,9 @@ export async function updateSharedExpense(id, updates = {}) {
  * @param {string} id - Shared expense ID
  * @returns {Promise<{ ok: boolean }>}
  */
-export async function removeSharedExpense(id) {
+export async function removeSharedExpense(arg1, arg2) {
+  if (getApiMode() === 'api') return httpRemoveSharedExpense(arg1, arg2);
+  const id = arg1;
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1265,6 +1454,8 @@ export async function removeSharedExpense(id) {
  * @returns {Promise<Record<string, number>>} Map of userId -> balance in integer paise
  */
 export async function getGroupBalances(groupId) {
+  if (getApiMode() === 'api') return httpGetGroupBalances(groupId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1293,6 +1484,8 @@ export async function getGroupBalances(groupId) {
  * }>}
  */
 export async function getGroupMemberStats(groupId) {
+  if (getApiMode() === 'api') return httpGetGroupMemberStats(groupId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1320,6 +1513,8 @@ export async function getGroupMemberStats(groupId) {
  * }>}
  */
 export async function getSuggestedSettlements(groupId) {
+  if (getApiMode() === 'api') return httpGetSuggestedSettlements(groupId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1344,6 +1539,8 @@ export async function getSuggestedSettlements(groupId) {
  * @returns {Promise<Object[]>}
  */
 export async function getSettlements(groupId) {
+  if (getApiMode() === 'api') return httpListSettlements(groupId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1363,6 +1560,8 @@ export async function getSettlements(groupId) {
  * @returns {Promise<Object>} Recorded settlement record
  */
 export async function recordSettlement(groupId, { payerId, payeeId, amount }) {
+  if (getApiMode() === 'api') return httpRecordSettlement(groupId, { payerId, payeeId, amount });
+
   if (!payerId || !payeeId) throw new ApiError('Payer and payee are required', { status: 400 });
   if (payerId === payeeId) {
     throw new ApiError('Payer and payee cannot be the same member', { status: 400 });
@@ -1445,7 +1644,9 @@ export async function recordSettlement(groupId, { payerId, payeeId, amount }) {
  * @param {string} id - Settlement ID
  * @returns {Promise<{ ok: boolean }>}
  */
-export async function removeSettlement(id) {
+export async function removeSettlement(arg1, arg2) {
+  if (getApiMode() === 'api') return httpRemoveSettlement(arg1, arg2);
+  const id = arg1;
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1488,6 +1689,8 @@ function findAccessibleShoppingList(store, listId, user) {
  * @returns {Promise<Object[]>}
  */
 export async function listShoppingLists(groupId = null) {
+  if (getApiMode() === 'api') return httpListShoppingLists(groupId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1511,6 +1714,8 @@ export async function listShoppingLists(groupId = null) {
  * @returns {Promise<Object>}
  */
 export async function getShoppingList(id) {
+  if (getApiMode() === 'api') return httpGetShoppingList(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1525,6 +1730,8 @@ export async function getShoppingList(id) {
  * @returns {Promise<Object>}
  */
 export async function createShoppingList({ name, budget = 0, groupId = null, items = [] }) {
+  if (getApiMode() === 'api') return httpCreateShoppingList({ name, budget, groupId, items });
+
   if (!name || !name.trim()) throw new ApiError('Name is required', { field: 'name' });
 
   const store = loadStore();
@@ -1561,6 +1768,8 @@ export async function createShoppingList({ name, budget = 0, groupId = null, ite
  * @returns {Promise<Object>}
  */
 export async function updateShoppingList(id, data) {
+  if (getApiMode() === 'api') return httpUpdateShoppingList(id, data);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1589,6 +1798,8 @@ export async function updateShoppingList(id, data) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function removeShoppingList(id) {
+  if (getApiMode() === 'api') return httpRemoveShoppingList(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1607,6 +1818,8 @@ export async function removeShoppingList(id) {
  * @returns {Promise<Object>} The added item
  */
 export async function addShoppingItem(listId, { name, quantity = 1, estimatedPrice = 0, actualPrice = null, assignedTo = null }) {
+  if (getApiMode() === 'api') return httpAddShoppingItem(listId, { name, quantity, estimatedPrice, actualPrice, assignedTo });
+
   if (!name || !name.trim()) throw new ApiError('Item name is required', { field: 'name' });
 
   const store = loadStore();
@@ -1637,6 +1850,8 @@ export async function addShoppingItem(listId, { name, quantity = 1, estimatedPri
  * @returns {Promise<Object>} The updated item
  */
 export async function toggleShoppingItem(listId, itemId) {
+  if (getApiMode() === 'api') return httpToggleShoppingItem(listId, itemId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1663,6 +1878,8 @@ export async function toggleShoppingItem(listId, itemId) {
  * @returns {Promise<Object>}
  */
 export async function updateShoppingItem(listId, itemId, data) {
+  if (getApiMode() === 'api') return httpUpdateShoppingItem(listId, itemId, data);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1713,6 +1930,8 @@ export async function updateShoppingItem(listId, itemId, data) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function removeShoppingItem(listId, itemId) {
+  if (getApiMode() === 'api') return httpRemoveShoppingItem(listId, itemId);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1737,6 +1956,8 @@ export async function removeShoppingItem(listId, itemId) {
  * @returns {Promise<Object>} The created expense
  */
 export async function convertShoppingListToExpense(listId, options = {}) {
+  if (getApiMode() === 'api') return httpConvertShoppingListToExpense(listId, options);
+
   const opts = typeof options === 'string' ? { categoryId: options } : options || {};
   const { categoryId = 'cat_food', paymentMethod = 'Card' } = opts;
 
@@ -1789,6 +2010,8 @@ export async function convertShoppingListToExpense(listId, options = {}) {
  * @returns {Promise<Object[]>}
  */
 export async function listReceipts() {
+  if (getApiMode() === 'api') return httpListReceipts();
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1801,6 +2024,8 @@ export async function listReceipts() {
  * @returns {Promise<Object>}
  */
 export async function getReceipt(id) {
+  if (getApiMode() === 'api') return httpGetReceipt(id);
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -1860,6 +2085,8 @@ export async function createReceipt({
  * @returns {Promise<Object>}
  */
 export async function monthlySummary(arg = {}) {
+  if (getApiMode() === 'api') return httpMonthlySummary(arg);
+
   let month = 10;
   let year = 2026;
   let monthsBack = 6;
@@ -1919,6 +2146,8 @@ export async function monthlySummary(arg = {}) {
  * @returns {Promise<Object[]>} Array of { category, amount, total, percentage, prevAmount, changePercent }
  */
 export async function byCategory(arg1 = 10, arg2 = 2026, arg3 = 'expense') {
+  if (getApiMode() === 'api') return httpByCategory(arg1, arg2, arg3);
+
   let month = 10;
   let year = 2026;
   let type = 'expense';
@@ -2002,6 +2231,8 @@ export async function byCategory(arg1 = 10, arg2 = 2026, arg3 = 'expense') {
  * @returns {Promise<Object>}
  */
 export async function forecast(arg1 = 10, arg2 = 2026) {
+  if (getApiMode() === 'api') return httpForecast(arg1, arg2);
+
   let month = 10;
   let year = 2026;
   let referenceDate = '2026-10-28';
@@ -2044,6 +2275,8 @@ export async function forecast(arg1 = 10, arg2 = 2026) {
  * @returns {Promise<Object[]>}
  */
 export async function insights() {
+  if (getApiMode() === 'api') return httpInsights();
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -2080,6 +2313,8 @@ export async function insights() {
  * @returns {Promise<{ notifications: Object[], unreadCount: number }>}
  */
 export async function getNotifications() {
+  if (getApiMode() === 'api') return httpGetNotifications();
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -2106,6 +2341,8 @@ export async function getNotifications() {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function markNotificationRead(id) {
+  if (getApiMode() === 'api') return httpMarkNotificationRead(id);
+
   if (!id) return { ok: false };
 
   const store = loadStore();
@@ -2132,6 +2369,8 @@ export async function markNotificationRead(id) {
  * @returns {Promise<{ ok: boolean }>}
  */
 export async function markAllNotificationsRead() {
+  if (getApiMode() === 'api') return httpMarkAllNotificationsRead();
+
   const store = loadStore();
   const user = requireAuth(store);
 
@@ -2156,6 +2395,8 @@ export async function markAllNotificationsRead() {
  * @returns {Promise<{ expenses: Object[], income: Object[], groups: Object[], shoppingLists: Object[], shopping: Object[], total: number }>}
  */
 export async function search(query) {
+  if (getApiMode() === 'api') return httpSearch(query);
+
   if (!query || !query.trim()) {
     return { expenses: [], income: [], groups: [], shopping: [], shoppingLists: [], total: 0 };
   }
@@ -2232,5 +2473,55 @@ export async function search(query) {
  */
 export async function resetDemoData() {
   resetStore();
+  return { ok: true };
+}
+
+// =============================================================================
+// REVIEW 3 RECEIPT INTEGRATION EXPORTS
+// =============================================================================
+
+export async function updateGroup(id, data) {
+  if (getApiMode() === 'api') return httpUpdateGroup(id, data);
+  throw new ApiError('Updating groups is not supported in local mode.', { status: 501 });
+}
+
+export async function removeGroup(id) {
+  if (getApiMode() === 'api') return httpRemoveGroup(id);
+  throw new ApiError('Deleting groups is not supported in local mode.', { status: 501 });
+}
+
+export async function updateRecurring(id, data) {
+  if (getApiMode() === 'api') return httpUpdateRecurring(id, data);
+  throw new ApiError('Updating recurring items is not supported in local mode.', { status: 501 });
+}
+
+export async function uploadReceipt(file, options) {
+  if (getApiMode() === 'api') {
+    return httpUploadReceipt(file, options);
+  }
+  throw new ApiError('Receipt upload requires server API mode.', { status: 501 });
+}
+
+export async function confirmReceipt(receiptId, expenseData) {
+  if (getApiMode() === 'api') {
+    return httpConfirmReceipt(receiptId, expenseData);
+  }
+  throw new ApiError('Receipt confirmation requires server API mode.', { status: 501 });
+}
+
+export function getReceiptImageUrl(receiptId) {
+  return httpGetReceiptImageUrl(receiptId);
+}
+
+export async function removeReceipt(id) {
+  if (getApiMode() === 'api') {
+    return httpRemoveReceipt(id);
+  }
+  const store = loadStore();
+  const user = requireAuth(store);
+  const idx = (store.receipts || []).findIndex((r) => r.id === id && r.userId === user.id);
+  if (idx === -1) throw new ApiError('Receipt not found', { status: 404 });
+  store.receipts.splice(idx, 1);
+  saveStore(store);
   return { ok: true };
 }

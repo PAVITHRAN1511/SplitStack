@@ -229,3 +229,35 @@ Step P7 completes the shopping checklist workflow and implements a client-side r
 | **Algorithmic Graph Simplification** | Greedy minimum-cash-flow algorithm reducing $O(N^2)$ circular group debts into at most $N-1$ direct transfers while preserving zero-sum balance conservation. | `client/js/domain/settle.js` |
 | **Statistical Forecasting Model** | Linear daily velocity spending projection with explicit minimum transaction data-sufficiency gating ($\ge 3$ transactions) and calendar-boundary safety. | `client/js/domain/forecast.js` |
 | **WAI-ARIA Combobox & Listbox** | Accessible live-search pattern (`role="combobox"`, `role="listbox"`, `aria-activedescendant`) with 200ms input debouncing and full keyboard navigation. | `client/js/ui/search.js` |
+
+## Review 3 Frontend API Integration (Step P13)
+
+In Step P13, SplitStack's frontend data layer is integrated with the Express and MongoDB backend (`/api`) while maintaining full backwards compatibility for offline/local storage mode and existing unit tests.
+
+### 1. Architecture & Dual-Mode Dispatch (`api-http.js` and `api.js`)
+- **Centralized Dispatcher**: `client/js/data/api-http.js` provides centralized fetch handling with base URL configuration (`getApiBaseUrl()`, `setApiBaseUrl()`), automatic query string serialization, HttpOnly cookie transport (`credentials: 'include'`), in-memory tab-scoped Bearer token management, and structured error normalization to `ApiError { message, field, status }`.
+- **Mode Delegation**: `client/js/data/api.js` delegates transparently to `api-http.js` when in `'api'` mode and to `store.js` when in `'local'` mode.
+  - In a real browser running on `http:` or `https:`, `getApiMode()` defaults to `'api'`.
+  - In Node test environments, `getApiMode()` defaults to `'local'`, ensuring all 176 Review 2 unit tests run without modification.
+  - Operating mode can be toggled via `setApiMode('api' | 'local')`.
+- **Strictly No Silent Fallback**: When in `'api'` mode, any server error (400, 401, 404, 500) or network failure throws an `ApiError` directly to the page form/component. It **never** silently writes data to `localStorage` or falsely implies that data was saved to the server.
+
+### 2. Authentication & Session Transport
+- **Zero Insecure Storage**: Passwords and long-lived JWT tokens are never stored in `localStorage`.
+- **Transport**: Standard session management uses `credentials: 'include'` for HttpOnly cookies. Tab-scoped Bearer tokens are kept in memory and synchronized only to `sessionStorage`.
+- **Session Verification**: The active user session is verified via `GET /api/auth/me` (`httpCurrentUser()`), validating against the server session rather than trusting a client-supplied user ID.
+- **Session Invalidation**: Receiving an HTTP 401 Unauthorized automatically clears in-memory tokens.
+- **Logout**: `httpLogout()` calls `POST /api/auth/logout` to clear server cookies and clears client in-memory tokens.
+
+### 3. Receipt Upload & Server-Side OCR Workflow
+- **Multipart Form Upload**: `httpUploadReceipt(file)` uploads binary image files via `FormData` using the exact field name `receipt` expected by the backend without manually setting multipart boundary headers.
+- **Progress & Loading State**: `receipt-scan.js` disables the submit button and displays a live pending state (`Uploading & scanning receipt...`).
+- **Unverified OCR Candidate Review**: Extracted OCR metadata (`candidate { merchant, amount, date, confidence }`) is passed via tab session storage to `receipt-confirm.js`, pre-filling form inputs as unverified suggestions with confidence badges.
+- **Explicit Confirmation**: Expenses are created only after the user explicitly reviews/edits fields and clicks "Confirm & save", calling `POST /api/receipts/:id/confirm` with integer paise.
+- **Duplicate Protection**: Button debounce prevents multi-clicks. Server 409 Conflict responses are mapped to a clear user warning without data duplication.
+- **Local vs Server Distinction**: Badges and figcaptions clearly distinguish local client previews from server-processed receipts.
+
+### 4. Local Data Migration & Recovery
+- **Non-Destructive Snapshot**: `exportLocalData()` provides a snapshot of `localStorage` (`splitstack:v1`) without modifying or deleting any records.
+- **Deliberate Migration**: `importLocalDataToServer()` provides a deliberate, user-initiated migration helper that verifies an authenticated session, validates records, and imports categories, expenses, income, groups, and shopping lists to the server database.
+
