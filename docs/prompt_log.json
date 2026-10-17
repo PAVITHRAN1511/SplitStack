@@ -897,20 +897,43 @@
       ],
       "result": "Implemented safe database seeding script (seed.js) with production guards and bcrypt hashing; implemented real MongoDB integration test suite (integration.test.js) with MONGODB_TEST_URI opt-in covering all 12 end-to-end flows; created GitHub Actions CI workflow (ci.yml) with disposable MongoDB service container; verified client unit tests (201 passed), server unit tests (123 passed), HTML lint (25 files clean), and legacy Python tests (31 passed); updated documentation and audit reports.",
       "verification": "npm run test:client (201 passed across 59 suites); npm run test:server:unit (123 passed across 43 suites); npm run test:integration (documented skip when MONGODB_TEST_URI not set); npm run lint:html (25 files clean); pytest legacy tests (31 passed across 4 suites)."
+    },
+    {
+      "id": 50,
+      "date": "2026-10-17",
+      "stage": "Wrap-up",
+      "title": "Request: proceed with Review 3 Step P15",
+      "type": "User prompt",
+      "prompt": "# SplitStack — Phase P15: Final Wrap-Up, Deployment Readiness & Release Review\n\nExecute P15 only, the final roadmap phase. Review the project, consolidate documentation, prepare deployment guidance and manifests where safe, verify release readiness, and document a proposed v3.0.0 release.\n\n## 1. Mandatory safety rules\nStart by verifying active branch refurbish, current commit 2008c19 (P14), inspect git status --short and recent history. Do not push to any remote. Do not reset, rebase, amend commits, or discard changes. Preserve all seven pre-existing untracked baseline evidence files in docs/audit/. Preserve all other existing audit reports too. Preserve the legacy Flask application and its files. Do not delete, archive, move, or rewrite them in this phase. Document a separate future removal decision if necessary. Do not expose secrets or credentials. Do not create or use a real production database or deploy to production. Do not create a release tag unless the complete release-readiness checklist passes and the user explicitly approves tagging. Do not push tags.\n\n## 2. Audit the current state\nInspect READMEs, package.json files, .env.example files, ci.yml, audit reports, prompt_log.json, runtime assumptions, deployment/security configs, CORS, health endpoints, client mode behavior, and preserved Flask app.\n\n## 3. Release-readiness checklist\nCreate concise, evidence-based checklist covering lockfile installs, client/server/legacy tests, MongoDB integration, CI workflow result, secret management, security controls, backup/migration strategy, deployment procedure, accessibility/responsive UI, legacy coexistence, and known issues. Use clear statuses (PASS, FAIL, NOT VERIFIED, NOT APPLICABLE).\n\n## 4. Deployment preparation — documentation first\nPrepare safe deployment documentation: supported runtimes, installation steps, env var reference without secrets, local startup/testing/seeding, health check, HTTPS/cookies/JWT/CORS/rate limits/upload limits, backup/restore, deployment checklist and rollback plan. Provide production Dockerfile (non-root execution) and docker-compose.yml.\n\n## 5. Documentation consolidation\nUpdate README.md and server/README.md with architecture, entry points, client modes, env vars, test running, safe seeding, mock vs real database disclosure, limitations, and preserved legacy Flask app.\n\n## 6. Final tests and CI review\nRun npm ci, npm --prefix server ci, test:client, test:server:unit, lint:html, legacy Python tests, and integration suite. Report exact outcomes.\n\n## 7. Final documentation and audit trail\nCreate docs/audit/P15_FINAL_RELEASE_READINESS.md, docs/DEPLOYMENT_GUIDE.md, docs/RELEASE_NOTES_v3.0.0_DRAFT.md. Update docs/prompt_log.json and regenerate prompt-log DOCX/PDF via npm run log.\n\n## 8. Git discipline\nReview full diff. Stage only explicitly intended P15 files. Commit message: Review 3: final release readiness and deployment documentation. Do not push or tag.\n\n## 9. Final report",
+      "purpose": "Authorize execution of Step P15: Final Wrap-Up, Deployment Readiness & Release Review.",
+      "files": [],
+      "result": "Authorized Step P15 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 51,
+      "date": "2026-10-17",
+      "stage": "Wrap-up",
+      "title": "Final release readiness and deployment documentation",
+      "type": "Working prompt",
+      "prompt": "Audit the complete SplitStack repository; verify reproducible lockfile installs via npm ci and npm --prefix server ci; run client unit tests (201 passed), server unit tests (123 passed), HTML validation (25 files clean), legacy Python tests (31 passed), and verify integration test skip behavior; create production Dockerfile with non-root node user and health checks; create docker-compose.yml with MongoDB 7.0 service container; create docs/DEPLOYMENT_GUIDE.md covering architectures, runtime prerequisites, secrets generation, HTTPS/cookies/CORS/rate limiting hardening, mongodump backup/restore, and rollback procedures; create docs/RELEASE_NOTES_v3.0.0_DRAFT.md summarizing complete Review 1, 2, and 3 achievements with conditional release status; update README.md and server/README.md to consolidate architecture, client modes, test commands with mock vs live database disclosure, and legacy Flask coexistence; create docs/audit/P15_FINAL_RELEASE_READINESS.md with evidence-based checklist; update prompt logs and regenerate DOCX and PDF artifacts.",
+      "purpose": "Complete Phase P15 wrap-up: deployment documentation, container manifests, release-readiness evaluation, and documentation consolidation.",
+      "files": [
+        ".dockerignore",
+        "Dockerfile",
+        "docker-compose.yml",
+        "README.md",
+        "server/README.md",
+        "docs/DEPLOYMENT_GUIDE.md",
+        "docs/RELEASE_NOTES_v3.0.0_DRAFT.md",
+        "docs/audit/P15_FINAL_RELEASE_READINESS.md",
+        "docs/prompt_log.json",
+        "docs/SplitStack_Prompt_Log.docx",
+        "docs/SplitStack_Prompt_Log.pdf"
+      ],
+      "result": "Completed P15 wrap-up with verified reproducible lockfile installations (0 vulnerabilities); executed client unit tests (201 passed), server unit tests (123 passed), HTML validation (25 files clean), and legacy Python tests (31 passed); created production Dockerfile, docker-compose.yml, DEPLOYMENT_GUIDE.md, RELEASE_NOTES_v3.0.0_DRAFT.md, and P15_FINAL_RELEASE_READINESS.md; consolidated READMEs; documented legacy Flask coexistence and unverified live DB/remote CI items; regenerated prompt log DOCX and PDF.",
+      "verification": "npm ci (0 vulnerabilities); npm --prefix server ci (0 vulnerabilities); npm run test:client (201 passed across 59 suites); npm run test:server:unit (123 passed across 43 suites); npm run lint:html (25 files clean); python -m pytest tests/... (31 passed); npm run test:integration (documented skip without live DB)."
     }
   ],
-  "planned": [
-    {
-      "stage": "Wrap-up",
-      "title": "Remove legacy code, document and deploy",
-      "type": "Planned prompt",
-      "prompt": "Delete the Flask app (app.py, config.py, database/, modules/, templates/, static/, ml/, tests/*.py, requirements.txt, Procfile) from main, since it is kept on the legacy branch. Rewrite README.md: features, the stack per review (HTML+CSS, JavaScript, Node.js+MongoDB), setup steps, environment variables, a data-model diagram, the API table and screenshots. Deploy the full app to Render as a Node web service (build: npm ci; start: npm start; environment: MONGODB_URI, SESSION_SECRET, NODE_ENV=production) with MongoDB Atlas network access configured, and keep the static site on GitHub Pages. Finish the prompt log, export it to Word and PDF, and tag the release v3.0.0.",
-      "purpose": "Deliver a clean, documented, deployed project.",
-      "files": [
-        "README.md",
-        "render.yaml",
-        "docs/*"
-      ]
-    }
-  ]
+  "planned": []
 }

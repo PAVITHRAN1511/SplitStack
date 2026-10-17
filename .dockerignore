@@ -1,0 +1,34 @@
+# Git and version control
+.git
+.gitignore
+.github
+
+# Node dependencies
+node_modules
+server/node_modules
+
+# Python virtual environment and bytecode
+env/
+venv/
+__pycache__/
+*.pyc
+
+# Local databases and temporary storage
+database/*.db
+database/*.sqlite
+server/uploads/temp/*
+!server/uploads/temp/.gitkeep
+
+# Environment files
+.env
+server/.env
+*.env.local
+
+# Test coverage and system logs
+coverage/
+.system_generated/
+*.log
+
+# Audit evidence PDFs and scratch files
+docs/audit/*.pdf
+scratch/

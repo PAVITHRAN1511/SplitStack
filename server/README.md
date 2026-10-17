@@ -284,4 +284,4 @@ The integration suite covers 12 comprehensive end-to-end flows:
 - **P12 (Complete):** Receipt upload and server-side OCR processing pipeline with persistent GridFS storage, magic byte verification, and candidate confirmation.
 - **P13 (Complete):** Client data layer migration from `localStorage` to `/api` `fetch()`.
 - **P14 (Complete):** Safe database seeding (`seed.js`), real MongoDB integration tests (`integration.test.js`), API contract checks, and GitHub Actions CI workflow (`.github/workflows/ci.yml`).
-- **P15 (Next):** Final audit, deployment manifests, legacy removal, and wrap-up.
+- **P15 (Complete):** Production deployment manifests (`Dockerfile`, `docker-compose.yml`), comprehensive deployment guide ([`docs/DEPLOYMENT_GUIDE.md`](../docs/DEPLOYMENT_GUIDE.md)), release notes draft ([`docs/RELEASE_NOTES_v3.0.0_DRAFT.md`](../docs/RELEASE_NOTES_v3.0.0_DRAFT.md)), and final release readiness audit ([`docs/audit/P15_FINAL_RELEASE_READINESS.md`](../docs/audit/P15_FINAL_RELEASE_READINESS.md)).

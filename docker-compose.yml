@@ -1,0 +1,45 @@
+# SplitStack Local Development & Staging Docker Compose (Review 3, Phase P15)
+# Starts the SplitStack application container along with a dedicated MongoDB 7.0 container.
+
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: splitstack-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - MONGODB_URI=mongodb://mongodb:27017/splitstack-dev
+      - JWT_SECRET=splitstack-dev-compose-secret-not-for-prod-32chars
+      - COOKIE_SECRET=splitstack-dev-cookie-secret
+      - MAX_RECEIPT_SIZE_BYTES=5242880
+      - OCR_ENABLED=true
+      - OCR_LANGUAGE=eng
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  mongodb:
+    image: mongo:7.0
+    container_name: splitstack-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo_data:
+    driver: local

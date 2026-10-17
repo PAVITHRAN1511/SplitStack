@@ -1,23 +1,29 @@
 # SplitStack - Smart Financial & Group Expense Management
 
-> **Refurbishment in progress (Web Technology course).** SplitStack is being rebuilt in three stages:
-> Review 1 HTML + CSS (**done**, in [`client/`](client/)), Review 2 JavaScript (**done**), Review 3 Node.js + MongoDB (**in progress**, backend foundation in [`server/`](server/)).
+> **Refurbishment Complete (Web Technology Course).** SplitStack has been rebuilt across three major milestones:
+> - **Review 1 (HTML + CSS)**: Complete responsive UI and glassmorphic design system in [`client/`](client/).
+> - **Review 2 (JavaScript Client)**: Complete modular vanilla JS financial engine with integer-paise arithmetic and debt simplification.
+> - **Review 3 (Node.js + MongoDB)**: Complete Express REST API, Mongoose models, JWT/cookie authentication, GridFS receipt storage, Tesseract OCR pipeline, deterministic database seeder, and GitHub Actions CI in [`server/`](server/).
 >
-> - Live site (Review 1): https://mahaprabhuk.github.io/SplitStack/ (served from the `gh-pages` branch)
-> - Run the client locally: `npm run client` (opens http://localhost:5500)
-> - Run the Express API server: `npm run server` or `cd server && npm start` (opens http://localhost:3000)
-> - Client unit tests: `npm run test:client` (201 passing tests)
-> - Server unit tests: `npm run test:server:unit` (123 passing tests)
-> - Real MongoDB integration tests: `MONGODB_TEST_URI=mongodb://127.0.0.1:27017/splitstack-test npm run test:integration`
-> - Safe database seeding: `npm run seed` (dev) / `npm run seed:test` (dedicated test database)
-> - Plan: [`docs/REFURBISH_PLAN.md`](docs/REFURBISH_PLAN.md)
-> - Prompt log: [`docs/SplitStack_Prompt_Log.pdf`](docs/SplitStack_Prompt_Log.pdf) / [`.docx`](docs/SplitStack_Prompt_Log.docx)
-> - The original Flask + SQLite version described below is preserved on the [`legacy`](../../tree/legacy) branch
->   and is still in this branch until the wrap-up stage.
+> - **Live Site (Review 1 Static)**: https://mahaprabhuk.github.io/SplitStack/ (served from `gh-pages` branch)
+> - **Run Client Localy**: `npm run client` (opens http://localhost:5500)
+> - **Run Express API Server**: `npm run server` or `cd server && npm start` (opens http://localhost:3000)
+> - **Run with Docker Compose**: `docker compose up --build` (starts app + MongoDB 7.0 container)
+> - **Client Unit Tests**: `npm run test:client` (201 passing tests across 59 suites — in-memory mocks)
+> - **Server Unit Tests**: `npm run test:server:unit` (123 passing tests across 43 suites — in-memory mocks)
+> - **Real MongoDB Integration Tests**: `MONGODB_TEST_URI=mongodb://127.0.0.1:27017/splitstack-test npm run test:integration` (requires live test MongoDB)
+> - **HTML5 Validation**: `npm run lint:html` (25 HTML pages clean)
+> - **Legacy Python Tests**: `python -m pytest tests/test_security.py tests/test_auth_flow.py tests/test_regression.py tests/test_master.py` (31 passing tests)
+> - **Safe Database Seeding**: `npm run seed` (dev database) / `npm run seed:test` (dedicated test database)
+> - **Deployment Guide**: [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md)
+> - **v3.0.0 Release Notes (Draft)**: [`docs/RELEASE_NOTES_v3.0.0_DRAFT.md`](docs/RELEASE_NOTES_v3.0.0_DRAFT.md)
+> - **Release Readiness Audit**: [`docs/audit/P15_FINAL_RELEASE_READINESS.md`](docs/audit/P15_FINAL_RELEASE_READINESS.md)
+> - **Prompt Log**: [`docs/SplitStack_Prompt_Log.pdf`](docs/SplitStack_Prompt_Log.pdf) / [`.docx`](docs/SplitStack_Prompt_Log.docx)
+> - **Legacy Flask Preservation**: The original Python/Flask + SQLite application described below is fully preserved on this branch and the [`legacy`](../../tree/legacy) branch.
 
-**SplitStack** is an intelligent, full-featured personal finance and group expense-sharing web application built with Python, Flask, SQLite, and modern vanilla web technologies.
+**SplitStack** is an intelligent personal finance and collaborative group expense-sharing web platform. It combines personal budgeting, multi-party shared expense splitting, greedy debt simplification algorithms, collaborative shopping management, financial analytics, receipt OCR processing, and spending velocity forecasting.
 
-It combines daily personal budgeting, multi-party shared expense splitting, debt simplification algorithms, collaborative shopping management, financial analytics with dynamic charts, receipt OCR processing, and machine-learning-driven spending forecasts.
+All financial calculations across both client and server are computed strictly in **integer paise** (₹1.00 = 100 paise), preventing floating-point precision errors.
 
 ---
 
