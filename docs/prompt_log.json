@@ -726,21 +726,65 @@
       ],
       "result": "Created database connection manager and 12 validated Mongoose models with integer-paise monetary enforcement; all 38 server tests passing across 19 suites; client test suite (176 tests) and HTML linter (25 files) clean; documentation updated.",
       "verification": "npm run test:server (38 passed, 0 failed); npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors)."
+    },
+    {
+      "id": 42,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Request: proceed with Review 3 Step P11",
+      "type": "User prompt",
+      "prompt": "# P11 — Review 3: Authentication and REST API Endpoints\n\nContinue the SplitStack project from the current refurbish branch. P10 is reported complete at commit 313f69f. Implement P11 only.\n\n## 1. Repository safety\n- Verify the branch, working tree, latest commit, and existing server architecture before editing.\n- Work only on refurbish.\n- Do not push to any remote.\n- Do not reset, rebase, amend commits, or discard changes.\n- Preserve all legacy Flask files, existing audit evidence, and unrelated untracked files.\n- Do not implement P12 OCR/file upload, P13 frontend API integration, or later phases.\n- Do not claim live database integration works unless tested against a reachable MongoDB instance.\n\n## 2. Review existing contracts first\nInspect server files, Mongoose models, client API contracts, and roadmap reports.\n\n## 3. Authentication\nImplement secure registration, login, logout, and current-user/session endpoints.\n- Use bcrypt (cost factor 12). Never store plaintext passwords.\n- Never return password hashes in API responses.\n- Validate and normalize inputs; enforce unique email addresses.\n- Use generic login failure messages that do not reveal whether an email exists.\n- Apply request-size limits and authentication rate limiting.\n- Use secure session/token handling (JWT, HttpOnly cookie with SameSite: Lax).\n- Never log passwords, tokens, cookies, or credentials.\n- Authorization middleware derives authenticated user from verified credentials.\n\n## 4. REST API\nImplement documented P11 endpoints and controllers for core SplitStack resources.\n- Consistent success and error response formats.\n- Request validation and appropriate HTTP status codes.\n- Enforce per-user ownership and group membership/role checks on every operation.\n- Validate referenced document IDs (reject malformed ObjectIds).\n- Scoped Mongoose queries; avoid leaking internal stack traces.\n\n## 5. Database and tests\n- Keep Express app independently importable for tests without automatically connecting to MongoDB.\n- Add authentication tests (registration, hashing, login success/failure, logout, rate limiting).\n- Add API tests (authorization, ownership isolation, input validation, correct responses).\n- Run npm run test:server and npm run test:client.\n- Run npm run lint:html if frontend files change.\n\n## 6. Documentation and audit\n- Update server/README.md and .env.example.\n- Add P11 audit report in docs/audit/.\n- Update prompt log and regenerate DOCX/PDF via npm run log.\n\n## 7. Commit\n- Commit message: Review 3: authentication and REST API\n- Do not push.\n\n## 8. Final report",
+      "purpose": "Authorize execution of Step P11: Authentication and REST API Endpoints.",
+      "files": [],
+      "result": "Authorized Step P11 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 43,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Authentication and REST API endpoints",
+      "type": "Working prompt",
+      "prompt": "Install bcryptjs, jsonwebtoken, and cookie-parser in server/; update server/src/config.js with JWT and cookie configuration; update server/.env.example with safe security templates; create server/src/utils/errors.js and server/src/utils/domain.js; create server/src/services/authService.js with bcrypt hashing (cost factor 12), JWT generation, email normalization, and generic login protection; create server/src/middleware/auth.js, server/src/middleware/rateLimit.js (in-memory sliding window), and server/src/middleware/validate.js (ObjectId and paise checks); create REST resource routes in server/src/routes/ (auth, expenses, income, categories, budgets, recurring, groups, shopping, analytics, notifications, search, receipts); mount routes and cookie-parser in server/src/app.js; add comprehensive test suites in server/tests/auth.test.js and server/tests/api.test.js; update server/README.md and docs/audit/P11_AUTH_REST_API_AUDIT.md; regenerate prompt logs.",
+      "purpose": "Implement production-grade authentication and the complete set of REST API endpoints for SplitStack with ownership isolation and monetary validation.",
+      "files": [
+        "server/package.json",
+        "server/package-lock.json",
+        "server/.env.example",
+        "server/src/config.js",
+        "server/src/app.js",
+        "server/src/utils/errors.js",
+        "server/src/utils/domain.js",
+        "server/src/middleware/auth.js",
+        "server/src/middleware/rateLimit.js",
+        "server/src/middleware/validate.js",
+        "server/src/services/authService.js",
+        "server/src/routes/auth.js",
+        "server/src/routes/expenses.js",
+        "server/src/routes/income.js",
+        "server/src/routes/categories.js",
+        "server/src/routes/budgets.js",
+        "server/src/routes/recurring.js",
+        "server/src/routes/groups.js",
+        "server/src/routes/shopping.js",
+        "server/src/routes/analytics.js",
+        "server/src/routes/notifications.js",
+        "server/src/routes/search.js",
+        "server/src/routes/receipts.js",
+        "server/src/routes/index.js",
+        "server/tests/auth.test.js",
+        "server/tests/api.test.js",
+        "server/README.md",
+        "docs/audit/P11_AUTH_REST_API_AUDIT.md",
+        "docs/prompt_log.json",
+        "docs/SplitStack_Prompt_Log.docx",
+        "docs/SplitStack_Prompt_Log.pdf"
+      ],
+      "result": "Created complete authentication layer and 12 REST API modules with strict ownership isolation, group role checks, and paise validation; all 88 server tests passing across 33 suites; client test suite (176 tests) and HTML linter (25 files) clean; documentation and audit updated.",
+      "verification": "npm run test:server (88 passed, 0 failed); npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors)."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 3",
-      "title": "Authentication and REST API",
-      "type": "Planned prompt",
-      "prompt": "Implement the REST API under /api with one express.Router per module, mirroring the 48 legacy Flask routes: /api/auth (register with bcrypt cost 12, login, logout, me), /api/expenses, /api/income, /api/categories, /api/budgets, /api/recurring (including toggle), /api/groups (members, shared expenses, balances, settlements, leave), /api/shopping (lists, items, toggle, convert to expense), /api/analytics (monthly, categories, forecast, insights) and /api/search. Validate every input with a schema (zod or express-validator), check ownership or group membership on every request, use MongoDB transactions for multi-document writes (recording a settlement, converting a list), and reuse the Review 2 settle.js and splits.js modules on the server so the algorithm has a single implementation.",
-      "purpose": "Deliver the Node.js back end with a complete, secure API.",
-      "files": [
-        "server/src/routes/*.js",
-        "server/src/services/*.js",
-        "server/src/middleware/*.js"
-      ]
-    },
     {
       "stage": "Review 3",
       "title": "Receipt upload and server-side OCR",

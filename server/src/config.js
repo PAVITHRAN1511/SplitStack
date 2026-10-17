@@ -47,6 +47,10 @@ export const config = {
   port: parsePort(process.env.PORT, 3000),
   host: process.env.HOST || 'localhost',
   mongodbUri: process.env.MONGODB_URI || '',
+  jwtSecret: process.env.JWT_SECRET || (isProduction ? (() => { throw new Error('JWT_SECRET must be set in production'); })() : 'splitstack-dev-jwt-secret-do-not-use-in-prod-12345'),
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  cookieSecret: process.env.COOKIE_SECRET || 'splitstack-cookie-secret-dev',
+  bcryptRounds: 12,
   clientDir: path.resolve(__dirname, '../../client'),
 };
 

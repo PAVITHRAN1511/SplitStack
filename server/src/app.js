@@ -5,8 +5,10 @@
  */
 
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { config } from './config.js';
 import { isDbConnected } from './db.js';
+import { apiRouter } from './routes/index.js';
 
 export function createApp(customConfig = {}, customRoutes = null) {
   const appConfig = { ...config, ...customConfig };
@@ -17,6 +19,9 @@ export function createApp(customConfig = {}, customRoutes = null) {
 
   // JSON body parser with strict size ceiling (100kb protects against memory exhaustion)
   app.use(express.json({ limit: '100kb' }));
+
+  // Parse cookies for authentication token extraction
+  app.use(cookieParser(appConfig.cookieSecret));
 
   // Safe diagnostics logging (development mode only, never logs bodies or auth tokens)
   if (appConfig.isDevelopment && !appConfig.isTest) {
@@ -42,6 +47,9 @@ export function createApp(customConfig = {}, customRoutes = null) {
       database: isDbConnected() ? 'connected' : 'disconnected',
     });
   });
+
+  // Mount SplitStack REST API sub-routers under /api
+  app.use('/api', apiRouter);
 
   // Serve static client frontend files
   app.use(express.static(appConfig.clientDir));
@@ -70,6 +78,38 @@ export function createApp(customConfig = {}, customRoutes = null) {
       return res.status(400).json({
         error: 'BadRequestError',
         message: 'Malformed JSON payload in request body.',
+      });
+    }
+
+    // Handle Mongoose validation errors
+    if (err.name === 'ValidationError') {
+      const fields = {};
+      if (err.errors) {
+        for (const [key, val] of Object.entries(err.errors)) {
+          fields[key] = val.message;
+        }
+      }
+      return res.status(400).json({
+        error: 'ValidationError',
+        message: err.message || 'Validation failed.',
+        fields,
+      });
+    }
+
+    // Handle Mongoose cast errors (malformed ObjectIds)
+    if (err.name === 'CastError') {
+      return res.status(400).json({
+        error: 'BadRequestError',
+        message: `Invalid identifier format for parameter "${err.path}".`,
+      });
+    }
+
+    // Handle MongoDB duplicate key errors (code 11000)
+    if (err.code === 11000) {
+      const keys = err.keyPattern ? Object.keys(err.keyPattern).join(', ') : 'field';
+      return res.status(409).json({
+        error: 'ConflictError',
+        message: `A record with this ${keys} already exists.`,
       });
     }
 
