@@ -46,6 +46,7 @@ export const config = {
   isDevelopment,
   port: parsePort(process.env.PORT, 3000),
   host: process.env.HOST || 'localhost',
+  mongodbUri: process.env.MONGODB_URI || '',
   clientDir: path.resolve(__dirname, '../../client'),
 };
 

@@ -6,6 +6,7 @@
 
 import express from 'express';
 import { config } from './config.js';
+import { isDbConnected } from './db.js';
 
 export function createApp(customConfig = {}, customRoutes = null) {
   const appConfig = { ...config, ...customConfig };
@@ -38,6 +39,7 @@ export function createApp(customConfig = {}, customRoutes = null) {
       environment: appConfig.nodeEnv,
       service: 'SplitStack API',
       version: '3.0.0',
+      database: isDbConnected() ? 'connected' : 'disconnected',
     });
   });
 

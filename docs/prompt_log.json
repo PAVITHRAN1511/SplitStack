@@ -674,30 +674,61 @@
       ],
       "result": "Created clean Express server foundation in server/ with health check at /api/health, centralized 404/error handling, 100kb JSON parsing limit, disabled X-Powered-By header, and static frontend hosting; all 7 server tests passing in node --test; live health check verified; root package.json and README.md updated.",
       "verification": "npm run test:server (7 passed, 0 failed); npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors); live GET /api/health returned 200 OK with expected JSON payload."
+    },
+    {
+      "id": 40,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Request: proceed with Review 3 Step P10",
+      "type": "User prompt",
+      "prompt": "# P10 — Review 3: MongoDB Connection and Mongoose Data Models\n\nContinue the SplitStack project from the current refurbish branch. P9 is reported complete with local commit 30a4d60. Implement P10 only.\n\n## 1. Safety rules\n- Verify the current branch, working tree, and latest commit before editing.\n- Work only on refurbish.\n- Do not push to any remote.\n- Do not reset, rebase, amend commits, or discard changes.\n- Preserve the complete legacy Flask application and all existing docs/audit/ evidence.\n- Do not implement P11 authentication or REST resource endpoints, P12 OCR/file storage, or P13 frontend API integration.\n- Never expose or commit real database credentials, secrets, or production connection strings.\n\n## 2. Inspect before coding\n- Read server/package.json, server/src/config.js, server/src/app.js, existing tests, and the client API/data contracts.\n- Check the existing roadmap and project documentation for required data entities and relationships.\n- Determine which models are explicitly supported by the project requirements.\n- Review existing dependencies and lockfiles before making changes.\n\n## 3. MongoDB configuration\n- Add Mongoose as a server dependency using a compatible version and update the server lockfile.\n- Implement a dedicated database connection module.\n- Read the MongoDB connection URI from an environment variable such as MONGODB_URI.\n- Update server/.env.example with a clearly fake local-development URI and any required database settings.\n- Validate configuration and produce safe, actionable errors without printing secrets.\n- Make database connection and disconnection functions explicit and testable.\n- Ensure importing the Express app does not automatically require a live database connection.\n- Update server startup to connect to MongoDB before accepting requests. If the connection fails, log a sanitized error and exit nonzero. Handle graceful shutdown without leaving connections open.\n- Do not claim a database connection succeeded unless it was actually tested against a reachable MongoDB instance.\n\n## 4. Mongoose models\n- Define schemas and models for the entities required by the documented SplitStack domain.\n- Start by mapping existing documented entities: users, groups, expenses, participants/splits, settlements, budgets, recurring expenses, shopping lists/items, and receipts.\n- Avoid redundant models where embedded documents are a better fit. Explain major schema decisions.\n- Add appropriate field types, required constraints, enums, timestamps, indexes, and references where justified.\n- Validate monetary fields and document whether stored values use integer paise, consistent with the existing client contract.\n- Keep sensitive user fields out of ordinary serialization and never include passwords or secrets in logs.\n\n## 5. Tests\n- Add tests for schema validation, required fields, enum constraints, relationships/references, and monetary validation.\n- Prefer isolated tests that do not require an external MongoDB instance.\n- Run npm run test:server and npm run test:client.\n- Run npm run lint:html if any frontend files change.\n\n## 6. Documentation and audit\n- Update server/README.md with database configuration, model overview, startup behavior, and testing instructions.\n- Add a P10 audit report in docs/audit/.\n- Update the prompt log and regenerate its DOCX/PDF using the existing npm run log workflow.\n\n## 7. Commit\n- Commit message: Review 3: MongoDB connection and Mongoose models\n- Do not push.\n\n## 8. Final report",
+      "purpose": "Authorize execution of Step P10: MongoDB connection lifecycle and 12 Mongoose data models.",
+      "files": [],
+      "result": "Authorized Step P10 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 41,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "MongoDB connection and Mongoose data models",
+      "type": "Working prompt",
+      "prompt": "Install mongoose in server/; update server/src/config.js with mongodbUri; create server/src/db.js with connectDb, disconnectDb, sanitizeMongoUri, and readyState tracking; update server/src/app.js health check with database connection status; update server/src/index.js to connect to MongoDB before listening and handle graceful shutdown; create server/src/models/validators.js for integer paise and RFC email validation; create 12 Mongoose models in server/src/models/ (User, Category, Expense, Income, Budget, Recurring, Group, SharedExpense, Settlement, ShoppingList, Receipt, Insight) matching client data contracts with integer-paise validation, embedded subdocuments (members, shares, checklist items), and toJSON password stripping; create server/tests/models.test.js with 31 unit tests for schema validation, constraints, and URI sanitization; update server/README.md and server/.env.example; document P10 audit in docs/audit/P10_MONGOOSE_MODELS_AUDIT.md and update prompt logs.",
+      "purpose": "Implement the persistent MongoDB connection lifecycle and 12 Mongoose data models matching the SplitStack domain.",
+      "files": [
+        "server/package.json",
+        "server/package-lock.json",
+        "server/.env.example",
+        "server/src/config.js",
+        "server/src/db.js",
+        "server/src/app.js",
+        "server/src/index.js",
+        "server/src/models/validators.js",
+        "server/src/models/User.js",
+        "server/src/models/Category.js",
+        "server/src/models/Expense.js",
+        "server/src/models/Income.js",
+        "server/src/models/Budget.js",
+        "server/src/models/Recurring.js",
+        "server/src/models/Group.js",
+        "server/src/models/SharedExpense.js",
+        "server/src/models/Settlement.js",
+        "server/src/models/ShoppingList.js",
+        "server/src/models/Receipt.js",
+        "server/src/models/Insight.js",
+        "server/src/models/index.js",
+        "server/tests/models.test.js",
+        "server/README.md",
+        "docs/audit/P10_MONGOOSE_MODELS_AUDIT.md",
+        "docs/prompt_log.json",
+        "docs/SplitStack_Prompt_Log.docx",
+        "docs/SplitStack_Prompt_Log.pdf"
+      ],
+      "result": "Created database connection manager and 12 validated Mongoose models with integer-paise monetary enforcement; all 38 server tests passing across 19 suites; client test suite (176 tests) and HTML linter (25 files) clean; documentation updated.",
+      "verification": "npm run test:server (38 passed, 0 failed); npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors)."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 3",
-      "title": "Mongoose data models and MongoDB connection",
-      "type": "Planned prompt",
-      "prompt": "Connect Express to MongoDB Atlas with Mongoose using MONGODB_URI from server/.env. Design Mongoose schemas with validation and indexes to replace the 15 SQLite tables: User, Category, Expense, Income, Budget, Recurring, Group, SharedExpense, Settlement, ShoppingList, Receipt, and Insight. Add server/src/db.js to handle connection lifecycle and graceful shutdown.",
-      "purpose": "Establish MongoDB connection and Mongoose data models.",
-      "files": [
-        "server/src/db.js",
-        "server/src/models/*.js"
-      ]
-    },
-    {
-      "stage": "Review 3",
-      "title": "Mongoose data models",
-      "type": "Planned prompt",
-      "prompt": "Design Mongoose schemas with validation and indexes to replace the 15 SQLite tables: User (name, email unique and lowercase, passwordHash, preferences), Category (user, or null for defaults; name; type expense or income; icon; color), Expense and Income (user, category, amount stored as integer paise, date, description or source, paymentMethod), Budget (user, category or null, month, year, limit; unique on user+category+month+year), Recurring (name, amount, frequency, startDate, nextDueDate, active), Group (name, description, createdBy, members [{user, role admin|member, joinedAt}]), SharedExpense (group, title, amount, paidBy, category, date, splitType, shares [{user, amount}] with a validator that the shares sum to the amount), Settlement (group, payer, payee, amount, status, completedAt), ShoppingList (owner, optional group, name, budget, items [{name, quantity, estimatedPrice, actualPrice, purchased, assignedTo}], convertedExpense), Receipt (user, file reference, merchant, date, amount, rawText, confidence) and Insight (user, kind, message, read). Explain in comments which data is embedded and which is referenced, and why.",
-      "purpose": "Show MongoDB data modelling, the core of Review 3.",
-      "files": [
-        "server/src/models/*.js"
-      ]
-    },
     {
       "stage": "Review 3",
       "title": "Authentication and REST API",
