@@ -8,7 +8,11 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "node --test \"tests/**/*.test.js\""
+    "test": "node --test \"tests/**/*.test.js\"",
+    "test:unit": "node --test \"tests/api.test.js\" \"tests/auth.test.js\" \"tests/models.test.js\" \"tests/receipts.test.js\" \"tests/server.test.js\"",
+    "test:integration": "node --test tests/integration.test.js",
+    "seed": "node scripts/seed.js --dev",
+    "seed:test": "node scripts/seed.js --test"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

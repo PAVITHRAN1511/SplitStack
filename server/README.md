@@ -210,21 +210,71 @@ All protected endpoints require either an `Authorization: Bearer <token>` header
 | **Receipts** | `POST` | `/api/receipts/:id/confirm` | Confirm draft receipt into an expense (duplicate protected, 409) | Required |
 | **Receipts** | `DELETE` | `/api/receipts/:id` | Delete receipt metadata and remove binary from GridFS | Required |
 
+## Database Seeding (Phase P14)
+
+SplitStack provides a deterministic, repeatable development and test database seeding script (`server/scripts/seed.js`).
+
+### Safety Guards & Safeguards:
+- **Explicit Target Required**: Requires `--dev`, `--test`, or `--uri <connection-string>`. Never runs without an explicit target.
+- **Production Blacklist**: Strictly refuses to run when `NODE_ENV === 'production'` or against database names containing `prod`, `production`, or `live`.
+- **System Database Guard**: Refuses internal system databases (`admin`, `config`, `local`).
+- **Test Mode Enforcement**: In `--test` mode, the database name must contain `test` (e.g. `splitstack-test`).
+- **Never Auto-Seeds**: The server never automatically seeds on startup.
+- **Bcrypt Passwords**: Passwords for synthetic users (`Priya Raman`, `Rohan Das`, `Kavya Nair`, `Arjun Mehta`) are hashed with bcrypt (12 rounds) — plaintext passwords are never stored.
+- **Integer Paise Representation**: All monetary values use positive integer paise.
+- **Idempotence**: Clears targeted non-production collections cleanly before deterministic re-population.
+
+### Seeding Commands:
+```bash
+# Seed development database (mongodb://127.0.0.1:27017/splitstack-dev)
+npm run seed
+
+# Seed dedicated test database (mongodb://127.0.0.1:27017/splitstack-test)
+npm run seed:test
+
+# Dry-run inspection without writing to database
+node server/scripts/seed.js --dev --dry-run
+```
+
 ## Running Tests
 
-Run the full server test suite using Node's native test runner:
+### Unit Tests
+Run the server unit test suite (fast, offline-capable, uses schema validation and memory fallbacks):
 
 ```bash
-npm test
-```
+# From repository root:
+npm run test:server:unit
 
-Or from the repository root:
+# Or from server directory:
+npm run test:unit
+```
+Current unit test coverage: **123 passing tests across 43 suites** (0 failures).
+
+### Real MongoDB Integration Tests (Phase P14)
+Runs end-to-end integration flows against a dedicated, live test MongoDB database and GridFS bucket:
 
 ```bash
-npm run test:server
+# Require explicit MONGODB_TEST_URI opt-in:
+MONGODB_TEST_URI=mongodb://127.0.0.1:27017/splitstack-test npm run test:integration
+```
+If `MONGODB_TEST_URI` is not provided, the test suite reports a deliberate, documented skip:
+```
+﹣ SplitStack Real MongoDB Integration Suite (Dedicated Database) # SKIP
 ```
 
-Current test coverage: **123 passing tests across 43 suites** (0 failures).
+The integration suite covers 12 comprehensive end-to-end flows:
+1. MongoDB connection and Mongoose model persistence.
+2. User registration, login, profile retrieval (`GET /api/auth/me`), and logout.
+3. Password hash and salt non-exposure across all endpoints and JSON transforms.
+4. Personal expense and income CRUD with integer-paise monetary checks.
+5. Cross-user isolation (User B cannot read, modify, or delete User A records).
+6. Multi-member group creation, shared expense splitting, balance calculation, and debt settlement.
+7. Group membership and authorization restrictions.
+8. Shopping list persistence and duplicate-protected expense conversion.
+9. Budget and analytics calculations on persisted database records.
+10. Synthetic receipt image upload, GridFS persistence, authorized binary streaming, and cleanup.
+11. Duplicate receipt confirmation rejection (409 Conflict).
+12. Database error resilience and zero-orphan compensating cleanup.
 
 ## Roadmap Status
 
@@ -232,6 +282,6 @@ Current test coverage: **123 passing tests across 43 suites** (0 failures).
 - **P10 (Complete):** MongoDB connection lifecycle & 12 Mongoose data models with integer-paise validation.
 - **P11 (Complete):** Authentication routes (`/api/auth`), JWT & cookie session management, bcrypt hashing, rate limiting, and REST resource controllers for all core SplitStack entities.
 - **P12 (Complete):** Receipt upload and server-side OCR processing pipeline with persistent GridFS storage, magic byte verification, and candidate confirmation.
-- **P13 (Next):** Client data layer migration from `localStorage` to `/api` `fetch()`.
-- **P14:** End-to-end integration tests & CI automation.
-- **P15:** Final documentation, deployment manifests & cleanup.
+- **P13 (Complete):** Client data layer migration from `localStorage` to `/api` `fetch()`.
+- **P14 (Complete):** Safe database seeding (`seed.js`), real MongoDB integration tests (`integration.test.js`), API contract checks, and GitHub Actions CI workflow (`.github/workflows/ci.yml`).
+- **P15 (Next):** Final audit, deployment manifests, legacy removal, and wrap-up.

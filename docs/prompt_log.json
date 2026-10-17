@@ -860,21 +860,46 @@
       ],
       "result": "Implemented client REST API client and dual-mode dispatching with zero silent fallback; HttpOnly credentials transport and in-memory tab-scoped Bearer token management; end-to-end receipt scanning and server OCR confirmation pipeline; 201 client tests passing across 59 suites (including 25 new tests in api-http.test.mjs); 123 server tests passing; HTML validation clean; documentation and audit updated.",
       "verification": "npm run test:client (201 passed, 0 failed across 59 suites); npm run test:server (123 passed, 0 failed across 43 suites); npm run lint:html (25 files clean)."
+    },
+    {
+      "id": 48,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Request: proceed with Review 3 Step P14",
+      "type": "User prompt",
+      "prompt": "# SplitStack — P14: Database Seeding, Integration Tests & CI (Review 3)\n\nImplement P14 only of the SplitStack refurbishment roadmap on the existing refurbish branch.\n\n## 1. Mandatory safety checks\nBefore editing: Confirm branch refurbish and expected starting commit 28671cc (Review 3: frontend API integration). Run git status and inspect recent commits. Do not push to any remote. Do not reset, rebase, amend commits, or discard existing work. Preserve all existing files under docs/audit/, including untracked evidence. Stage only intended files. Preserve the legacy Flask application and its files. Work only on refurbish. Do not begin P15.\n\n## 2. Inspect before implementing\nReview server config, app, index, models, connection lifecycle, GridFS receipt storage, auth middleware, REST routers, client API adapter, package.json scripts, .gitignore, CI workflows, and audit docs. Identify tests using mocks vs real MongoDB.\n\n## 3. Safe database seeding\nImplement deterministic, repeatable development/test seeding script. Require explicit seed command and non-production environment. Refuse to seed if environment or database name indicates production. Never seed, clear, or drop production. Use dedicated test database for integration tests. Use synthetic users and fictional financial data. Hash test-user passwords through authService. Respect models, references, ownership, and integer paise.\n\n## 4. Real MongoDB integration tests\nAdd distinct integration-test suite running against dedicated test database. Require explicit opt-in and test URI (MONGODB_TEST_URI). Validate database name and refuse production. Never fall back silently to in-memory fake. Cover 12 realistic end-to-end flows: connection & persistence, auth flow, password hash non-exposure, personal expense/income CRUD, user isolation, group sharing/balances/settlement, group auth, shopping list conversion, budget/analytics calculations, receipt upload/GridFS/streaming/cleanup, duplicate receipt rejection, and database failure resilience/compensating cleanup. Separate real Tesseract worker from mocked OCR.\n\n## 5. API and migration contract checks\nVerify client API adapter and backend contracts agree on paths, methods, query params, bodies, integer paise, cookies/tokens, multipart receipts, migration, and unsupported operations.\n\n## 6. Continuous integration\nProvide CI jobs for lockfile installs, client tests, server unit tests, HTML lint, legacy Python tests, and MongoDB integration tests using a disposable test service. Keep CI steps explicit.\n\n## 7. Verification\nRun test:client, test:server, lint:html, new seed script, integration suite, legacy tests. Report exact test counts, failures, skips, and mock vs real database usage.\n\n## 8. Documentation and audit\nUpdate READMEs, safe environment examples, docs/audit/P14_DATABASE_SEEDING_INTEGRATION_CI_AUDIT.md, prompt_log.json, and regenerate DOCX/PDF via npm run log.\n\n## 9. Final review and commit\nReview complete diff. Commit with message: Review 3: database seeding and integration CI. Do not push.\n\n## 10. Final report",
+      "purpose": "Authorize execution of Step P14: Database Seeding, Integration Tests & CI.",
+      "files": [],
+      "result": "Authorized Step P14 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 49,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Database seeding, integration tests, and CI",
+      "type": "Working prompt",
+      "prompt": "Create server/scripts/seed.js with CLI parser (--dev, --test, --uri, --dry-run), strict production guards, database name validation, bcrypt password hashing, integer paise amounts, and complete synthetic seeding across all 12 entities; update root package.json and server/package.json with seed, seed:test, test:server:unit, and test:integration scripts; create server/tests/integration.test.js with MONGODB_TEST_URI opt-in, documented skip behavior, safety assertions, and comprehensive coverage of all 12 end-to-end flows (persistence, auth, credential protection, CRUD, user isolation, group balances, settlements, shopping list duplicate-protected conversion, budgets/analytics, GridFS receipt upload/streaming/deletion, duplicate confirmation 409 guard, and compensating cleanup); create .github/workflows/ci.yml with reproducible lockfile installs, client tests, server unit tests, HTML validation, legacy Python tests, and disposable MongoDB 7.0 container service integration testing; update server/.env.example with MONGODB_TEST_URI; update root and server README.md; create docs/audit/P14_DATABASE_SEEDING_INTEGRATION_CI_AUDIT.md; update prompt logs and regenerate DOCX and PDF artifacts.",
+      "purpose": "Implement deterministic database seeding with production safeguards, real MongoDB integration testing suite, API contract validation, and GitHub Actions CI workflow for SplitStack.",
+      "files": [
+        ".github/workflows/ci.yml",
+        "package.json",
+        "server/package.json",
+        "server/.env.example",
+        "server/scripts/seed.js",
+        "server/tests/integration.test.js",
+        "server/README.md",
+        "README.md",
+        "docs/audit/P14_DATABASE_SEEDING_INTEGRATION_CI_AUDIT.md",
+        "docs/prompt_log.json",
+        "docs/SplitStack_Prompt_Log.docx",
+        "docs/SplitStack_Prompt_Log.pdf"
+      ],
+      "result": "Implemented safe database seeding script (seed.js) with production guards and bcrypt hashing; implemented real MongoDB integration test suite (integration.test.js) with MONGODB_TEST_URI opt-in covering all 12 end-to-end flows; created GitHub Actions CI workflow (ci.yml) with disposable MongoDB service container; verified client unit tests (201 passed), server unit tests (123 passed), HTML lint (25 files clean), and legacy Python tests (31 passed); updated documentation and audit reports.",
+      "verification": "npm run test:client (201 passed across 59 suites); npm run test:server:unit (123 passed across 43 suites); npm run test:integration (documented skip when MONGODB_TEST_URI not set); npm run lint:html (25 files clean); pytest legacy tests (31 passed across 4 suites)."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 3",
-      "title": "Seed data and automated tests",
-      "type": "Planned prompt",
-      "prompt": "Add server/scripts/seed.js that creates the demo user, categories, six months of expenses and income, budgets, recurring payments, the three groups with shared expenses, and shopping lists. It must be idempotent and must refuse to run against a database whose name does not end in -dev or -test unless --force is passed. Write Jest + Supertest tests using mongodb-memory-server for auth, ownership checks, CSRF rejection, rate limiting, split validation, the settlement algorithm, budget status, convert-to-expense duplicate prevention and receipt upload validation, covering what the 47 legacy Python tests checked. Add an npm test script and a GitHub Actions workflow that runs lint and tests on every push.",
-      "purpose": "Prove the back end works and keep it working.",
-      "files": [
-        "server/scripts/seed.js",
-        "server/tests/*.test.js",
-        ".github/workflows/ci.yml"
-      ]
-    },
     {
       "stage": "Wrap-up",
       "title": "Remove legacy code, document and deploy",

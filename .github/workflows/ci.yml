@@ -1,0 +1,78 @@
+name: SplitStack CI
+
+on:
+  push:
+    branches:
+      - main
+      - refurbish
+  pull_request:
+    branches:
+      - main
+      - refurbish
+
+jobs:
+  test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })' --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install server dependencies
+        run: npm --prefix server ci
+
+      - name: Install Python test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest werkzeug Flask
+
+      - name: HTML Validation
+        run: npm run lint:html
+
+      - name: Client Unit Tests
+        run: npm run test:client
+
+      - name: Server Unit Tests
+        run: npm run test:server:unit
+
+      - name: Legacy Security & Regression Tests (Python)
+        run: python -m pytest tests/test_security.py tests/test_auth_flow.py tests/test_regression.py tests/test_master.py
+
+      - name: Safe Database Seeding (Dedicated Test Instance)
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/splitstack-test
+          NODE_ENV: test
+        run: npm run seed:test
+
+      - name: Real MongoDB Integration Tests
+        env:
+          MONGODB_TEST_URI: mongodb://127.0.0.1:27017/splitstack-test
+          NODE_ENV: test
+        run: npm run test:integration

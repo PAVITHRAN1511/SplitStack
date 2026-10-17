@@ -6,6 +6,10 @@
 > - Live site (Review 1): https://mahaprabhuk.github.io/SplitStack/ (served from the `gh-pages` branch)
 > - Run the client locally: `npm run client` (opens http://localhost:5500)
 > - Run the Express API server: `npm run server` or `cd server && npm start` (opens http://localhost:3000)
+> - Client unit tests: `npm run test:client` (201 passing tests)
+> - Server unit tests: `npm run test:server:unit` (123 passing tests)
+> - Real MongoDB integration tests: `MONGODB_TEST_URI=mongodb://127.0.0.1:27017/splitstack-test npm run test:integration`
+> - Safe database seeding: `npm run seed` (dev) / `npm run seed:test` (dedicated test database)
 > - Plan: [`docs/REFURBISH_PLAN.md`](docs/REFURBISH_PLAN.md)
 > - Prompt log: [`docs/SplitStack_Prompt_Log.pdf`](docs/SplitStack_Prompt_Log.pdf) / [`.docx`](docs/SplitStack_Prompt_Log.docx)
 > - The original Flask + SQLite version described below is preserved on the [`legacy`](../../tree/legacy) branch

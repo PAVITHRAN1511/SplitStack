@@ -8,6 +8,10 @@
     "server": "node server/src/index.js",
     "test:client": "node --test \"tests/client/**/*.test.mjs\"",
     "test:server": "node --test \"server/tests/**/*.test.js\"",
+    "test:server:unit": "node --test \"server/tests/api.test.js\" \"server/tests/auth.test.js\" \"server/tests/models.test.js\" \"server/tests/receipts.test.js\" \"server/tests/server.test.js\"",
+    "test:integration": "node --test server/tests/integration.test.js",
+    "seed": "node server/scripts/seed.js --dev",
+    "seed:test": "node server/scripts/seed.js --test",
     "lint:html": "html-validate \"client/**/*.html\"",
     "log": "node docs/tools/build-prompt-log.js && python docs/tools/build_prompt_pdf.py"
   },
