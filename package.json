@@ -5,9 +5,11 @@
   "description": "SplitStack - personal & group expense management (HTML/CSS, JavaScript, Node.js, MongoDB)",
   "scripts": {
     "client": "node scripts/serve-client.js",
-    "log": "node docs/tools/build-prompt-log.js && python docs/tools/build_prompt_pdf.py",
+    "server": "node server/src/index.js",
+    "test:client": "node --test \"tests/client/**/*.test.mjs\"",
+    "test:server": "node --test \"server/tests/**/*.test.js\"",
     "lint:html": "html-validate \"client/**/*.html\"",
-    "test:client": "node --test \"tests/client/**/*.test.mjs\""
+    "log": "node docs/tools/build-prompt-log.js && python docs/tools/build_prompt_pdf.py"
   },
   "devDependencies": {
     "docx": "^9.5.1",

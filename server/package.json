@@ -1,0 +1,17 @@
+{
+  "name": "splitstack-server",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SplitStack backend REST API server (Node.js & Express)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test \"tests/**/*.test.js\""
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}

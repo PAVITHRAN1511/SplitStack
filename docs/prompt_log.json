@@ -635,20 +635,57 @@
       ],
       "result": "All 176 client tests passing across 52 test suites; HTML-validate passing on all 25 pages with 0 errors; legacy Python tests passing (test_master.py 100% Master Pass, test_auth_flow.py 8/8 pass, test_security.py 10/10 pass, test_regression.py 12/12 pass); documented QA findings in docs/audit/P8_REVIEW_2_QA_AUDIT.md; added Review 2 JavaScript Concepts & Architecture table to client/README.md.",
       "verification": "npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors); py -3 tests/test_auth_flow.py (8 passed); py -3 tests/test_master.py (8 phases passed); py -3 tests/test_security.py (10 passed); py -3 tests/test_regression.py (12 passed)."
+    },
+    {
+      "id": 38,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Request: proceed with Review 3 Step P9",
+      "type": "User prompt",
+      "prompt": "# P9 — Review 3: Node.js and Express Backend Foundation\n\nBegin phase P9 only for the SplitStack project.\n\n## Repository safety\n- Work only on the refurbish branch.\n- First inspect the branch, working tree, recent commits, package.json, existing client API contract, README files, and current directory structure.\n- Confirm that commit 82b648b is present before proceeding.\n- Do not push to any remote.\n- Do not reset, rebase, amend, or discard changes.\n- Preserve all legacy Flask files and directories, including app.py, config.py, Procfile, requirements.txt, modules/, templates/, static/, database/, ml/, and legacy tests.\n- Preserve all existing docs/audit/ evidence.\n- Do not implement P10–P15 in this phase.\n\n## Objective\nCreate the minimal, maintainable Node.js and Express server foundation that later phases can extend.\n\n## Implementation\n- Establish a clearly separated Node.js server entry point.\n- Configure Express with appropriate JSON parsing, environment-based configuration, and a simple health-check endpoint.\n- Add sensible centralized error handling and a not-found response.\n- Use environment variables for configurable host/port settings; provide a safe example environment file if needed, without real secrets.\n- Keep development configuration separate from production assumptions.\n- Add a basic server test using the repository’s existing test conventions where practical.\n- Document how to install dependencies, configure the environment, start the server, check its health endpoint, and run its tests.\n- Keep the implementation small and consistent with the current project architecture.\n\n## Security and quality\n- Do not hardcode credentials or secrets.\n- Do not log passwords, tokens, or sensitive user data.\n- Do not enable permissive CORS without a demonstrated need; document any origin configuration.\n- Do not claim the server is production-ready.\n- Avoid unrelated frontend changes.\n- Do not connect to MongoDB yet unless an existing project requirement explicitly makes it necessary; database models and connection work belong to P10.\n- Do not implement authentication or REST resource endpoints yet; those belong to P11.\n- Do not implement OCR or receipt file storage; those belong to P12.\n\n## Verification\n- Run the relevant server tests and existing client tests.\n- Run the HTML linter if any frontend-facing files change.\n- Report exact commands, observed outcomes, and any blocked checks.\n- Inspect the complete diff and ensure legacy Flask files remain untouched.\n\n## Documentation and commit\n- Update the appropriate README and prompt log using the established project workflow.\n- Add a P9 audit entry while preserving existing audit files.\n- Stage only reviewed P9 files and intended documentation.\n- Commit only after reviewing the diff and checking for accidental secrets or unrelated changes.\n- Commit message: Review 3: Express server foundation\n- Do not push.\n\n## Final report",
+      "purpose": "Authorize execution of Step P9: Node.js and Express backend foundation.",
+      "files": [],
+      "result": "Authorized Step P9 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 39,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Express server foundation",
+      "type": "Working prompt",
+      "prompt": "Create server/ as a Node.js 20+ project (ES modules) with Express: server/package.json with minimal dependencies (express, dotenv) and scripts start, dev, test; server/src/config.js with environment configuration, default port 3000, host localhost, and validation; server/src/app.js with createApp factory, express.json(limit: 100kb), safe request logging, health-check endpoint GET /api/health returning status, uptime, timestamp, environment, service, version, static client asset serving, catch-all 404 handler returning JSON, and centralized error handling middleware; server/src/index.js entry point with graceful SIGINT/SIGTERM shutdown; server/.env.example with safe configuration template; server/tests/server.test.js with automated tests for health check, 404 handler, JSON parsing, error formatting, and static frontend; server/README.md; add server and test:server scripts to root package.json; document P9 audit in docs/audit/P9_EXPRESS_FOUNDATION_AUDIT.md and update prompt log.",
+      "purpose": "Establish the minimal, maintainable Node.js and Express backend foundation for Review 3.",
+      "files": [
+        "server/package.json",
+        "server/package-lock.json",
+        "server/.env.example",
+        "server/src/config.js",
+        "server/src/app.js",
+        "server/src/index.js",
+        "server/tests/server.test.js",
+        "server/README.md",
+        "package.json",
+        "README.md",
+        "docs/audit/P9_EXPRESS_FOUNDATION_AUDIT.md",
+        "docs/prompt_log.json",
+        "docs/SplitStack_Prompt_Log.docx",
+        "docs/SplitStack_Prompt_Log.pdf"
+      ],
+      "result": "Created clean Express server foundation in server/ with health check at /api/health, centralized 404/error handling, 100kb JSON parsing limit, disabled X-Powered-By header, and static frontend hosting; all 7 server tests passing in node --test; live health check verified; root package.json and README.md updated.",
+      "verification": "npm run test:server (7 passed, 0 failed); npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors); live GET /api/health returned 200 OK with expected JSON payload."
     }
   ],
   "planned": [
     {
       "stage": "Review 3",
-      "title": "Express server and MongoDB connection",
+      "title": "Mongoose data models and MongoDB connection",
       "type": "Planned prompt",
-      "prompt": "Create server/ as a Node.js 20+ project (ES modules) with Express: server/src/app.js (helmet with a Content Security Policy that allows only the CDNs in use, compression, express.json, express-session stored with connect-mongo, express-rate-limit on auth and upload routes, a CSRF token check on state-changing requests, and a central error handler returning JSON {error, fields}), server/src/index.js (connect to MongoDB Atlas with Mongoose using MONGODB_URI from server/.env, then listen), and static serving of client/. Add server/.env.example (MONGODB_URI, SESSION_SECRET of at least 32 characters, PORT) and npm scripts dev (node --watch) and start. Never commit .env.",
-      "purpose": "Start Review 3 with a secure, conventional Express setup.",
+      "prompt": "Connect Express to MongoDB Atlas with Mongoose using MONGODB_URI from server/.env. Design Mongoose schemas with validation and indexes to replace the 15 SQLite tables: User, Category, Expense, Income, Budget, Recurring, Group, SharedExpense, Settlement, ShoppingList, Receipt, and Insight. Add server/src/db.js to handle connection lifecycle and graceful shutdown.",
+      "purpose": "Establish MongoDB connection and Mongoose data models.",
       "files": [
-        "server/package.json",
-        "server/src/app.js",
-        "server/src/index.js",
-        "server/.env.example"
+        "server/src/db.js",
+        "server/src/models/*.js"
       ]
     },
     {

@@ -1,10 +1,11 @@
 # SplitStack - Smart Financial & Group Expense Management
 
 > **Refurbishment in progress (Web Technology course).** SplitStack is being rebuilt in three stages:
-> Review 1 HTML + CSS (**done**, in [`client/`](client/)), Review 2 JavaScript, Review 3 Node.js + MongoDB.
+> Review 1 HTML + CSS (**done**, in [`client/`](client/)), Review 2 JavaScript (**done**), Review 3 Node.js + MongoDB (**in progress**, backend foundation in [`server/`](server/)).
 >
 > - Live site (Review 1): https://mahaprabhuk.github.io/SplitStack/ (served from the `gh-pages` branch)
-> - Run the site locally: `npm install` then `npm run client` and open http://localhost:5500
+> - Run the client locally: `npm run client` (opens http://localhost:5500)
+> - Run the Express API server: `npm run server` or `cd server && npm start` (opens http://localhost:3000)
 > - Plan: [`docs/REFURBISH_PLAN.md`](docs/REFURBISH_PLAN.md)
 > - Prompt log: [`docs/SplitStack_Prompt_Log.pdf`](docs/SplitStack_Prompt_Log.pdf) / [`.docx`](docs/SplitStack_Prompt_Log.docx)
 > - The original Flask + SQLite version described below is preserved on the [`legacy`](../../tree/legacy) branch
