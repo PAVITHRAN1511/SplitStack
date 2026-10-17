@@ -367,7 +367,9 @@ describe('Page Rendering and UI Layer (Step P3)', () => {
       'recurring',
       'settlements',
       'shopping-detail',
-      'shopping'
+      'shopping',
+      'receipt-scan',
+      'receipt-confirm'
     ];
 
     test('every page module exports an init function', async () => {

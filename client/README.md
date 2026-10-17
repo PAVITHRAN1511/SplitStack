@@ -74,6 +74,7 @@ SplitStack's front end uses a modular client data layer in `client/js/data/`:
 | **Recurring** | `listRecurring()`, `createRecurring(data)`, `toggleRecurring(id)`, `removeRecurring(id)` |
 | **Groups & Splitting** | `listGroups()`, `getGroup(id)`, `createGroup(data)`, `addMember(groupId, member)`, `removeMember(groupId, userId)`, `leaveGroup(groupId)`, `listSharedExpenses(groupId)`, `createSharedExpense(groupId, data)`, `getGroupBalances(groupId)`, `getSettlements(groupId)`, `recordSettlement(groupId, data)` |
 | **Shopping Lists** | `listShoppingLists(groupId)`, `getShoppingList(id)`, `createShoppingList(data)`, `updateShoppingList(id, data)`, `removeShoppingList(id)`, `addShoppingItem(listId, item)`, `updateShoppingItem(listId, itemId, data)`, `toggleShoppingItem(listId, itemId)`, `removeShoppingItem(listId, itemId)`, `convertShoppingListToExpense(listId, categoryId)` |
+| **Receipts** | `listReceipts()`, `getReceipt(id)`, `createReceipt(data)` |
 | **Analytics & Insights** | `monthlySummary(monthsBack)`, `byCategory(month, year)`, `forecast()`, `insights()` |
 | **Search & System** | `search(query)`, `resetDemoData()` |
 
@@ -188,4 +189,24 @@ Step P6 introduces comprehensive financial analytics, linear velocity forecastin
 - **Topbar Bell Indicator**: Connects the bell icon to live notifications derived from active insights. Dynamically toggles unread dot indicator and updates `aria-label`.
 - **Accessible Panel**: Toggles an accessible notification list panel with item tones (`danger`, `warning`, `info`, `success`) and timestamps.
 - **Persistence**: Persists individual read states and "Mark all as read" in `user.preferences.readNotifications` through `api.js`.
+
+## Shopping Checklist & Receipt Scanning Preview (Review 2, Step P7)
+
+Step P7 completes the shopping checklist workflow and implements a client-side receipt scanning and review preview:
+
+### 1. Interactive Shopping Checklist (`client/js/pages/shopping-detail.js` & `shopping-form.js`)
+- **Full List Lifecycle**: Create new lists, view checklist items with live progress, edit list metadata (name, budget, group association) via `shopping-form.html?id=...`, and delete lists with `confirmDialog`.
+- **Inline Item Editing**: Directly edit item name, quantity, estimated unit price, and actual price inline within the row without page reloads.
+- **Optimistic State Toggling**: Live status changes update checklist checkboxes and recalculate totals instantly with automatic rollback if the API operation fails.
+- **Destructive Action Guards**: Removing items or deleting lists is guarded by accessible confirmation dialogs (`confirmDialog`).
+- **Duplicate Conversion Prevention**: Lists can only be converted to expenses once. When converted, the list records `convertedExpenseId`, and the convert button is disabled to prevent duplicate expense creation.
+
+### 2. Receipt Scanning Preview & Validation (`client/js/domain/receipt.js`, `receipt-scan.js`, `receipt-confirm.js`)
+- **Client-Side File Validation**: Enforces MIME types (`image/png`, `image/jpeg`, `image/webp`), valid image extensions, and a 5 MB maximum size limit. Malicious filenames are sanitized against path traversal and XSS.
+- **Temporary In-Memory Preview**: Generates object URLs with memory cleanup (`URL.revokeObjectURL`) and supports drag-and-drop file selection with `.is-dragover` styling.
+- **Cancel / Reset Controls**: Allows users to clear the selected receipt image and reset the dropzone anytime.
+- **Honest Client-Side OCR Boundary**: No external OCR calls or fabricated extractions. The UI honestly labels the client preview state, displaying manual review candidate fields and reserving automated Tesseract/server-side OCR for Review 3.
+- **Editable Review Step**: Extracted/candidate fields (merchant, amount in integer paise, date, category, payment method) are fully editable before saving.
+- **Prevention of Accidental Writes**: No expenses or shopping items are created without explicit confirmation by the user. Discarding cleanly removes temporary state and navigates back.
+
 

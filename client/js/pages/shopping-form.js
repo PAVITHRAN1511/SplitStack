@@ -1,10 +1,10 @@
 /**
- * Shopping list creation page module (Review 2, Step P4).
- * Handles creating a personal or group shopping list, validation,
- * budget in integer paise, and redirect to the new list's detail page.
+ * Shopping list form page module (Review 2, Steps P4 & P7).
+ * Handles creating or editing a personal or group shopping list, validation,
+ * budget in integer paise, and redirect to the list's detail page.
  */
 
-import { listGroups, createShoppingList } from '../data/api.js';
+import { listGroups, getShoppingList, createShoppingList, updateShoppingList } from '../data/api.js';
 import { qs, on } from '../core/dom.js';
 import { showToast } from '../ui/toast.js';
 import {
@@ -16,7 +16,7 @@ import {
 } from '../ui/forms.js';
 
 /**
- * Initialize shopping list creation form.
+ * Initialize shopping list form (create or edit).
  */
 export async function init() {
   const form = qs('form.form');
@@ -27,6 +27,10 @@ export async function init() {
 
   if (!form) return;
 
+  const url = new URL(window.location.href);
+  const editId = url.searchParams.get('id');
+  const isEditMode = Boolean(editId);
+
   // Dynamically populate user groups
   try {
     const groups = await listGroups();
@@ -36,6 +40,31 @@ export async function init() {
     }
   } catch (err) {
     console.warn('[SplitStack] Could not load groups for shopping list:', err);
+  }
+
+  // If in edit mode, load existing shopping list and update UI copy
+  if (isEditMode) {
+    const breadcrumbCurrent = qs('.breadcrumbs li[aria-current="page"]');
+    if (breadcrumbCurrent) breadcrumbCurrent.textContent = 'Edit list';
+
+    const h1 = qs('.page-header h1');
+    if (h1) h1.textContent = 'Edit shopping list';
+
+    const p = qs('.page-header p');
+    if (p) p.textContent = 'Update list name, group sharing, or budget.';
+
+    if (submitBtn) submitBtn.textContent = 'Save changes';
+
+    try {
+      const existingList = await getShoppingList(editId);
+      if (nameInput) nameInput.value = existingList.name || '';
+      if (groupSelect) groupSelect.value = existingList.groupId || '';
+      if (budgetInput && existingList.budget > 0) {
+        budgetInput.value = String(existingList.budget / 100);
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to load shopping list', 'danger');
+    }
   }
 
   on(form, 'submit', async (e) => {
@@ -67,20 +96,34 @@ export async function init() {
       return;
     }
 
-    setButtonLoading(submitBtn, true, 'Creating list...');
+    setButtonLoading(submitBtn, true, isEditMode ? 'Saving changes...' : 'Creating list...');
 
     try {
-      const newList = await createShoppingList({
-        name: nameVal,
-        budget: budgetPaise,
-        groupId: groupVal || null
-      });
+      if (isEditMode) {
+        const updated = await updateShoppingList(editId, {
+          name: nameVal,
+          budget: budgetPaise,
+          groupId: groupVal || null
+        });
 
-      showToast(`Shopping list "${newList.name}" created!`, 'success');
+        showToast(`Shopping list "${updated.name}" updated!`, 'success');
 
-      setTimeout(() => {
-        window.location.href = `shopping-detail.html?id=${encodeURIComponent(newList.id)}`;
-      }, 500);
+        setTimeout(() => {
+          window.location.href = `shopping-detail.html?id=${encodeURIComponent(updated.id)}`;
+        }, 500);
+      } else {
+        const newList = await createShoppingList({
+          name: nameVal,
+          budget: budgetPaise,
+          groupId: groupVal || null
+        });
+
+        showToast(`Shopping list "${newList.name}" created!`, 'success');
+
+        setTimeout(() => {
+          window.location.href = `shopping-detail.html?id=${encodeURIComponent(newList.id)}`;
+        }, 500);
+      }
     } catch (err) {
       setButtonLoading(submitBtn, false);
 
@@ -89,7 +132,7 @@ export async function init() {
       } else if (err.field === 'budget') {
         showFieldError(budgetInput, err.message);
       } else {
-        showFieldError(nameInput, err.message || 'Failed to create shopping list');
+        showFieldError(nameInput, err.message || (isEditMode ? 'Failed to update shopping list' : 'Failed to create shopping list'));
       }
       focusFirstInvalid(form);
     }

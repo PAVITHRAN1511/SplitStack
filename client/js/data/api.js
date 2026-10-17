@@ -1564,10 +1564,21 @@ export async function updateShoppingList(id, data) {
   const store = loadStore();
   const user = requireAuth(store);
 
-  const list = store.shoppingLists.find((sl) => sl.id === id && sl.ownerId === user.id);
+  const list = findAccessibleShoppingList(store, id, user);
   if (!list) throw new ApiError('Shopping list not found', { status: 404 });
 
-  Object.assign(list, data, { id, ownerId: user.id });
+  if (data.name !== undefined) {
+    if (!data.name || !data.name.trim()) throw new ApiError('Name is required', { field: 'name' });
+    list.name = data.name.trim();
+  }
+  if (data.budget !== undefined) {
+    const b = Number(data.budget);
+    if (!Number.isFinite(b) || b < 0) throw new ApiError('Budget must be a non-negative number', { field: 'budget' });
+    list.budget = Math.round(b);
+  }
+  if (data.groupId !== undefined) {
+    list.groupId = data.groupId || null;
+  }
   saveStore(store);
   return list;
 }
@@ -1661,7 +1672,36 @@ export async function updateShoppingItem(listId, itemId, data) {
   const item = list.items.find((it) => it.id === itemId);
   if (!item) throw new ApiError('Item not found', { status: 404 });
 
-  Object.assign(item, data, { id: itemId });
+  if (data.name !== undefined) {
+    if (!data.name || !data.name.trim()) throw new ApiError('Item name is required', { field: 'name' });
+    item.name = data.name.trim();
+  }
+  if (data.quantity !== undefined) {
+    const q = parseInt(data.quantity, 10);
+    if (!Number.isFinite(q) || q < 1) throw new ApiError('Quantity must be at least 1', { field: 'quantity' });
+    item.quantity = q;
+  }
+  if (data.estimatedPrice !== undefined) {
+    const p = Number(data.estimatedPrice);
+    if (!Number.isFinite(p) || p < 0) throw new ApiError('Estimated price must be a non-negative amount', { field: 'estimatedPrice' });
+    item.estimatedPrice = Math.round(p);
+  }
+  if (data.actualPrice !== undefined) {
+    if (data.actualPrice === null) {
+      item.actualPrice = null;
+    } else {
+      const a = Number(data.actualPrice);
+      if (!Number.isFinite(a) || a < 0) throw new ApiError('Actual price must be a non-negative amount', { field: 'actualPrice' });
+      item.actualPrice = Math.round(a);
+    }
+  }
+  if (data.purchased !== undefined) {
+    item.purchased = Boolean(data.purchased);
+  }
+  if (data.assignedTo !== undefined) {
+    item.assignedTo = data.assignedTo || null;
+  }
+
   saveStore(store);
   return item;
 }
@@ -1676,10 +1716,13 @@ export async function removeShoppingItem(listId, itemId) {
   const store = loadStore();
   const user = requireAuth(store);
 
-  const list = store.shoppingLists.find((sl) => sl.id === listId && sl.ownerId === user.id);
+  const list = findAccessibleShoppingList(store, listId, user);
   if (!list) throw new ApiError('Shopping list not found', { status: 404 });
 
-  list.items = list.items.filter((it) => it.id !== itemId);
+  const idx = list.items.findIndex((it) => it.id === itemId);
+  if (idx === -1) throw new ApiError('Item not found', { status: 404 });
+
+  list.items.splice(idx, 1);
   saveStore(store);
   return { ok: true };
 }
@@ -1735,6 +1778,74 @@ export async function convertShoppingListToExpense(listId, options = {}) {
   }
 
   return createdExpense;
+}
+
+// =============================================================================
+// RECEIPTS
+// =============================================================================
+
+/**
+ * List receipts for the current user.
+ * @returns {Promise<Object[]>}
+ */
+export async function listReceipts() {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  return (store.receipts || []).filter((r) => r.userId === user.id);
+}
+
+/**
+ * Get a receipt by ID.
+ * @param {string} id
+ * @returns {Promise<Object>}
+ */
+export async function getReceipt(id) {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  const receipt = (store.receipts || []).find((r) => r.id === id && r.userId === user.id);
+  if (!receipt) throw new ApiError('Receipt not found', { status: 404 });
+  return receipt;
+}
+
+/**
+ * Create a receipt record.
+ * @param {Object} data
+ * @returns {Promise<Object>}
+ */
+export async function createReceipt({
+  merchant,
+  amount = 0,
+  date,
+  rawText = '',
+  confidence = null,
+  status = 'pending',
+  imageUrl = ''
+}) {
+  const store = loadStore();
+  const user = requireAuth(store);
+
+  if (!merchant || !merchant.trim()) throw new ApiError('Merchant is required', { field: 'merchant' });
+
+  const newReceipt = {
+    id: generateId(),
+    userId: user.id,
+    merchant: merchant.trim(),
+    date: date || new Date().toISOString().slice(0, 10),
+    amount: Math.max(0, Math.round(Number(amount) || 0)),
+    rawText: rawText || '',
+    confidence: typeof confidence === 'number' ? confidence : null,
+    status: status || 'pending',
+    imageUrl: imageUrl || ''
+  };
+
+  if (!Array.isArray(store.receipts)) {
+    store.receipts = [];
+  }
+  store.receipts.push(newReceipt);
+  saveStore(store);
+  return newReceipt;
 }
 
 // =============================================================================

@@ -78,11 +78,13 @@
         <div class="page-header">
           <div><h1>Monthly groceries</h1><p>Personal list &middot; 9 of 14 items bought</p></div>
           <div class="page-actions">
+            <a class="btn btn-secondary" id="edit-list-btn" href="shopping-form.html?id=shop_1"><i class="fa-solid fa-pen" aria-hidden="true"></i>Edit list</a>
             <form action="expenses.html" method="get"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i>Convert to expense</button></form>
             <form action="shopping.html" method="get"><button class="btn btn-danger" type="submit"><i class="fa-solid fa-trash" aria-hidden="true"></i>Delete list</button></form>
           </div>
         </div>
 
+        <div class="meter mb-4" id="list-progress-meter" style="--fill: var(--success)" role="progressbar" aria-label="Monthly groceries progress" aria-valuemin="0" aria-valuemax="14" aria-valuenow="9"><span style="--value: 64%"></span></div>
         <section class="grid grid-4 mb-4" aria-label="List totals">
           <article class="card stat tone-primary"><div class="stat-top"><h2 class="stat-label">Estimated total</h2></div><p class="stat-value num">₹3,131</p><p class="stat-meta">All 14 items</p></article>
           <article class="card stat tone-info"><div class="stat-top"><h2 class="stat-label">Estimate for bought</h2></div><p class="stat-value num">₹2,171</p><p class="stat-meta">9 items</p></article>

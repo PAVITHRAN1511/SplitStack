@@ -1,14 +1,19 @@
 /**
- * Shopping list detail page module (Review 2, Steps P3 & P4).
+ * Shopping list detail page module (Review 2, Steps P3, P4 & P7).
  * Connects shopping-detail.html to api.js to render items checklist,
- * live toggle purchased status, recompute totals, add items with validation,
- * delete items, delete the list with confirmation, and convert the list to an expense.
+ * optimistic live toggle of purchased status with error rollback,
+ * live recalculation of estimated, actual and variance totals,
+ * inline item editing (name, quantity, est & actual unit prices),
+ * item deletion with confirmDialog, empty state handling,
+ * list editing link, list deletion with confirmDialog,
+ * and duplicate-protected conversion to expense.
  */
 
 import {
   getShoppingList,
   toggleShoppingItem,
   addShoppingItem,
+  updateShoppingItem,
   removeShoppingItem,
   removeShoppingList,
   convertShoppingListToExpense
@@ -27,7 +32,7 @@ import {
 } from '../ui/forms.js';
 
 /**
- * Recompute and update summary stat cards.
+ * Recompute and update summary stat cards and progress meter.
  * @param {Array} items
  */
 function updateTotals(items) {
@@ -44,17 +49,30 @@ function updateTotals(items) {
     if (item.purchased) {
       boughtCount++;
       estimateForBought += est;
-      actuallyPaid += (item.actualPrice || item.estimatedPrice || 0) * qty;
+      actuallyPaid += (item.actualPrice !== null ? item.actualPrice : item.estimatedPrice || 0) * qty;
     }
   }
 
   const variancePaise = actuallyPaid - estimateForBought;
   const isOver = variancePaise > 0;
+  const percent = items.length > 0 ? Math.round((boughtCount / items.length) * 100) : 0;
 
   // Header subtitle
   const headerP = qs('.page-header p');
   if (headerP) {
-    headerP.textContent = `${boughtCount} of ${items.length} items bought`;
+    headerP.textContent = `${boughtCount} of ${items.length} items bought (${percent}%)`;
+  }
+
+  // Progress meter
+  const meter = qs('#list-progress-meter');
+  if (meter) {
+    meter.setAttribute('aria-valuemin', '0');
+    meter.setAttribute('aria-valuemax', String(items.length));
+    meter.setAttribute('aria-valuenow', String(boughtCount));
+    const meterSpan = qs('span', meter);
+    if (meterSpan) {
+      meterSpan.style.setProperty('--value', `${percent}%`);
+    }
   }
 
   // Estimated total card
@@ -89,7 +107,7 @@ function updateTotals(items) {
 }
 
 /**
- * Render items checklist.
+ * Render items checklist with inline editing and confirmation.
  * @param {Object} shoppingList
  * @param {Function} [onRefresh]
  */
@@ -101,67 +119,234 @@ function renderChecklist(shoppingList, onRefresh) {
 
   const items = shoppingList.items || [];
   if (items.length === 0) {
-    ul.appendChild(createEl('li', { className: 'p-4 text-dim text-center', textContent: 'No items in this shopping list.' }));
+    ul.appendChild(
+      createEl('li', { className: 'p-6 text-dim text-center empty-checklist' }, [
+        createEl('i', { className: 'fa-solid fa-cart-shopping text-2xl mb-2', 'aria-hidden': 'true' }),
+        createEl('p', { className: 'fw-600', textContent: 'No items in this shopping list yet.' }),
+        createEl('p', { className: 'text-xs text-dim', textContent: 'Use the "Add an item" form on the right to start building your checklist.' })
+      ])
+    );
     return;
   }
 
   items.forEach((item, index) => {
     const inputId = `item-${item.id || index}`;
+    const li = createEl('li', { className: 'check-item', id: `row-${item.id || index}` });
 
-    const checkbox = createEl('input', {
-      type: 'checkbox',
-      id: inputId,
-      name: 'purchased',
-      value: String(item.id || index),
-      checked: Boolean(item.purchased)
-    });
+    function renderRowView() {
+      clearElement(li);
+      li.className = 'check-item';
 
-    on(checkbox, 'change', async () => {
-      try {
-        const updatedItem = await toggleShoppingItem(shoppingList.id, item.id);
-        item.purchased = updatedItem.purchased;
+      const checkbox = createEl('input', {
+        type: 'checkbox',
+        id: inputId,
+        name: 'purchased',
+        value: String(item.id || index),
+        checked: Boolean(item.purchased)
+      });
+
+      // Optimistic checkbox toggle with rollback on error
+      on(checkbox, 'change', async () => {
+        const prevPurchased = item.purchased;
+        const prevActual = item.actualPrice;
+
+        item.purchased = checkbox.checked;
+        if (item.purchased && item.actualPrice === null) {
+          item.actualPrice = item.estimatedPrice;
+        }
         updateTotals(items);
-      } catch (err) {
-        console.warn('[SplitStack] Error toggling item:', err);
-        checkbox.checked = !checkbox.checked;
-      }
-    });
 
-    const removeBtn = createEl('button', {
-      className: 'icon-btn sm danger hide-sm',
-      type: 'button',
-      'aria-label': `Remove ${item.name}`
-    }, [
-      createEl('i', { className: 'fa-solid fa-xmark', 'aria-hidden': 'true' })
-    ]);
+        try {
+          const updated = await toggleShoppingItem(shoppingList.id, item.id);
+          item.purchased = updated.purchased;
+          item.actualPrice = updated.actualPrice;
+        } catch (err) {
+          item.purchased = prevPurchased;
+          item.actualPrice = prevActual;
+          checkbox.checked = prevPurchased;
+          updateTotals(items);
+          showToast(err.message || 'Failed to update item status', 'danger');
+        }
+      });
 
-    on(removeBtn, 'click', async () => {
-      try {
-        await removeShoppingItem(shoppingList.id, item.id);
-        showToast(`Removed "${item.name}"`, 'info');
-        if (onRefresh) await onRefresh();
-      } catch (err) {
-        showToast(err.message || 'Failed to remove item', 'danger');
-      }
-    });
+      const editBtn = createEl('button', {
+        className: 'icon-btn sm hide-sm',
+        type: 'button',
+        'aria-label': `Edit ${item.name}`,
+        title: `Edit ${item.name}`
+      }, [
+        createEl('i', { className: 'fa-solid fa-pen', 'aria-hidden': 'true' })
+      ]);
 
-    const li = createEl('li', { className: 'check-item' }, [
-      checkbox,
-      createEl('label', { for: inputId }, [
-        createEl('span', { className: 'cell-main', textContent: item.name }),
-        createEl('span', { className: 'cell-sub', textContent: `Qty ${item.quantity || 1}` })
-      ]),
-      createEl('span', {
-        className: 'price num text-dim hide-sm',
-        textContent: formatINR((item.estimatedPrice || 0) * (item.quantity || 1))
-      }),
-      createEl('span', {
-        className: 'price num fw-600',
-        textContent: formatINR((item.actualPrice || item.estimatedPrice || 0) * (item.quantity || 1))
-      }),
-      removeBtn
-    ]);
+      on(editBtn, 'click', () => {
+        renderRowEdit();
+      });
 
+      const removeBtn = createEl('button', {
+        className: 'icon-btn sm danger hide-sm',
+        type: 'button',
+        'aria-label': `Remove ${item.name}`,
+        title: `Remove ${item.name}`
+      }, [
+        createEl('i', { className: 'fa-solid fa-xmark', 'aria-hidden': 'true' })
+      ]);
+
+      on(removeBtn, 'click', async () => {
+        const confirmed = await confirmDialog({
+          title: 'Remove item',
+          message: `Remove "${item.name}" from this shopping list?`,
+          confirmText: 'Remove',
+          danger: true
+        });
+        if (!confirmed) return;
+
+        try {
+          await removeShoppingItem(shoppingList.id, item.id);
+          showToast(`Removed "${item.name}"`, 'info');
+          if (onRefresh) await onRefresh();
+        } catch (err) {
+          showToast(err.message || 'Failed to remove item', 'danger');
+        }
+      });
+
+      const estTotal = (item.estimatedPrice || 0) * (item.quantity || 1);
+      const actualTotal = item.purchased
+        ? (item.actualPrice !== null ? item.actualPrice : item.estimatedPrice || 0) * (item.quantity || 1)
+        : null;
+
+      li.append(
+        checkbox,
+        createEl('label', { for: inputId }, [
+          createEl('span', { className: 'cell-main', textContent: item.name }),
+          createEl('span', { className: 'cell-sub', textContent: `Qty ${item.quantity || 1}` })
+        ]),
+        createEl('span', {
+          className: 'price num text-dim hide-sm',
+          textContent: formatINR(estTotal)
+        }),
+        createEl('span', {
+          className: 'price num fw-600',
+          textContent: actualTotal !== null ? formatINR(actualTotal) : '—'
+        }),
+        createEl('div', { className: 'flex items-center gap-1' }, [editBtn, removeBtn])
+      );
+    }
+
+    function renderRowEdit() {
+      clearElement(li);
+      li.className = 'check-item is-editing';
+
+      const editForm = createEl('form', { className: 'check-item-edit-form' });
+
+      const nameInp = createEl('input', {
+        className: 'input input-sm',
+        type: 'text',
+        value: item.name,
+        required: true,
+        'aria-label': 'Item name'
+      });
+
+      const qtyInp = createEl('input', {
+        className: 'input input-sm',
+        type: 'number',
+        min: '1',
+        step: '1',
+        value: String(item.quantity || 1),
+        required: true,
+        'aria-label': 'Quantity'
+      });
+
+      const estPriceInp = createEl('input', {
+        className: 'input input-sm',
+        type: 'number',
+        min: '0',
+        step: '0.01',
+        value: String(((item.estimatedPrice || 0) / 100).toFixed(2)),
+        'aria-label': 'Estimated unit price'
+      });
+
+      const actualPriceInp = createEl('input', {
+        className: 'input input-sm',
+        type: 'number',
+        min: '0',
+        step: '0.01',
+        placeholder: 'Actual (optional)',
+        value: item.actualPrice !== null ? String((item.actualPrice / 100).toFixed(2)) : '',
+        'aria-label': 'Actual unit price'
+      });
+
+      const saveBtn = createEl('button', {
+        type: 'submit',
+        className: 'btn btn-primary btn-sm'
+      }, [createEl('span', { textContent: 'Save' })]);
+
+      const cancelBtn = createEl('button', {
+        type: 'button',
+        className: 'btn btn-ghost btn-sm'
+      }, [createEl('span', { textContent: 'Cancel' })]);
+
+      on(cancelBtn, 'click', () => {
+        renderRowView();
+      });
+
+      on(editForm, 'submit', async (e) => {
+        e.preventDefault();
+        const newName = nameInp.value.trim();
+        if (!newName) {
+          showToast('Item name is required', 'warning');
+          nameInp.focus();
+          return;
+        }
+
+        const newQty = parseInt(qtyInp.value, 10) || 1;
+        let newEstPaise = 0;
+        let newActualPaise = null;
+
+        try {
+          if (estPriceInp.value.trim()) {
+            newEstPaise = rupeesToPaise(estPriceInp.value.trim());
+          }
+          if (actualPriceInp.value.trim()) {
+            newActualPaise = rupeesToPaise(actualPriceInp.value.trim());
+          }
+        } catch (err) {
+          showToast(err.message, 'danger');
+          return;
+        }
+
+        setButtonLoading(saveBtn, true, 'Saving...');
+
+        try {
+          const updated = await updateShoppingItem(shoppingList.id, item.id, {
+            name: newName,
+            quantity: newQty,
+            estimatedPrice: newEstPaise,
+            actualPrice: newActualPaise
+          });
+
+          Object.assign(item, updated);
+          showToast(`Updated "${item.name}"`, 'success');
+          updateTotals(items);
+          renderRowView();
+        } catch (err) {
+          setButtonLoading(saveBtn, false);
+          showToast(err.message || 'Failed to update item', 'danger');
+        }
+      });
+
+      editForm.append(
+        nameInp,
+        qtyInp,
+        estPriceInp,
+        actualPriceInp,
+        createEl('div', { className: 'flex gap-1' }, [saveBtn, cancelBtn])
+      );
+
+      li.appendChild(editForm);
+      nameInp.focus();
+    }
+
+    renderRowView();
     ul.appendChild(li);
   });
 }
@@ -179,6 +364,31 @@ async function loadAndRenderShoppingList(listId) {
 
   const h1 = qs('.page-header h1');
   if (h1) h1.textContent = shoppingList.name;
+
+  // Ensure "Edit list" button link points to shopping-form with id
+  const editListBtn = qs('#edit-list-btn') || qs('.page-actions a.btn-secondary');
+  if (editListBtn) {
+    editListBtn.href = `shopping-form.html?id=${encodeURIComponent(listId)}`;
+  }
+
+  // Handle converted expense state
+  const convertBtn = qs('.page-actions form[action="expenses.html"] button');
+  if (convertBtn) {
+    if (shoppingList.convertedExpenseId) {
+      convertBtn.disabled = true;
+      convertBtn.className = 'btn btn-secondary';
+      convertBtn.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i> Converted to expense';
+      convertBtn.title = 'This shopping list has already been converted to an expense';
+    } else if (!shoppingList.items || shoppingList.items.length === 0) {
+      convertBtn.disabled = true;
+      convertBtn.title = 'Add items before converting to expense';
+    } else {
+      convertBtn.disabled = false;
+      convertBtn.className = 'btn btn-primary';
+      convertBtn.innerHTML = '<i class="fa-solid fa-file-invoice" aria-hidden="true"></i> Convert to expense';
+      convertBtn.title = '';
+    }
+  }
 
   renderChecklist(shoppingList, () => loadAndRenderShoppingList(listId));
   updateTotals(shoppingList.items || []);
@@ -263,6 +473,12 @@ export async function init() {
     if (convertForm) {
       on(convertForm, 'submit', async (e) => {
         e.preventDefault();
+
+        if (shoppingList.convertedExpenseId) {
+          showToast('This shopping list has already been converted to an expense.', 'info');
+          return;
+        }
+
         const confirmed = await confirmDialog({
           title: 'Convert to expense',
           message: 'Convert purchased items from this shopping list into an expense record?',

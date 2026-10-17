@@ -568,21 +568,46 @@
       ],
       "result": "Created forecast.js domain module with daily velocity model, data sufficiency threshold (>= 3 transactions), and budget risk classification; created insights.js domain module with deterministic budget alerts, month-over-month category trend tracking (>= 20%), upcoming recurring bills (next 7 days), and group balance alerts; created charts.js with Chart.js 4 dynamic loader, token palette extraction via getComputedStyle, theme observer, canvas aria-label, and CSS chart fallbacks; created search.js with 200ms debounce, WAI-ARIA combobox/listbox pattern, and keyboard navigation across expenses, income, groups, and shopping lists; created notifications.js with topbar bell badge and dropdown panel with read-state persistence in user preferences; updated dashboard.js, analytics.js, budgets.js, and app.js; added test:client script to package.json; added 41 new automated tests.",
       "verification": "145 total client tests passing across 7 test suites (data-layer.test.mjs, render.test.mjs, forms.test.mjs, splits-settle.test.mjs, forecast.test.mjs, insights.test.mjs, search-notifications.test.mjs); npm run lint:html passing with 0 errors across 25 HTML files."
+    },
+    {
+      "id": 34,
+      "date": "2026-10-17",
+      "stage": "Review 2",
+      "title": "Request: proceed with Review 2 Step P7",
+      "type": "User prompt",
+      "prompt": "# SplitStack — P7: Shopping Checklist & Receipt Scanning Preview\n\nYou are working on the existing SplitStack repository in VS Code using Antigravity.\n\n## Objective\n\nComplete **P7 only** from the SplitStack roadmap: implement and test the shopping checklist experience and receipt scanning preview, building on the existing P1–P6 implementation.\n\nDo not start P8 or any later phase. Finish P7 end-to-end, run the relevant tests, update the project logs, and create a local Git commit only after verification succeeds.\n\n1. Safety checks before editing\n2. Inspect the existing P7-related implementation\n3. Shopping checklist functionality\n4. Receipt scanning preview\n5. Security and data integrity\n6. Tests\n7. Verification\n8. Documentation and prompt log\n9. Review and local commit\n10. GitHub restrictions\n11. Final report",
+      "purpose": "Authorize execution of Step P7: Shopping Checklist & Receipt Scanning Preview.",
+      "files": [],
+      "result": "Authorized Step P7 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 35,
+      "date": "2026-10-17",
+      "stage": "Review 2",
+      "title": "Shopping checklist and receipt scan preview",
+      "type": "Working prompt",
+      "prompt": "Complete the shopping checklist experience and client-side receipt scanning preview: enable shopping list create/edit/delete, item CRUD, inline item editing (name, quantity, estimated and actual unit price), optimistic checkbox toggling with rollback on error, confirmation dialogs for item removal and list deletion, progress calculation, and duplicate-protected conversion to expense. Implement client-side receipt scanning preview: drag & drop dropzone with .is-dragover styling, file validation (PNG, JPEG, WEBP <= 5 MB), in-memory object URL preview with revokeObjectURL cleanup, cancel/reset option, honest OCR status notice (client preview mode with automated OCR deferred to Review 3), candidate receipt parsing, and editable review step with Discard and Confirm-and-save to expense.",
+      "purpose": "Deliver the shopping checklist lifecycle and client-side receipt scanning preview within Review 2.",
+      "files": [
+        "client/js/domain/receipt.js",
+        "client/js/pages/receipt-scan.js",
+        "client/js/pages/receipt-confirm.js",
+        "client/js/pages/shopping-form.js",
+        "client/js/pages/shopping-detail.js",
+        "client/pages/shopping-detail.html",
+        "client/js/data/api.js",
+        "client/css/components.css",
+        "package.json",
+        "tests/client/shopping-receipt.test.mjs",
+        "tests/client/render.test.mjs",
+        "client/README.md"
+      ],
+      "result": "Created domain module receipt.js with file validation (MIME, extension, 5 MB limit), formatFileSize, sanitizeReceiptFilename, candidate text parsing (merchant, date, amountPaise), and honest OCR availability check; created receipt-scan.js with drag & drop, safe object URL preview, metadata box, cancel/reset, and session transition; created receipt-confirm.js with preview rendering, honest OCR status alert, editable review form, Discard handler, and saving to expense & receipt collections; updated shopping-form.js to support both create and edit modes; updated shopping-detail.js with inline item editing, optimistic checklist toggling with error rollback, confirmDialog on item removal, and duplicate conversion guard; updated shopping-detail.html with Edit list button and progress meter; updated api.js with enhanced shopping validation and listReceipts, getReceipt, createReceipt methods; added 31 new automated tests in shopping-receipt.test.mjs.",
+      "verification": "176 total client tests passing across 8 test suites (data-layer.test.mjs, render.test.mjs, forms.test.mjs, splits-settle.test.mjs, forecast.test.mjs, insights.test.mjs, search-notifications.test.mjs, shopping-receipt.test.mjs); npm run lint:html passing with 0 errors across 25 HTML files."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 2",
-      "title": "Shopping checklist and receipt scan preview",
-      "type": "Planned prompt",
-      "prompt": "Make the shopping checklist toggle items with optimistic UI, edit actual prices inline, recompute the estimated, actual and variance totals live, and convert the list to an expense only once (prevent duplicates). On the receipt scan page add drag-and-drop with dragenter/dragleave styling, client-side checks (PNG, JPEG or WEBP, up to 5 MB) and an image preview via URL.createObjectURL. Until the backend exists, run OCR in the browser with tesseract.js from a pinned CDN, parse the merchant, date and total with regular expressions (prefer the line containing TOTAL), show progress, and pre-fill the confirm form.",
-      "purpose": "Complete the remaining interactive flows.",
-      "files": [
-        "client/js/pages/shopping-detail.js",
-        "client/js/pages/receipt-scan.js",
-        "client/js/domain/receipt-parser.js"
-      ]
-    },
     {
       "stage": "Review 2",
       "title": "Review 2 QA, log and commit",
