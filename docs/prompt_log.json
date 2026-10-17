@@ -605,21 +605,39 @@
       ],
       "result": "Created domain module receipt.js with file validation (MIME, extension, 5 MB limit), formatFileSize, sanitizeReceiptFilename, candidate text parsing (merchant, date, amountPaise), and honest OCR availability check; created receipt-scan.js with drag & drop, safe object URL preview, metadata box, cancel/reset, and session transition; created receipt-confirm.js with preview rendering, honest OCR status alert, editable review form, Discard handler, and saving to expense & receipt collections; updated shopping-form.js to support both create and edit modes; updated shopping-detail.js with inline item editing, optimistic checklist toggling with error rollback, confirmDialog on item removal, and duplicate conversion guard; updated shopping-detail.html with Edit list button and progress meter; updated api.js with enhanced shopping validation and listReceipts, getReceipt, createReceipt methods; added 31 new automated tests in shopping-receipt.test.mjs.",
       "verification": "176 total client tests passing across 8 test suites (data-layer.test.mjs, render.test.mjs, forms.test.mjs, splits-settle.test.mjs, forecast.test.mjs, insights.test.mjs, search-notifications.test.mjs, shopping-receipt.test.mjs); npm run lint:html passing with 0 errors across 25 HTML files."
+    },
+    {
+      "id": 36,
+      "date": "2026-10-17",
+      "stage": "Review 2",
+      "title": "Request: proceed with Review 2 Step P8",
+      "type": "User prompt",
+      "prompt": "# P8 — Review 2: QA, Final Audit, and Commit\n\nContinue the SplitStack project from the current refurbish branch. P1–P7 are reported complete. This phase is P8 only.\n\n## 1. Safety and repository rules\n- Work only on the refurbish branch.\n- First inspect git status, git branch --show-current, git log, and the latest commit.\n- Do not switch branches, reset, rebase, amend existing commits, or discard changes.\n- Preserve the untracked docs/audit/ directory and all of its contents. Inspect it before making changes; never delete or overwrite existing audit evidence without a clear reason.\n- Preserve every legacy Flask file and directory, including app.py, config.py, Procfile, requirements.txt, modules/, templates/, static/, database/, ml/, and legacy tests.\n- Do not start P9 or implement Express, MongoDB, Mongoose, authentication, server APIs, or server OCR.\n- Do not push to any remote.\n- Do not install dependencies or change lockfiles unless strictly necessary and explicitly justified.\n- Do not claim a test or browser check passed unless you actually ran it and observed the result.\n\n## 2. Audit the completed work\nReview the current implementation and existing tests for P1–P7, especially:\n- Module architecture and application shell.\n- Data persistence, recovery, and logout behavior.\n- Rendering, forms, validation, and CRUD operations.\n- Group expense splitting and debt simplification.\n- Analytics, charts, budgets, forecasts, insights, search, and notifications.\n- Shopping checklist interactions and receipt-upload preview/review flow.\n- API/data-layer contracts, error handling, and regression risks.\n- Security, accessibility, and responsive behavior where applicable.\n- Preservation of the legacy Flask application.\n\n## 3. Run verification\nInspect package.json first and use the existing scripts. Run the relevant checks, including:\n- npm run test:client\n- npm run lint:html\n- Legacy Python tests, including tests/test_auth_flow.py, using the project's existing environment and configuration.\n\n## 4. Fix issues carefully\n\n## 5. Documentation and audit evidence\n\n## 6. Commit criteria\nUse the commit message: Review 2: QA audit and regression verification\nDo not push.\n\n## 7. Final report",
+      "purpose": "Authorize execution of Step P8: Review 2 QA audit, full regression verification, documentation, and checkpoint commit.",
+      "files": [],
+      "result": "Authorized Step P8 implementation and audit.",
+      "verification": "-"
+    },
+    {
+      "id": 37,
+      "date": "2026-10-17",
+      "stage": "Review 2",
+      "title": "Review 2 QA, final audit and regression verification",
+      "type": "Working prompt",
+      "prompt": "Conduct comprehensive QA audit across completed Review 2 steps P1–P7: verify module architecture and application shell; verify data persistence, recovery, and logout behavior; verify rendering, forms, validation, and CRUD operations; verify group splitting and debt simplification; verify analytics, charts, budgets, forecasts, insights, search, and notifications; verify shopping checklist interactions and receipt-upload preview/review flow; verify API/data-layer contracts, error handling, and regression risks; verify security, accessibility, and responsive behavior; verify preservation of the legacy Flask application. Run automated client test suite, HTML linter, legacy Python test suite, document findings in docs/audit/P8_REVIEW_2_QA_AUDIT.md, update client/README.md with JavaScript architecture and concepts summary, update prompt logs, and commit with message 'Review 2: QA audit and regression verification'.",
+      "purpose": "Close Review 2 with comprehensive evidence, complete test execution results, architectural review, and regression verification.",
+      "files": [
+        "client/README.md",
+        "docs/audit/P8_REVIEW_2_QA_AUDIT.md",
+        "docs/prompt_log.json",
+        "docs/SplitStack_Prompt_Log.docx",
+        "docs/SplitStack_Prompt_Log.pdf"
+      ],
+      "result": "All 176 client tests passing across 52 test suites; HTML-validate passing on all 25 pages with 0 errors; legacy Python tests passing (test_master.py 100% Master Pass, test_auth_flow.py 8/8 pass, test_security.py 10/10 pass, test_regression.py 12/12 pass); documented QA findings in docs/audit/P8_REVIEW_2_QA_AUDIT.md; added Review 2 JavaScript Concepts & Architecture table to client/README.md.",
+      "verification": "npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors); py -3 tests/test_auth_flow.py (8 passed); py -3 tests/test_master.py (8 phases passed); py -3 tests/test_security.py (10 passed); py -3 tests/test_regression.py (12 passed)."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 2",
-      "title": "Review 2 QA, log and commit",
-      "type": "Planned prompt",
-      "prompt": "Run ESLint (recommended rules, browser globals, ES2023 modules) over client/js and fix every finding; run the domain unit tests; test every page manually at 1366px and 375px in dark and light themes, using only the keyboard, and with JavaScript disabled (pages must still show their static content). Update client/README.md with the JavaScript architecture and a table of the JS concepts used and where. Add each step to docs/prompt_log.json, rebuild the Word and PDF logs, and commit \"Review 2\".",
-      "purpose": "Close Review 2 with evidence.",
-      "files": [
-        "eslint.config.js",
-        "client/README.md",
-        "docs/*"
-      ]
-    },
     {
       "stage": "Review 3",
       "title": "Express server and MongoDB connection",

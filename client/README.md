@@ -50,10 +50,10 @@ assets/               favicon and the sample receipt image
 
 ```bash
 npm run lint:html
-node --test tests/client/data-layer.test.mjs tests/client/render.test.mjs
+npm run test:client
 ```
 
-All 25 pages validate with zero errors (config in `.htmlvalidate.json`). Text colours meet WCAG AA contrast. All 47 client unit and integration tests pass.
+All 25 pages validate with zero errors (config in `.htmlvalidate.json`). Text colours meet WCAG AA contrast (minimum 4.5:1). All 176 client unit and integration tests pass across 52 suites.
 
 ## Data layer (Review 2, Step P2)
 
@@ -209,4 +209,23 @@ Step P7 completes the shopping checklist workflow and implements a client-side r
 - **Editable Review Step**: Extracted/candidate fields (merchant, amount in integer paise, date, category, payment method) are fully editable before saving.
 - **Prevention of Accidental Writes**: No expenses or shopping items are created without explicit confirmation by the user. Discarding cleanly removes temporary state and navigates back.
 
+## Review 2 JavaScript Concepts & Architecture Summary
 
+| JavaScript Concept | Implementation in SplitStack | Key Module(s) |
+|---|---|---|
+| **ES Modules (`import` / `export`)** | Native browser module system with dynamic module loading (`import()`) keyed by `body[data-page]`. | `client/js/app.js`, `client/js/data/api.js` |
+| **DOM Traversal & Manipulation** | Safe element creation (`createEl`), attribute management, and safe string rendering using `textContent` (zero `innerHTML` injection). | `client/js/core/dom.js`, `client/js/core/render.js` |
+| **Event Handling & Delegation** | Centralized event listener registration and hierarchical event delegation for dynamic tables and checklists. | `client/js/core/dom.js`, `client/js/pages/shopping-detail.js` |
+| **Asynchronous Programming** | Universal `async`/`await` patterns, Promise-wrapped data interfaces, error mapping, and optimistic UI updates with automatic error rollback. | `client/js/data/api.js`, `client/js/pages/*.js` |
+| **Constraint Validation API** | Field validation using native HTML5 constraint validation (`checkValidity`, `:user-invalid`), custom rules, and ARIA accessibility error linking (`aria-describedby`, `aria-invalid`). | `client/js/ui/forms.js` |
+| **Accessible Dialog & Focus Trapping** | Native `<dialog>` modal element (`showModal`, `close`), keyboard focus trapping in mobile drawer, and focus restoration to trigger elements. | `client/js/ui/confirm.js`, `client/js/ui/nav.js` |
+| **Internationalization (Intl API)** | Standardized Indian Rupee formatting via `Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })` and localized date string formatting. | `client/js/core/format.js` |
+| **Storage & State Persistence** | Versioned collection persistence in `localStorage` under `splitstack:v1`, resilient to private browsing (in-memory fallback) and auto-recovering from corrupted payloads. | `client/js/data/store.js` |
+| **Web Cryptography API** | Standard UUID generation (`crypto.randomUUID`) and cryptographic hashing (`crypto.subtle.digest('SHA-256')`) with random salts for client demo authentication. | `client/js/data/store.js`, `client/js/data/api.js` |
+| **URL State & Query String Sync** | Deep-linkable UI states via `URLSearchParams` and `history.pushState` for filtering, pagination, and cross-page entity references (`?id=...`, `?groupId=...`). | `client/js/pages/expenses.js`, `client/js/pages/group-detail.js` |
+| **MutationObserver & Dynamic Themes** | Real-time observation of `<html data-theme>` attribute modifications to synchronize canvas chart palettes and component theming without page reloads. | `client/js/ui/charts.js`, `client/js/ui/theme.js` |
+| **Drag & Drop API** | HTML5 drag-and-drop dropzone with `dragenter`, `dragover`, `dragleave`, and `drop` event listeners and `.is-dragover` styling. | `client/js/pages/receipt-scan.js` |
+| **File API & In-Memory Previews** | Client-side MIME and size validation, in-memory object URL rendering via `URL.createObjectURL`, and memory cleanup via `URL.revokeObjectURL`. | `client/js/domain/receipt.js`, `client/js/pages/receipt-scan.js` |
+| **Algorithmic Graph Simplification** | Greedy minimum-cash-flow algorithm reducing $O(N^2)$ circular group debts into at most $N-1$ direct transfers while preserving zero-sum balance conservation. | `client/js/domain/settle.js` |
+| **Statistical Forecasting Model** | Linear daily velocity spending projection with explicit minimum transaction data-sufficiency gating ($\ge 3$ transactions) and calendar-boundary safety. | `client/js/domain/forecast.js` |
+| **WAI-ARIA Combobox & Listbox** | Accessible live-search pattern (`role="combobox"`, `role="listbox"`, `aria-activedescendant`) with 200ms input debouncing and full keyboard navigation. | `client/js/ui/search.js` |
