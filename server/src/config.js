@@ -52,6 +52,10 @@ export const config = {
   cookieSecret: process.env.COOKIE_SECRET || 'splitstack-cookie-secret-dev',
   bcryptRounds: 12,
   clientDir: path.resolve(__dirname, '../../client'),
+  maxReceiptSizeBytes: parseInt(process.env.MAX_RECEIPT_SIZE_BYTES, 10) || 5 * 1024 * 1024,
+  ocrEnabled: process.env.OCR_ENABLED !== 'false',
+  ocrLanguage: process.env.OCR_LANGUAGE || 'eng',
+  uploadTempDir: path.resolve(__dirname, '../uploads/temp'),
 };
 
 export default config;

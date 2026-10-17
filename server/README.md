@@ -1,10 +1,10 @@
 # SplitStack Backend Server
 
-Node.js, Express, and MongoDB backend for SplitStack (**Review 3, Steps P9, P10, and P11**).
+Node.js, Express, and MongoDB backend for SplitStack (**Review 3, Steps P9, P10, P11, and P12**).
 
 ## Overview
 
-The server provides the complete REST API, authentication layer, and data persistence foundation for SplitStack:
+The server provides the complete REST API, authentication layer, file storage, and data persistence foundation for SplitStack:
 - **ES Module Architecture**: Native ES modules throughout (`"type": "module"`).
 - **Express Server**: Configured with JSON body parsing (100kb limit), cookie parsing, static client hosting, health checks, 404 handler, and centralized error handling.
 - **Authentication & Security (Step P11)**:
@@ -13,17 +13,28 @@ The server provides the complete REST API, authentication layer, and data persis
   - **Account Enumeration Defense**: Generic login error messages prevent attackers from discovering whether an email exists.
   - **Rate Limiting**: Sliding-window in-memory rate limiter protecting sensitive authentication endpoints against brute-force attempts.
   - **User Isolation & Ownership**: Authorization middleware (`requireAuth`) derives authenticated identity strictly from verified token claims and strictly isolates data across users and groups.
+- **Secure Receipt Upload & Binary Validation (Step P12)**:
+  - **Multipart Parsing**: Multer middleware with memory buffering and a conservative 5 MB file size limit (`MAX_RECEIPT_SIZE_BYTES`).
+  - **Deep Content Inspection**: Binary magic byte verification (PNG `89 50 4E 47`, JPEG `FF D8 FF`, WEBP `RIFF`+`WEBP`). Client-supplied MIME types and extensions are treated as untrusted hints; spoofed files are rejected with 400 Bad Request.
+  - **Server-Controlled Unique Identifiers**: Storage keys are generated as `receipt_${timestamp}_${randomUUID}.${verifiedExt}`, completely neutralizing path traversal and file overwrite attacks.
+  - **GridFS Binary Storage**: Durable image storage backed by MongoDB GridFS (`receipts` bucket) with streaming retrieval and in-memory fallback for automated testing.
+  - **Compensating Cleanup**: Automatic deletion of stored image binaries if database metadata persistence or OCR processing fails, preventing orphaned storage leaks.
+- **Server-Side OCR Pipeline (Step P12)**:
+  - **Tesseract.js Engine**: Optical character recognition performed server-side on validated image buffers with configurable language (`OCR_LANGUAGE`, default `eng`).
+  - **Domain Candidate Parsing**: Best-effort extraction of merchant name, transaction date, total amount in integer paise, and confidence score.
+  - **Untrusted Suggestion Model**: OCR outputs are strictly treated as draft candidates. No expense is created until the user explicitly reviews and confirms via `POST /api/receipts/:id/confirm`.
+  - **Duplicate Protection**: Receipts are marked `status: 'confirmed'`, rejecting duplicate expense conversion with 409 Conflict.
 - **MongoDB Connection Management**: Dedicated connection module (`server/src/db.js`) reading `MONGODB_URI` with credential sanitization, connection event logging, and graceful shutdown.
 - **Mongoose Data Models**: 12 fully typed, normalized schemas matching the SplitStack domain with integer-paise monetary arithmetic, embedding optimizations, and strict validation.
 - **Shared Domain Algorithms**: Direct server reuse of authoritative client algorithms for equal splitting, custom shares validation, net balance calculation, and greedy debt simplification.
-- **Automated Tests**: Comprehensive test suites (88 tests across 33 suites) covering health check, 404/error handling, Mongoose models, authentication, security rate limiting, parameter validation, and REST API ownership isolation.
+- **Automated Tests**: Comprehensive test suites (123 tests across 43 suites) covering health check, 404/error handling, Mongoose models, authentication, security rate limiting, parameter validation, REST API ownership isolation, receipt uploads, magic byte validation, storage lifecycle, and OCR processing.
 
 ## Directory Structure
 
 ```
 server/
 ├── .env.example            # Example environment configuration template
-├── package.json            # Server package manifest (dependencies: express, mongoose, bcryptjs, jsonwebtoken, cookie-parser, dotenv)
+├── package.json            # Server package manifest (dependencies: express, mongoose, bcryptjs, jsonwebtoken, cookie-parser, multer, tesseract.js, dotenv)
 ├── package-lock.json       # Dependency lockfile
 ├── README.md               # Server documentation
 ├── src/
@@ -34,13 +45,14 @@ server/
 │   ├── middleware/
 │   │   ├── auth.js         # JWT verification, cookie extraction, requireAuth / optionalAuth
 │   │   ├── rateLimit.js    # In-memory sliding-window rate limiter
+│   │   ├── upload.js       # Multer multipart parsing & magic byte content inspection (P12)
 │   │   └── validate.js     # ObjectId validation and positive/non-negative paise checks
 │   ├── models/             # Mongoose domain models
 │   │   ├── index.js        # Model re-exports
 │   │   ├── validators.js   # Shared validators (integer paise, RFC email)
 │   │   ├── User.js         # User credentials, profile, preferences
 │   │   ├── Category.js     # Expense/income categories (personal & system)
-│   │   ├── Expense.js      # Personal expense records
+│   │   ├── Expense.js      # Personal expense records (with optional receipt link)
 │   │   ├── Income.js       # Personal income records
 │   │   ├── Budget.js       # Overall and category monthly budget limits
 │   │   ├── Recurring.js    # Subscriptions and recurring payments
@@ -48,7 +60,7 @@ server/
 │   │   ├── SharedExpense.js# Group expenses with embedded member shares
 │   │   ├── Settlement.js   # Direct debt settlement transactions
 │   │   ├── ShoppingList.js # Lists with embedded checklist items
-│   │   ├── Receipt.js      # Receipt uploads & OCR extraction metadata
+│   │   ├── Receipt.js      # Receipt uploads & OCR extraction metadata (P10/P12)
 │   │   └── Insight.js      # Spending alerts & deterministic insights
 │   ├── routes/             # REST API resource routes
 │   │   ├── index.js        # Aggregator mounting sub-routers onto /api
@@ -63,9 +75,11 @@ server/
 │   │   ├── analytics.js    # /api/analytics (monthly, categories, forecast, insights)
 │   │   ├── notifications.js# /api/notifications (list, mark-read, mark-all-read)
 │   │   ├── search.js       # /api/search (cross-collection keyword search)
-│   │   └── receipts.js     # /api/receipts (metadata listing and retrieval)
+│   │   └── receipts.js     # /api/receipts (upload, OCR, stream image, confirm, delete)
 │   ├── services/
-│   │   └── authService.js  # Password hashing, token creation, registration, login
+│   │   ├── authService.js  # Password hashing, token creation, registration, login
+│   │   ├── storageService.js # GridFS & in-memory image storage lifecycle (P12)
+│   │   └── ocrService.js   # Tesseract.js OCR execution and candidate extraction (P12)
 │   └── utils/
 │       ├── domain.js       # Re-exports shared client domain algorithms
 │       └── errors.js       # Standard HTTP error classes
@@ -73,7 +87,8 @@ server/
     ├── server.test.js      # Express server foundation & error tests
     ├── models.test.js      # Mongoose schema validation & connection tests
     ├── auth.test.js        # Authentication, JWT, bcrypt, and rate limiting tests
-    └── api.test.js         # REST API authorization, ownership, and validation tests
+    ├── api.test.js         # REST API authorization, ownership, and validation tests
+    └── receipts.test.js    # Receipt upload, magic bytes, storage, and OCR tests (P12)
 ```
 
 ## Prerequisites
@@ -111,6 +126,10 @@ npm install
 | `JWT_SECRET` | `string` | _(dev default)_ | Cryptographic secret for signing JWT tokens (min 32 chars in production) |
 | `JWT_EXPIRES_IN` | `string` | `7d` | Token lifetime (e.g. `24h`, `7d`) |
 | `COOKIE_SECRET` | `string` | _(dev default)_ | Secret for cookie parsing and tamper protection |
+| `MAX_RECEIPT_SIZE_BYTES` | `number` | `5242880` (5 MB) | Maximum accepted receipt image size in bytes |
+| `OCR_ENABLED` | `boolean` | `true` | Enable/disable server-side Tesseract.js OCR processing |
+| `OCR_LANGUAGE` | `string` | `eng` | Tesseract.js language code (e.g. `eng`) |
+| `UPLOAD_TEMP_DIR` | `string` | `uploads/temp` | Temporary staging directory for file operations |
 
 > **Security Note:** Never commit `.env` or real database credentials to version control. The file is listed in `.gitignore`. The connection manager strictly masks credentials when logging.
 
@@ -183,8 +202,13 @@ All protected endpoints require either an `Authorization: Bearer <token>` header
 | **Notifications** | `PATCH` | `/api/notifications/:id/read` | Mark individual notification as read | Required |
 | **Notifications** | `POST` | `/api/notifications/mark-all-read` | Mark all notifications as read | Required |
 | **Search** | `GET` | `/api/search` | Multi-collection search across expenses, income, groups, lists | Required |
-| **Receipts** | `GET` | `/api/receipts` | List user receipts metadata | Required |
+| **Receipts** | `POST` | `/api/receipts/upload` | Multipart receipt upload & server-side OCR candidate extraction | Required |
+| **Receipts** | `POST` | `/api/receipts` | Alias for receipt upload endpoint | Required |
+| **Receipts** | `GET` | `/api/receipts` | List receipts uploaded by authenticated user | Required |
 | **Receipts** | `GET` | `/api/receipts/:id` | Get receipt metadata (ownership enforced) | Required |
+| **Receipts** | `GET` | `/api/receipts/:id/image` | Stream authorized receipt binary (ownership enforced) | Required |
+| **Receipts** | `POST` | `/api/receipts/:id/confirm` | Confirm draft receipt into an expense (duplicate protected, 409) | Required |
+| **Receipts** | `DELETE` | `/api/receipts/:id` | Delete receipt metadata and remove binary from GridFS | Required |
 
 ## Running Tests
 
@@ -200,14 +224,14 @@ Or from the repository root:
 npm run test:server
 ```
 
-Current test coverage: **88 passing tests across 33 suites** (0 failures).
+Current test coverage: **123 passing tests across 43 suites** (0 failures).
 
 ## Roadmap Status
 
 - **P9 (Complete):** Express server foundation, health check, 404/error handling, and test suite.
 - **P10 (Complete):** MongoDB connection lifecycle & 12 Mongoose data models with integer-paise validation.
 - **P11 (Complete):** Authentication routes (`/api/auth`), JWT & cookie session management, bcrypt hashing, rate limiting, and REST resource controllers for all core SplitStack entities.
-- **P12 (Next):** Receipt upload and server-side OCR processing pipeline with persistent storage.
-- **P13:** Client data layer migration from `localStorage` to `/api` `fetch()`.
+- **P12 (Complete):** Receipt upload and server-side OCR processing pipeline with persistent GridFS storage, magic byte verification, and candidate confirmation.
+- **P13 (Next):** Client data layer migration from `localStorage` to `/api` `fetch()`.
 - **P14:** End-to-end integration tests & CI automation.
 - **P15:** Final documentation, deployment manifests & cleanup.

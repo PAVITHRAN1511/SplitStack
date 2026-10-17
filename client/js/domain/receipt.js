@@ -167,9 +167,10 @@ export function parseCandidateReceipt(rawText) {
     }
   }
 
-  // Total amount: look for TOTAL line
+  // Total amount: prioritize explicit TOTAL line before generic currency prefix
   let amountPaise = 0;
-  const totalLineMatch = rawText.match(/(?:TOTAL|Total|Rs\.?|INR)\s*:?\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  const explicitTotalMatch = rawText.match(/(?:TOTAL|Total|Grand Total)\s*:?\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  const totalLineMatch = explicitTotalMatch || rawText.match(/(?:Rs\.?|INR)\s*:?\s*([\d,]+(?:\.\d{1,2})?)/i);
   if (totalLineMatch) {
     const cleanNum = totalLineMatch[1].replace(/,/g, '');
     const num = parseFloat(cleanNum);

@@ -21,3 +21,6 @@ uploads/receipts/*
 
 # Office lock files
 ~$*
+
+# OCR traineddata
+*.traineddata

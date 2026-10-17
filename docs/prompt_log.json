@@ -782,20 +782,50 @@
       ],
       "result": "Created complete authentication layer and 12 REST API modules with strict ownership isolation, group role checks, and paise validation; all 88 server tests passing across 33 suites; client test suite (176 tests) and HTML linter (25 files) clean; documentation and audit updated.",
       "verification": "npm run test:server (88 passed, 0 failed); npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors)."
+    },
+    {
+      "id": 44,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Request: proceed with Review 3 Step P12",
+      "type": "User prompt",
+      "prompt": "# SplitStack — P12: Receipt Upload and Server-Side OCR (Review 3)\n\nImplement P12 only of the SplitStack refurbishment roadmap on the existing refurbish branch.\n\n## 1. Mandatory safety checks\nBefore editing: Confirm current branch is refurbish, latest commit is c6c6f1d (Review 3: authentication and REST API), inspect git status. Work only on refurbish. Do not push. Preserve legacy Flask files and docs/audit/ evidence.\n\n## 2. Inspect the existing implementation first\nReview server/src/app.js, server/src/config.js, middleware, routes, models, client receipt scanner, and package.json.\n\n## 3. Implement secure receipt upload\nImplement POST /api/receipts/upload. Use Multer or equivalent. Accept explicitly supported receipt image formats (PNG, JPEG, WEBP) validated by content magic bytes, not just MIME type. Enforce 5 MB limit. Reject empty, malformed, or oversized files. Never trust client paths; generate server-controlled unique identifiers. Authenticate uploader and derive ownership exclusively from verified principal. Store in MongoDB GridFS with compensating cleanup on partial failures.\n\n## 4. Implement server-side OCR\nUse tesseract.js to extract text server-side. Return structured candidate results (merchant, date, amount, confidence). Treat all extracted fields as untrusted suggestions. Confirming creates the expense; nothing becomes an expense without confirmation. OCR failures must produce safe, consistent errors without orphaned files.\n\n## 5. Privacy and security\nDo not commit private receipt images or sensitive data. Use safe test fixtures. Enforce ownership on upload, download, metadata, and deletion.\n\n## 6. Tests\nAdd focused automated tests for upload, authentication, MIME sniffing, oversized files, OCR parsing, ownership, streaming, confirmation, and cleanup.\n\n## 7. Documentation and audit\nUpdate server/README.md, .env.example, P12 audit report, and prompt_log.json.\n\n## 8. Verification and commit\nRun test:server, test:client, lint:html. Commit message: Review 3: receipt upload and server-side OCR. Do not push.\n\n## 9. Final report",
+      "purpose": "Authorize execution of Step P12: Receipt Upload and Server-Side OCR.",
+      "files": [],
+      "result": "Authorized Step P12 implementation.",
+      "verification": "-"
+    },
+    {
+      "id": 45,
+      "date": "2026-10-17",
+      "stage": "Review 3",
+      "title": "Receipt upload and server-side OCR",
+      "type": "Working prompt",
+      "prompt": "Install multer and tesseract.js in server/; update server/src/config.js and server/.env.example with MAX_RECEIPT_SIZE_BYTES, OCR_ENABLED, and OCR_LANGUAGE; create server/src/middleware/upload.js with 5 MB memory storage limit and validateImageSignature magic byte inspection for PNG, JPEG, and WEBP; create server/src/services/storageService.js with GridFS bucket management, server-controlled unique keys, streaming download, and compensating cleanup; create server/src/services/ocrService.js with Tesseract.js optical character recognition and candidate parsing via parseCandidateReceipt; update server/src/models/Receipt.js with mimeType, fileSizeBytes, and originalName; update server/src/routes/receipts.js with POST /upload, GET /, GET /:id, GET /:id/image (streaming), POST /:id/confirm (linked expense creation with duplicate 409 guard), and DELETE /:id (metadata and GridFS cleanup); update client/js/domain/receipt.js to prioritize explicit TOTAL line; create server/tests/receipts.test.js with 35 tests covering all upload, magic byte, OCR, ownership isolation, streaming, confirmation, and deletion behaviors; update server/README.md, docs/audit/P12_RECEIPT_UPLOAD_OCR_AUDIT.md, and prompt logs.",
+      "purpose": "Implement secure multipart receipt upload, binary magic byte content inspection, persistent GridFS storage, server-side OCR candidate extraction, and duplicate-protected confirmation for SplitStack.",
+      "files": [
+        "client/js/domain/receipt.js",
+        "server/package.json",
+        "server/package-lock.json",
+        "server/.env.example",
+        "server/src/config.js",
+        "server/src/models/Receipt.js",
+        "server/src/middleware/upload.js",
+        "server/src/services/storageService.js",
+        "server/src/services/ocrService.js",
+        "server/src/routes/receipts.js",
+        "server/tests/receipts.test.js",
+        "server/README.md",
+        "docs/audit/P12_RECEIPT_UPLOAD_OCR_AUDIT.md",
+        "docs/prompt_log.json",
+        "docs/SplitStack_Prompt_Log.docx",
+        "docs/SplitStack_Prompt_Log.pdf"
+      ],
+      "result": "Implemented secure receipt upload pipeline with Multer and binary magic byte verification (PNG, JPEG, WEBP); MongoDB GridFS binary storage and streaming; server-side OCR via Tesseract.js with candidate extraction; duplicate-protected confirmation into linked Expense; all 123 server tests passing across 43 suites; client test suite (176 tests) and HTML linter (25 files) clean; documentation and audit updated.",
+      "verification": "npm run test:server (123 passed, 0 failed); npm run test:client (176 passed, 0 failed); npm run lint:html (0 errors)."
     }
   ],
   "planned": [
-    {
-      "stage": "Review 3",
-      "title": "Receipt upload and server-side OCR",
-      "type": "Planned prompt",
-      "prompt": "Add POST /api/receipts using multer with memory storage, a 5 MB limit and magic-byte checks for PNG, JPEG and WEBP; preprocess with sharp (rotate from EXIF, greyscale, upscale small images, normalise); run tesseract.js with one shared worker; parse the merchant, date and total with the Review 2 parser; store the image in MongoDB GridFS (so it survives redeploys on free hosting) and the parsed fields in Receipt. GET /api/receipts/:id/image streams the image only to its owner. Confirming creates the expense; nothing becomes an expense without confirmation.",
-      "purpose": "Port the OCR feature to Node with persistent storage.",
-      "files": [
-        "server/src/routes/receipts.js",
-        "server/src/services/ocr.js"
-      ]
-    },
     {
       "stage": "Review 3",
       "title": "Connect the client to the API",

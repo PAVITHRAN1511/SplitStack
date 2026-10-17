@@ -57,6 +57,18 @@ const receiptSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    mimeType: {
+      type: String,
+      default: 'image/png',
+    },
+    fileSizeBytes: {
+      type: Number,
+      default: 0,
+    },
+    originalName: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,
