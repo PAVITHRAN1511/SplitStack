@@ -6,7 +6,7 @@
   "scripts": {
     "client": "node scripts/serve-client.js",
     "server": "node server/src/index.js",
-    "test:client": "node --test \"tests/client/**/*.test.mjs\"",
+    "test:client": "node --test \"tests/client/api-http.test.mjs\" \"tests/client/data-layer.test.mjs\" \"tests/client/forecast.test.mjs\" \"tests/client/forms.test.mjs\" \"tests/client/insights.test.mjs\" \"tests/client/render.test.mjs\" \"tests/client/search-notifications.test.mjs\" \"tests/client/shopping-receipt.test.mjs\" \"tests/client/splits-settle.test.mjs\"",
     "test:server": "node --test \"server/tests/**/*.test.js\"",
     "test:server:unit": "node --test \"server/tests/api.test.js\" \"server/tests/auth.test.js\" \"server/tests/models.test.js\" \"server/tests/receipts.test.js\" \"server/tests/server.test.js\"",
     "test:integration": "node --test server/tests/integration.test.js",
