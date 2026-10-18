@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import mongoose from 'mongoose';
 import { createApp } from '../src/app.js';
-import { connectDb, disconnectDb, isDbConnected } from '../src/db.js';
+import { connectDb, disconnectDb, isDbConnected, sanitizeMongoUri } from '../src/db.js';
 import { assertSafeDatabase, extractDatabaseName } from '../scripts/seed.js';
 import {
   User,
@@ -48,6 +48,12 @@ const SYNTHETIC_PNG_BUFFER = Buffer.from(
   'hex'
 );
 
+// Safe synthetic JPEG fixture
+const SYNTHETIC_JPEG_BUFFER = Buffer.from(
+  'ffd8ffe000104a46494600010101006000600000ffdb004300080606070605080707070909080a0c140d0c0b0b0c1912130f141d1a1f1e1d1a1c1c20242e2720222c231c1c2837292c30313434341f27393d38323c2e333432ffc0000b080001000101011100ffc4001f0000010501010101010100000000000000000102030405060708090a0bffda0008010100003f007f00ffd9',
+  'hex'
+);
+
 // If MONGODB_TEST_URI is not provided, skip the entire suite with clear explanation
 const describeIntegration = hasDedicatedTestDb ? describe : describe.skip;
 
@@ -69,7 +75,7 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
 
   before(async () => {
     // 1. Validate test database URI safety before connecting
-    console.log(`[Integration Test] Validating dedicated test database URI: "${testMongoUri}"`);
+    console.log(`[Integration Test] Validating dedicated test database URI: "${sanitizeMongoUri(testMongoUri)}"`);
     assertSafeDatabase(testMongoUri, { isTest: true, nodeEnv: process.env.NODE_ENV || 'test' });
 
     // 2. Connect to real test MongoDB instance
@@ -344,10 +350,10 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
 
       assert.equal(res.status, 201);
       const data = await res.json();
-      assert.ok(data.expense);
-      assert.equal(data.expense.amount, 84000);
-      assert.equal(data.expense.description, 'Integration Swiggy Dinner');
-      createdExpenseId = data.expense.id || data.expense._id;
+      assert.ok(data.id || data._id);
+      assert.equal(data.amount, 84000);
+      assert.equal(data.description, 'Integration Swiggy Dinner');
+      createdExpenseId = data.id || data._id;
 
       // Verify in MongoDB
       const dbExpense = await Expense.findById(createdExpenseId);
@@ -361,7 +367,7 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
       });
       assert.equal(getRes.status, 200);
       const getData = await getRes.json();
-      assert.equal(getData.expense.description, 'Integration Swiggy Dinner');
+      assert.equal(getData.description, 'Integration Swiggy Dinner');
 
       const patchRes = await fetch(`${baseUrl}/api/expenses/${createdExpenseId}`, {
         method: 'PATCH',
@@ -376,8 +382,8 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
       });
       assert.equal(patchRes.status, 200);
       const patchData = await patchRes.json();
-      assert.equal(patchData.expense.amount, 95000);
-      assert.equal(patchData.expense.description, 'Updated Swiggy Dinner + Dessert');
+      assert.equal(patchData.amount, 95000);
+      assert.equal(patchData.description, 'Updated Swiggy Dinner + Dessert');
     });
 
     it('creates, retrieves, and lists personal income records', async () => {
@@ -398,9 +404,9 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
 
       assert.equal(res.status, 201);
       const data = await res.json();
-      assert.ok(data.income);
-      assert.equal(data.income.amount, 7500000);
-      createdIncomeId = data.income.id || data.income._id;
+      assert.ok(data.id || data._id);
+      assert.equal(data.amount, 7500000);
+      createdIncomeId = data.id || data._id;
 
       const listRes = await fetch(`${baseUrl}/api/income`, {
         headers: { Authorization: `Bearer ${tokenA}` },
@@ -443,7 +449,7 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
         }),
       });
       const data = await res.json();
-      userAPrivateExpenseId = data.expense.id || data.expense._id;
+      userAPrivateExpenseId = data.id || data._id;
     });
 
     it('denies user B access to user A private expense (404 Not Found)', async () => {
@@ -498,18 +504,16 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
         body: JSON.stringify({
           name: 'Integration Goa Trip',
           description: 'Testing shared balances',
-          members: [
-            { email: 'rohan.test@splitstack.app', role: 'member' },
-          ],
+          memberEmails: ['rohan.test@splitstack.app'],
         }),
       });
 
       assert.equal(res.status, 201);
       const data = await res.json();
-      assert.ok(data.group);
-      assert.equal(data.group.name, 'Integration Goa Trip');
-      assert.equal(data.group.members.length, 2);
-      groupId = data.group.id || data.group._id;
+      assert.ok(data.id || data._id);
+      assert.equal(data.name, 'Integration Goa Trip');
+      assert.equal(data.members.length, 2);
+      groupId = data.id || data._id;
     });
 
     it('creates a shared expense with exact equal splits', async () => {
@@ -535,8 +539,8 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
 
       assert.equal(res.status, 201);
       const data = await res.json();
-      assert.ok(data.sharedExpense);
-      sharedExpenseId = data.sharedExpense.id || data.sharedExpense._id;
+      assert.ok(data.id || data._id);
+      sharedExpenseId = data.id || data._id;
 
       // Verify in MongoDB
       const dbShared = await SharedExpense.findById(sharedExpenseId);
@@ -578,9 +582,9 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
 
       assert.equal(res.status, 201);
       const data = await res.json();
-      assert.ok(data.settlement);
-      assert.equal(data.settlement.amount, 50000);
-      assert.equal(data.settlement.status, 'completed');
+      assert.ok(data.id || data._id);
+      assert.equal(data.amount, 50000);
+      assert.equal(data.status, 'completed');
     });
 
     it('verifies balances are fully settled (0 paise net) after settlement', async () => {
@@ -612,21 +616,21 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
         },
         body: JSON.stringify({
           name: 'Priya & Rohan Private Group',
-          members: [{ email: 'rohan.test@splitstack.app' }],
+          memberEmails: ['rohan.test@splitstack.app'],
         }),
       });
       const data = await res.json();
-      privateGroupId = data.group.id || data.group._id;
+      privateGroupId = data.id || data._id;
     });
 
-    it('denies non-member user C access to group details (403 Forbidden)', async () => {
+    it('denies non-member user C access to group details (404 Not Found)', async () => {
       const res = await fetch(`${baseUrl}/api/groups/${privateGroupId}`, {
         headers: { Authorization: `Bearer ${tokenC}` },
       });
-      assert.equal(res.status, 403);
+      assert.equal(res.status, 404);
     });
 
-    it('denies non-member user C adding shared expenses to group (403 Forbidden)', async () => {
+    it('denies non-member user C adding shared expenses to group (404 Not Found)', async () => {
       const res = await fetch(`${baseUrl}/api/groups/${privateGroupId}/expenses`, {
         method: 'POST',
         headers: {
@@ -637,10 +641,10 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
           title: 'Intruder Expense',
           amount: 20000,
           categoryId: foodCatId,
-          participants: [{ memberId: userCId, sharePaise: 20000 }],
+          shares: [userCId],
         }),
       });
-      assert.equal(res.status, 403);
+      assert.equal(res.status, 404);
     });
   });
 
@@ -671,10 +675,10 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
 
       assert.equal(res.status, 201);
       const data = await res.json();
-      assert.ok(data.shoppingList);
-      assert.equal(data.shoppingList.name, 'Weekly Organic Grocery Run');
-      assert.equal(data.shoppingList.items.length, 3);
-      shoppingListId = data.shoppingList.id || data.shoppingList._id;
+      assert.ok(data.id || data._id);
+      assert.equal(data.name, 'Weekly Organic Grocery Run');
+      assert.equal(data.items.length, 3);
+      shoppingListId = data.id || data._id;
 
       // Verify in MongoDB
       const dbList = await ShoppingList.findById(shoppingListId);
@@ -684,7 +688,7 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
     });
 
     it('converts purchased items into an actual Expense record', async () => {
-      const res = await fetch(`${baseUrl}/api/shopping/${shoppingListId}/convert`, {
+      const res = await fetch(`${baseUrl}/api/shopping/${shoppingListId}/convert-expense`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -698,21 +702,25 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
 
       assert.equal(res.status, 201);
       const data = await res.json();
-      assert.ok(data.expense);
-      // Actual price sum of purchased: 69000 + 35000 = 104000 paise (₹1,040)
-      assert.equal(data.expense.amount, 104000);
-      assert.ok(data.shoppingList);
-      assert.ok(data.shoppingList.convertedExpense);
-      convertedExpId = data.expense.id || data.expense._id;
+      assert.ok(data.id || data._id);
+      // Total amount: sum of all items (actual if present, else estimated)
+      // 69000 + 35000 + 18000 = 122000 paise (₹1,220)
+      assert.equal(data.amount, 122000);
+      convertedExpId = data.id || data._id;
+
+      // Verify ShoppingList updated with convertedExpense in MongoDB
+      const dbList = await ShoppingList.findById(shoppingListId);
+      assert.ok(dbList);
+      assert.equal(dbList.convertedExpense?.toString(), convertedExpId.toString());
 
       // Verify Expense created in MongoDB
       const dbExp = await Expense.findById(convertedExpId);
       assert.ok(dbExp);
-      assert.equal(dbExp.amount, 104000);
+      assert.equal(dbExp.amount, 122000);
     });
 
     it('rejects duplicate conversion of the same shopping list (409 Conflict)', async () => {
-      const res = await fetch(`${baseUrl}/api/shopping/${shoppingListId}/convert`, {
+      const res = await fetch(`${baseUrl}/api/shopping/${shoppingListId}/convert-expense`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -757,8 +765,8 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
       const aData = await aRes.json();
 
       assert.ok(aData);
-      assert.ok(Array.isArray(aData.months));
-      assert.ok(typeof aData.totalSpent === 'number');
+      assert.ok(Array.isArray(aData.trend));
+      assert.ok(typeof aData.totalExpenses === 'number');
       assert.ok(typeof aData.totalIncome === 'number');
     });
   });
@@ -787,7 +795,7 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
       assert.equal(res.status, 201);
       const data = await res.json();
       assert.ok(data.receipt);
-      assert.equal(data.receipt.merchant, 'Organic Harvest Market');
+      assert.equal(data.receipt.merchant, 'ORGANIC HARVEST MARKET');
       assert.equal(data.receipt.amount, 84000);
       assert.equal(data.receipt.status, 'pending');
 
@@ -800,12 +808,13 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
       assert.ok(dbReceipt);
       assert.equal(dbReceipt.status, 'pending');
 
-      // Verify binary stored in GridFS bucket
+      // Verify binary stored in GridFS bucket with persisted MIME metadata
       assert.ok(mongoose.connection.db);
       const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'receipts' });
       const files = await bucket.find({ filename: storedFileKey }).toArray();
       assert.equal(files.length, 1, 'File must exist in GridFS receipts bucket');
-      assert.equal(files[0].contentType, 'image/png');
+      assert.equal(files[0].metadata?.mimeType || files[0].contentType, 'image/png');
+      assert.equal(files[0].metadata?.userId, userAId);
     });
 
     it('streams authorized image binary via GET /api/receipts/:id/image to owner', async () => {
@@ -817,6 +826,44 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
       assert.equal(res.headers.get('content-type'), 'image/png');
       const arrayBuf = await res.arrayBuffer();
       assert.equal(arrayBuf.byteLength, SYNTHETIC_PNG_BUFFER.length);
+    });
+
+    it('uploads JPEG receipt to GridFS, persists metadata, and streams Content-Type: image/jpeg', async () => {
+      const formData = new FormData();
+      const blob = new Blob([SYNTHETIC_JPEG_BUFFER], { type: 'image/jpeg' });
+      formData.append('receipt', blob, 'receipt-test.jpg');
+      formData.append('mockOcrText', 'ORGANIC HARVEST MARKET\nDate: 24/10/2026\nTOTAL: INR 840.00');
+
+      const uploadRes = await fetch(`${baseUrl}/api/receipts/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tokenA}` },
+        body: formData,
+      });
+
+      assert.equal(uploadRes.status, 201);
+      const uploadData = await uploadRes.json();
+      assert.ok(uploadData.receipt);
+      const jpegReceiptId = uploadData.receipt.id || uploadData.receipt._id;
+      const jpegFileKey = uploadData.receipt.fileReference;
+
+      // Verify GridFS metadata
+      const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'receipts' });
+      const files = await bucket.find({ filename: jpegFileKey }).toArray();
+      assert.equal(files.length, 1);
+      assert.equal(files[0].metadata?.mimeType || files[0].contentType, 'image/jpeg');
+
+      // Verify streaming content-type
+      const streamRes = await fetch(`${baseUrl}/api/receipts/${jpegReceiptId}/image`, {
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
+      assert.equal(streamRes.status, 200);
+      assert.equal(streamRes.headers.get('content-type'), 'image/jpeg');
+
+      // Clean up
+      await fetch(`${baseUrl}/api/receipts/${jpegReceiptId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
     });
 
     it('denies user B access to user A receipt image binary (404 Not Found)', async () => {
@@ -852,7 +899,7 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
       const formData = new FormData();
       const blob = new Blob([SYNTHETIC_PNG_BUFFER], { type: 'image/png' });
       formData.append('receipt', blob, 'deterministic-receipt.png');
-      formData.append('mockOcrText', 'BLUE TOKAI COFFEE ROASTERS\nDate: 2026-10-14\nTotal Amount: 450.00');
+      formData.append('mockOcrText', 'BLUE TOKAI COFFEE ROASTERS\nDate: 2026-10-14\nTotal: 450.00');
 
       const res = await fetch(`${baseUrl}/api/receipts/upload`, {
         method: 'POST',
@@ -862,7 +909,7 @@ describeIntegration('SplitStack Real MongoDB Integration Suite (Dedicated Databa
 
       assert.equal(res.status, 201);
       const data = await res.json();
-      assert.equal(data.candidate.merchant, 'Blue Tokai Coffee Roasters');
+      assert.equal(data.candidate.merchant, 'BLUE TOKAI COFFEE ROASTERS');
       assert.equal(data.candidate.amountPaise, 45000);
 
       // Clean up

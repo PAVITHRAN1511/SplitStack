@@ -47,6 +47,7 @@ export async function storeReceiptImage({ buffer, mimeType, userId, ext = '.jpg'
         contentType: mimeType,
         metadata: {
           userId,
+          mimeType,
           storedAt: new Date(),
         },
       });
@@ -96,7 +97,7 @@ export async function getReceiptImageStream(fileReference) {
     const stream = bucket.openDownloadStreamByName(fileReference);
     return {
       stream,
-      mimeType: fileDoc.contentType || 'image/jpeg',
+      mimeType: fileDoc.metadata?.mimeType || fileDoc.contentType || 'image/jpeg',
       length: fileDoc.length,
     };
   }
