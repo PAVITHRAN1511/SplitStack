@@ -63,6 +63,8 @@ jobs:
         run: npm run test:server:unit
 
       - name: Legacy Security & Regression Tests (Python)
+        env:
+          FLASK_SECRET_KEY: ci-test-flask-secret-key-splitstack-minimum-32-chars
         run: python -m pytest tests/test_security.py tests/test_auth_flow.py tests/test_regression.py tests/test_master.py
 
       - name: Safe Database Seeding (Dedicated Test Instance)
