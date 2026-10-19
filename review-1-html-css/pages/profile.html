@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profile &amp; settings · SplitStack</title>
+  <meta name="description" content="Your account details and preferences.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="profile">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <input type="checkbox" id="nav-toggle" class="visually-hidden" aria-label="Show navigation menu">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>Split<span class="brand-accent">Stack</span></span></a>
+      <nav aria-label="Main">
+        <div class="nav-section">
+          <span class="nav-label">Overview</span>
+          <a class="nav-link" href="dashboard.html"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Dashboard</a>
+          <a class="nav-link" href="analytics.html"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Analytics</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Personal finance</span>
+          <a class="nav-link" href="expenses.html"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>Expenses</a>
+          <a class="nav-link" href="income.html"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Income</a>
+          <a class="nav-link" href="budgets.html"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budgets</a>
+          <a class="nav-link" href="recurring.html"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Recurring</a>
+          <a class="nav-link" href="categories.html"><i class="fa-solid fa-tags" aria-hidden="true"></i>Categories</a>
+          <a class="nav-link" href="receipt-scan.html"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Shared</span>
+          <a class="nav-link" href="groups.html"><i class="fa-solid fa-users" aria-hidden="true"></i>Groups<span class="nav-count">3</span></a>
+          <a class="nav-link" href="shopping.html"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Shopping lists<span class="nav-count">3</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Account</span>
+          <a class="nav-link" href="profile.html" aria-current="page"><i class="fa-solid fa-user-gear" aria-hidden="true"></i>Profile &amp; settings</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="avatar" aria-hidden="true">PR</span>
+        <span class="user-meta"><span class="user-name">Priya Raman</span><span class="user-email">priya.raman@example.com</span></span>
+        <a class="icon-btn sm" href="login.html" aria-label="Sign out" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></a>
+      </div>
+    </aside>
+    <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+    <div class="app-main">
+      <header class="topbar">
+        <label for="nav-toggle" class="menu-btn" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
+        <div class="topbar-title"><span class="kicker">Account</span><strong>Profile &amp; settings</strong></div>
+        <div class="topbar-actions">
+          <form class="search" role="search" action="expenses.html">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="visually-hidden" for="global-search">Search SplitStack</label>
+            <input id="global-search" type="search" name="q" placeholder="Search expenses, groups, lists">
+            <button class="visually-hidden" type="submit">Search</button>
+          </form>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+          <a class="icon-btn" href="dashboard.html#insights" aria-label="Notifications, 3 new" title="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i><span class="dot"></span></a>
+          <a class="avatar" href="profile.html" aria-label="Your profile" title="Priya Raman">PR</a>
+        </div>
+      </header>
+      <main id="main" class="content">
+<div class="page-header"><div><h1>Profile &amp; settings</h1><p>Manage your account, password and preferences.</p></div></div>
+        <div class="grid grid-main-side">
+          <div class="stack">
+            <section class="card" aria-labelledby="acct-title">
+              <div class="card-header"><h2 class="card-title" id="acct-title"><i class="fa-solid fa-id-card" aria-hidden="true"></i>Account</h2></div>
+              <div class="card-body stack">
+                <div class="profile-head"><span class="avatar lg" title="Priya Raman" aria-hidden="true">PR</span><div><p class="text-lg fw-700 text-main">Priya Raman</p><p class="text-sm">priya.raman@example.com</p><span class="badge badge-success mt-2">Verified</span></div></div>
+                <form class="form" action="profile.html" method="get">
+                  <div class="form-grid">
+                    <div class="field"><label for="p-name">Full name</label><input class="input" id="p-name" name="name" type="text" value="Priya Raman" autocomplete="name" required></div>
+                    <div class="field"><label for="p-email">Email</label><input class="input" id="p-email" name="email" type="email" value="priya.raman@example.com" autocomplete="email" required></div>
+                    <div class="field"><label for="p-currency">Currency</label><select class="select" id="p-currency" name="currency"><option selected>₹ Indian rupee (INR)</option></select></div>
+                    <div class="field"><label for="p-budget">Default monthly budget</label><div class="input-group"><span class="addon" aria-hidden="true">₹</span><input class="input" id="p-budget" name="monthly_budget" type="number" min="0" value="40000"></div></div>
+                  </div>
+                  <div class="form-actions"><button class="btn btn-primary" type="submit">Save profile</button></div>
+                </form>
+              </div>
+            </section>
+            <section class="card" aria-labelledby="pw-title">
+              <div class="card-header"><h2 class="card-title" id="pw-title"><i class="fa-solid fa-key" aria-hidden="true"></i>Change password</h2></div>
+              <div class="card-body">
+                <form class="form" action="profile.html" method="get">
+                  <div class="field"><label for="pw-current">Current password</label><input class="input" id="pw-current" name="current_password" type="password" autocomplete="current-password" required></div>
+                  <div class="form-grid">
+                    <div class="field"><label for="pw-new">New password</label><input class="input" id="pw-new" name="new_password" type="password" autocomplete="new-password" minlength="8" required></div>
+                    <div class="field"><label for="pw-confirm">Confirm new password</label><input class="input" id="pw-confirm" name="confirm_password" type="password" autocomplete="new-password" minlength="8" required></div>
+                  </div>
+                  <div class="form-actions"><button class="btn btn-secondary" type="submit">Update password</button></div>
+                </form>
+              </div>
+            </section>
+          </div>
+          <div class="stack">
+            <section class="card" aria-labelledby="pref-title">
+              <div class="card-header"><h2 class="card-title" id="pref-title"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Preferences</h2></div>
+              <div class="card-body stack gap-4">
+                <fieldset class="field"><legend>Theme</legend><div class="segmented"><input type="radio" id="t-system" name="theme" value="system" checked><label for="t-system">System</label><input type="radio" id="t-dark" name="theme" value="dark"><label for="t-dark">Dark</label><input type="radio" id="t-light" name="theme" value="light"><label for="t-light">Light</label></div></fieldset>
+                <label class="switch"><input type="checkbox" name="budget_alerts" checked>Budget alerts</label>
+                <label class="switch"><input type="checkbox" name="due_reminders" checked>Bill due reminders</label>
+                <label class="switch"><input type="checkbox" name="weekly_summary">Weekly summary</label>
+              </div>
+            </section>
+            <section class="card" aria-labelledby="stats-title">
+              <div class="card-header"><h2 class="card-title" id="stats-title"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>Account details</h2></div>
+              <div class="card-body">
+                <dl class="kv">
+                  <dt>Member since</dt><dd>12 May 2026</dd>
+                  <dt>Expenses logged</dt><dd>214</dd>
+                  <dt>Groups</dt><dd>3</dd>
+                  <dt>Last sign-in</dt><dd>Today, 7:42 pm</dd>
+                </dl>
+              </div>
+            </section>
+            <section class="card danger-zone" aria-labelledby="danger-title">
+              <div class="card-header"><h2 class="card-title tone-danger" id="danger-title"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>Danger zone</h2></div>
+              <div class="card-body stack gap-3">
+                <p class="text-sm">Signing out ends this session. Deleting your account removes all personal data and cannot be undone.</p>
+                <button class="btn btn-secondary btn-block" id="reset-demo-btn" type="button"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i>Reset demo data</button>
+                <a class="btn btn-secondary" href="login.html"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>Sign out</a>
+                <form action="../index.html" method="get"><button class="btn btn-danger btn-block" type="submit">Delete account</button></form>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+      <footer class="app-footer">&copy; 2026 SplitStack &middot; Personal &amp; group expense management</footer>
+    </div>
+  </div>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>

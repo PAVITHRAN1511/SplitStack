@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log income · SplitStack</title>
+  <meta name="description" content="Record income.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="income-form">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <input type="checkbox" id="nav-toggle" class="visually-hidden" aria-label="Show navigation menu">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>Split<span class="brand-accent">Stack</span></span></a>
+      <nav aria-label="Main">
+        <div class="nav-section">
+          <span class="nav-label">Overview</span>
+          <a class="nav-link" href="dashboard.html"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Dashboard</a>
+          <a class="nav-link" href="analytics.html"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Analytics</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Personal finance</span>
+          <a class="nav-link" href="expenses.html"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>Expenses</a>
+          <a class="nav-link" href="income.html" aria-current="page"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Income</a>
+          <a class="nav-link" href="budgets.html"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budgets</a>
+          <a class="nav-link" href="recurring.html"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Recurring</a>
+          <a class="nav-link" href="categories.html"><i class="fa-solid fa-tags" aria-hidden="true"></i>Categories</a>
+          <a class="nav-link" href="receipt-scan.html"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Shared</span>
+          <a class="nav-link" href="groups.html"><i class="fa-solid fa-users" aria-hidden="true"></i>Groups<span class="nav-count">3</span></a>
+          <a class="nav-link" href="shopping.html"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Shopping lists<span class="nav-count">3</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Account</span>
+          <a class="nav-link" href="profile.html"><i class="fa-solid fa-user-gear" aria-hidden="true"></i>Profile &amp; settings</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="avatar" aria-hidden="true">PR</span>
+        <span class="user-meta"><span class="user-name">Priya Raman</span><span class="user-email">priya.raman@example.com</span></span>
+        <a class="icon-btn sm" href="login.html" aria-label="Sign out" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></a>
+      </div>
+    </aside>
+    <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+    <div class="app-main">
+      <header class="topbar">
+        <label for="nav-toggle" class="menu-btn" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
+        <div class="topbar-title"><span class="kicker">Income</span><strong>New income</strong></div>
+        <div class="topbar-actions">
+          <form class="search" role="search" action="expenses.html">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="visually-hidden" for="global-search">Search SplitStack</label>
+            <input id="global-search" type="search" name="q" placeholder="Search expenses, groups, lists">
+            <button class="visually-hidden" type="submit">Search</button>
+          </form>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+          <a class="icon-btn" href="dashboard.html#insights" aria-label="Notifications, 3 new" title="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i><span class="dot"></span></a>
+          <a class="avatar" href="profile.html" aria-label="Your profile" title="Priya Raman">PR</a>
+        </div>
+      </header>
+      <main id="main" class="content">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="income.html">Income</a></li><li aria-current="page">New income</li></ol></nav>
+        <div class="page-header"><div><h1>Log income</h1><p>Salary, freelance work, dividends or anything else you earned.</p></div></div>
+        <section class="card max-860" aria-label="Income details">
+          <div class="card-body">
+            <form class="form" action="income.html" method="get">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="amount">Amount <span class="req" aria-hidden="true">*</span></label>
+                  <div class="input-group"><span class="addon" aria-hidden="true">₹</span><input class="input" id="amount" name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required></div>
+                </div>
+                <div class="field">
+                  <label for="income-date">Date received <span class="req" aria-hidden="true">*</span></label>
+                  <input class="input" id="income-date" name="income_date" type="date" value="2026-10-28" required>
+                </div>
+                <div class="field">
+                  <label for="source">Source <span class="req" aria-hidden="true">*</span></label>
+                  <input class="input" id="source" name="source" type="text" maxlength="120" placeholder="e.g. Monthly salary" required>
+                </div>
+                <div class="field">
+                  <label for="category">Category <span class="req" aria-hidden="true">*</span></label>
+                  <select class="select" id="category" name="category" required><option value="">Choose a category</option><option value="salary">Salary</option><option value="freelance">Freelance</option><option value="investments">Investments</option><option value="other">Other</option></select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <a class="btn btn-ghost" href="income.html">Cancel</a>
+                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Save income</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </main>
+      <footer class="app-footer">&copy; 2026 SplitStack &middot; Personal &amp; group expense management</footer>
+    </div>
+  </div>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+/* ==========================================================================
+   SplitStack stylesheet entry point
+   Cascade layers make the order explicit: later layers win over earlier ones,
+   regardless of selector specificity inside each file.
+   ========================================================================== */
+
+@layer tokens, base, layout, components, pages, utilities;
+
+@import url("tokens.css") layer(tokens);
+@import url("base.css") layer(base);
+@import url("layout.css") layer(layout);
+@import url("components.css") layer(components);
+@import url("pages.css") layer(pages);
+@import url("utilities.css") layer(utilities);

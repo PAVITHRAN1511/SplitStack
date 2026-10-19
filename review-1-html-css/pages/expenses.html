@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expenses · SplitStack</title>
+  <meta name="description" content="Search, filter and manage your personal expenses.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="expenses">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <input type="checkbox" id="nav-toggle" class="visually-hidden" aria-label="Show navigation menu">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>Split<span class="brand-accent">Stack</span></span></a>
+      <nav aria-label="Main">
+        <div class="nav-section">
+          <span class="nav-label">Overview</span>
+          <a class="nav-link" href="dashboard.html"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Dashboard</a>
+          <a class="nav-link" href="analytics.html"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Analytics</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Personal finance</span>
+          <a class="nav-link" href="expenses.html" aria-current="page"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>Expenses</a>
+          <a class="nav-link" href="income.html"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Income</a>
+          <a class="nav-link" href="budgets.html"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budgets</a>
+          <a class="nav-link" href="recurring.html"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Recurring</a>
+          <a class="nav-link" href="categories.html"><i class="fa-solid fa-tags" aria-hidden="true"></i>Categories</a>
+          <a class="nav-link" href="receipt-scan.html"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Shared</span>
+          <a class="nav-link" href="groups.html"><i class="fa-solid fa-users" aria-hidden="true"></i>Groups<span class="nav-count">3</span></a>
+          <a class="nav-link" href="shopping.html"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Shopping lists<span class="nav-count">3</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Account</span>
+          <a class="nav-link" href="profile.html"><i class="fa-solid fa-user-gear" aria-hidden="true"></i>Profile &amp; settings</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="avatar" aria-hidden="true">PR</span>
+        <span class="user-meta"><span class="user-name">Priya Raman</span><span class="user-email">priya.raman@example.com</span></span>
+        <a class="icon-btn sm" href="login.html" aria-label="Sign out" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></a>
+      </div>
+    </aside>
+    <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+    <div class="app-main">
+      <header class="topbar">
+        <label for="nav-toggle" class="menu-btn" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
+        <div class="topbar-title"><span class="kicker">Personal finance</span><strong>Expenses</strong></div>
+        <div class="topbar-actions">
+          <form class="search" role="search" action="expenses.html">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="visually-hidden" for="global-search">Search SplitStack</label>
+            <input id="global-search" type="search" name="q" placeholder="Search expenses, groups, lists">
+            <button class="visually-hidden" type="submit">Search</button>
+          </form>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+          <a class="icon-btn" href="dashboard.html#insights" aria-label="Notifications, 3 new" title="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i><span class="dot"></span></a>
+          <a class="avatar" href="profile.html" aria-label="Your profile" title="Priya Raman">PR</a>
+        </div>
+      </header>
+      <main id="main" class="content">
+<div class="page-header">
+          <div><h1>Expenses</h1><p>Everything you have paid for yourself. Showing 10 of 38 this month.</p></div>
+          <div class="page-actions">
+            <a class="btn btn-secondary" href="receipt-scan.html"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+            <a class="btn btn-primary" href="expense-form.html"><i class="fa-solid fa-plus" aria-hidden="true"></i>Add expense</a>
+          </div>
+        </div>
+
+        <section class="card mb-4" aria-label="Filter expenses">
+          <div class="card-body">
+            <form class="filter-bar" action="expenses.html" method="get" role="search">
+              <div class="field search-field"><label for="f-search">Search</label><input class="input" id="f-search" type="search" name="q" placeholder="Description or merchant"></div>
+              <div class="field"><label for="f-cat">Category</label><select class="select" id="f-cat" name="category"><option value="">All categories</option><option value="food">Food &amp; Dining</option><option value="transport">Transportation</option><option value="shopping">Shopping</option><option value="bills">Bills &amp; Utilities</option><option value="entertainment">Entertainment</option><option value="education">Education</option><option value="health">Healthcare</option><option value="travel">Travel</option><option value="other">Other</option></select></div>
+              <div class="field"><label for="f-method">Method</label><select class="select" id="f-method" name="method"><option value="">All methods</option><option>UPI</option><option>Card</option><option>Cash</option><option>Net banking</option></select></div>
+              <div class="field"><label for="f-from">From</label><input class="input" id="f-from" type="date" name="from" value="2026-10-01"></div>
+              <div class="field"><label for="f-to">To</label><input class="input" id="f-to" type="date" name="to" value="2026-10-31"></div>
+              <button class="btn btn-secondary" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i>Apply</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="exp-list-title">
+          <div class="card-header">
+            <h2 class="card-title" id="exp-list-title"><i class="fa-solid fa-list" aria-hidden="true"></i>October 2026</h2>
+            <div class="flex items-center gap-2 text-sm"><label for="sort" class="text-dim">Sort by</label><select class="select" id="sort" name="sort"><option>Newest first</option><option>Oldest first</option><option>Amount: high to low</option><option>Amount: low to high</option></select></div>
+          </div>
+          <div class="card-body flush">
+            <div class="table-wrap">
+              <table class="table stack-sm">
+                <caption class="visually-hidden">Expenses for October 2026</caption>
+                <thead><tr><th scope="col">Date</th><th scope="col">Description</th><th scope="col">Category</th><th scope="col">Method</th><th scope="col" class="end">Amount</th><th scope="col" class="end"><span class="visually-hidden">Actions</span></th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-28" class="text-dim">28 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">Swiggy · dinner</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-food)"><i class="fa-solid fa-utensils" aria-hidden="true"></i>Food &amp; Dining</span></td>
+                    <td data-label="Method"><span class="badge">UPI</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹640</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_1" aria-label="Edit Swiggy · dinner"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Swiggy · dinner"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-27" class="text-dim">27 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">Metro card recharge</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-transport)"><i class="fa-solid fa-car" aria-hidden="true"></i>Transportation</span></td>
+                    <td data-label="Method"><span class="badge">UPI</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹500</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_2" aria-label="Edit Metro card recharge"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Metro card recharge"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-26" class="text-dim">26 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">TNEB electricity bill</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-bills)"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i>Bills &amp; Utilities</span></td>
+                    <td data-label="Method"><span class="badge">Net banking</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹2,180</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_3" aria-label="Edit TNEB electricity bill"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete TNEB electricity bill"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-24" class="text-dim">24 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">Running shoes · Myntra</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-shopping)"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>Shopping</span></td>
+                    <td data-label="Method"><span class="badge">Card</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹3,499</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_4" aria-label="Edit Running shoes · Myntra"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Running shoes · Myntra"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-22" class="text-dim">22 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">PVR · movie night</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-entertainment)"><i class="fa-solid fa-film" aria-hidden="true"></i>Entertainment</span></td>
+                    <td data-label="Method"><span class="badge">UPI</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹780</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_5" aria-label="Edit PVR · movie night"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete PVR · movie night"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-20" class="text-dim">20 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">Apollo Pharmacy</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-health)"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>Healthcare</span></td>
+                    <td data-label="Method"><span class="badge">Cash</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹450</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_6" aria-label="Edit Apollo Pharmacy"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Apollo Pharmacy"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-18" class="text-dim">18 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">Groceries · BigBasket</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-food)"><i class="fa-solid fa-utensils" aria-hidden="true"></i>Food &amp; Dining</span></td>
+                    <td data-label="Method"><span class="badge">UPI</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹2,310</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_7" aria-label="Edit Groceries · BigBasket"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Groceries · BigBasket"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-15" class="text-dim">15 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">Uber to airport</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-transport)"><i class="fa-solid fa-car" aria-hidden="true"></i>Transportation</span></td>
+                    <td data-label="Method"><span class="badge">Card</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹920</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_8" aria-label="Edit Uber to airport"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Uber to airport"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-12" class="text-dim">12 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">Weekend trip · bus tickets</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-travel)"><i class="fa-solid fa-plane" aria-hidden="true"></i>Travel</span></td>
+                    <td data-label="Method"><span class="badge">UPI</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹2,500</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_9" aria-label="Edit Weekend trip · bus tickets"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Weekend trip · bus tickets"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Date"><time datetime="2026-10-10" class="text-dim">10 Oct 2026</time></td>
+                    <td data-label="Description" class="fw-600">Jio Fiber broadband</td>
+                    <td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-bills)"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i>Bills &amp; Utilities</span></td>
+                    <td data-label="Method"><span class="badge">UPI</span></td>
+                    <td data-label="Amount" class="end num amount-out">&minus;₹999</td>
+                    <td data-label="Actions" class="end"><div class="row-actions">
+                        <a class="icon-btn sm" href="expense-edit.html?id=exp_10" aria-label="Edit Jio Fiber broadband"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                        <form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Jio Fiber broadband"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form>
+                      </div></td>
+                  </tr>
+                </tbody>
+                <tfoot><tr><td colspan="4" data-label="Shown">Total of 10 shown</td><td class="end num" data-label="Total">₹14,778</td><td></td></tr></tfoot>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="text-dim">Page 1 of 4</span>
+            <nav class="flex gap-2" aria-label="Pagination"><a class="btn btn-secondary btn-sm" aria-disabled="true">Previous</a><a class="btn btn-secondary btn-sm" href="expenses.html?page=2">Next</a></nav>
+          </div>
+        </section>
+      </main>
+      <footer class="app-footer">&copy; 2026 SplitStack &middot; Personal &amp; group expense management</footer>
+    </div>
+  </div>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>

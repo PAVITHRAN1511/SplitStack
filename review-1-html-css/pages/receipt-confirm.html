@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Confirm receipt · SplitStack</title>
+  <meta name="description" content="Review the details read from your receipt before saving the expense.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="receipt-confirm">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <input type="checkbox" id="nav-toggle" class="visually-hidden" aria-label="Show navigation menu">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>Split<span class="brand-accent">Stack</span></span></a>
+      <nav aria-label="Main">
+        <div class="nav-section">
+          <span class="nav-label">Overview</span>
+          <a class="nav-link" href="dashboard.html"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Dashboard</a>
+          <a class="nav-link" href="analytics.html"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Analytics</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Personal finance</span>
+          <a class="nav-link" href="expenses.html"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>Expenses</a>
+          <a class="nav-link" href="income.html"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Income</a>
+          <a class="nav-link" href="budgets.html"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budgets</a>
+          <a class="nav-link" href="recurring.html"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Recurring</a>
+          <a class="nav-link" href="categories.html"><i class="fa-solid fa-tags" aria-hidden="true"></i>Categories</a>
+          <a class="nav-link" href="receipt-scan.html" aria-current="page"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Shared</span>
+          <a class="nav-link" href="groups.html"><i class="fa-solid fa-users" aria-hidden="true"></i>Groups<span class="nav-count">3</span></a>
+          <a class="nav-link" href="shopping.html"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Shopping lists<span class="nav-count">3</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Account</span>
+          <a class="nav-link" href="profile.html"><i class="fa-solid fa-user-gear" aria-hidden="true"></i>Profile &amp; settings</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="avatar" aria-hidden="true">PR</span>
+        <span class="user-meta"><span class="user-name">Priya Raman</span><span class="user-email">priya.raman@example.com</span></span>
+        <a class="icon-btn sm" href="login.html" aria-label="Sign out" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></a>
+      </div>
+    </aside>
+    <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+    <div class="app-main">
+      <header class="topbar">
+        <label for="nav-toggle" class="menu-btn" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
+        <div class="topbar-title"><span class="kicker">Scan receipt</span><strong>Confirm details</strong></div>
+        <div class="topbar-actions">
+          <form class="search" role="search" action="expenses.html">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="visually-hidden" for="global-search">Search SplitStack</label>
+            <input id="global-search" type="search" name="q" placeholder="Search expenses, groups, lists">
+            <button class="visually-hidden" type="submit">Search</button>
+          </form>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+          <a class="icon-btn" href="dashboard.html#insights" aria-label="Notifications, 3 new" title="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i><span class="dot"></span></a>
+          <a class="avatar" href="profile.html" aria-label="Your profile" title="Priya Raman">PR</a>
+        </div>
+      </header>
+      <main id="main" class="content">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="receipt-scan.html">Scan receipt</a></li><li aria-current="page">Confirm</li></ol></nav>
+        <div class="page-header"><div><h1>Check what we found</h1><p>Edit anything that looks wrong, then save it as an expense.</p></div></div>
+        <div class="receipt-layout">
+          <section class="card" aria-labelledby="found-title">
+            <div class="card-header"><h2 class="card-title" id="found-title"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>Extracted details</h2><span class="badge badge-success">High confidence</span></div>
+            <div class="card-body">
+              <form class="form" action="expenses.html" method="get">
+                <div class="field"><label for="r-desc">Merchant / description <span class="req" aria-hidden="true">*</span></label><input class="input" id="r-desc" name="description" type="text" value="Blue Leaf Cafe &amp; Roastery" required></div>
+                <div class="form-grid">
+                  <div class="field"><label for="r-amount">Amount <span class="req" aria-hidden="true">*</span></label><div class="input-group"><span class="addon" aria-hidden="true">₹</span><input class="input" id="r-amount" name="amount" type="number" min="0.01" step="0.01" value="745.00" required></div><span class="confidence"><i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i>Read from the TOTAL line</span></div>
+                  <div class="field"><label for="r-date">Receipt date <span class="req" aria-hidden="true">*</span></label><input class="input" id="r-date" name="expense_date" type="date" value="2026-08-25" required><span class="confidence"><i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i>Read from "Dated: 25-Aug-2026"</span></div>
+                  <div class="field"><label for="r-cat">Category</label><select class="select" id="r-cat" name="category"><option value="food" selected>Food &amp; Dining</option><option value="transport">Transportation</option><option value="shopping">Shopping</option><option value="bills">Bills &amp; Utilities</option><option value="entertainment">Entertainment</option><option value="health">Healthcare</option><option value="travel">Travel</option><option value="other">Other</option></select></div>
+                  <div class="field"><label for="r-method">Payment method</label><select class="select" id="r-method" name="payment_method"><option selected>UPI</option><option>Card</option><option>Cash</option><option>Net banking</option></select></div>
+                </div>
+                <details>
+                  <summary class="text-sm fw-600">Raw text read from the image</summary>
+                  <pre class="ocr-raw mt-2">Blue Leaf Cafe &amp; Roastery
+Koramangala 4th Block, Bengaluru
+Receipt No: BL-4412
+Dated: 25-Aug-2026
+------------------------------
+Item            Qty   Amount
+Artisan Cappuccino    2   450.00
+Almond Croissant      1   295.00
+------------------------------
+Subtotal: 745.00
+VAT / Service Charge: 0.00
+TOTAL: Rs 745.00
+------------------------------
+Thank You! Have A Great Day</pre>
+                </details>
+                <div class="form-actions"><a class="btn btn-ghost" href="receipt-scan.html">Discard</a><button class="btn btn-primary" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Confirm &amp; save</button></div>
+              </form>
+            </div>
+          </section>
+          <figure class="card">
+            <div class="card-body">
+              <img class="receipt-preview" src="../assets/sample-receipt.webp" alt="Blue Leaf Cafe &amp; Roastery receipt, Bengaluru, dated 25 August 2026: two cappuccinos and an almond croissant, total 745 rupees" width="700" height="554" loading="lazy">
+            </div>
+            <figcaption class="card-footer text-dim">Uploaded image &middot; sample-receipt.webp</figcaption>
+          </figure>
+        </div>
+      </main>
+      <footer class="app-footer">&copy; 2026 SplitStack &middot; Personal &amp; group expense management</footer>
+    </div>
+  </div>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>

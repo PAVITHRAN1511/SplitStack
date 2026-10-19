@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SplitStack · Personal &amp; group expense management</title>
+  <meta name="description" content="SplitStack helps you track personal spending, split group bills and settle debts in the fewest payments.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="landing">
+  <a class="skip-link" href="#main">Skip to main content</a>
+<header class="public-header">
+    <div class="inner">
+      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>Split<span class="brand-accent">Stack</span></span></a>
+      <nav class="public-nav" aria-label="Main">
+        <a class="nav-text" href="index.html#features">Features</a>
+        <a class="nav-text" href="index.html#how">How it works</a>
+        <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+        <a class="btn btn-ghost" href="pages/login.html">Sign in</a>
+        <a class="btn btn-primary" href="pages/register.html">Get started</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="section-inner">
+        <div>
+          <span class="eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Personal + group finance in one app</span>
+          <h1 id="hero-title">Know where your money goes. <em>Settle up</em> without the maths.</h1>
+          <p class="hero-lead">SplitStack tracks your everyday spending and shares costs with friends, flatmates and teams, then tells everyone exactly who pays whom.</p>
+          <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="pages/register.html">Create free account <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            <a class="btn btn-secondary btn-lg" href="pages/dashboard.html">View demo dashboard</a>
+          </div>
+          <ul class="hero-proof">
+            <li><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Equal &amp; custom splits</li>
+            <li><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Receipt OCR</li>
+            <li><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Prices in ₹</li>
+          </ul>
+        </div>
+        <figure class="card preview" aria-label="Preview of the SplitStack dashboard">
+          <div class="grid grid-2">
+            <div class="card stat tone-success"><div class="stat-top"><span class="stat-label">Income</span><span class="stat-icon"><i class="fa-solid fa-wallet" aria-hidden="true"></i></span></div><span class="stat-value">₹73,500</span><span class="stat-meta">October 2026</span></div>
+            <div class="card stat tone-danger"><div class="stat-top"><span class="stat-label">Spent</span><span class="stat-icon"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i></span></div><span class="stat-value">₹31,840</span><span class="stat-meta">80% of budget</span></div>
+          </div>
+          <div class="mt-4">
+            <div class="flex justify-between text-sm mb-2"><span>Food &amp; Dining</span><span class="text-dim">₹8,420 / ₹10,000</span></div>
+            <div class="meter is-caution"><span style="--value: 84%"></span></div>
+            <div class="flex justify-between text-sm mb-2 mt-4"><span>Shopping</span><span class="text-danger">₹6,280 / ₹5,000</span></div>
+            <div class="meter is-danger"><span style="--value: 100%"></span></div>
+          </div>
+          <div class="card preview-float">
+            <span class="text-xs text-dim">Goa Trip 2026 &middot; settle up</span>
+            <div class="flex items-center gap-2 mt-2"><span class="avatar sm" style="--avatar: #d97706" title="Rohan Das" aria-hidden="true">RD</span><span class="text-sm grow">Rohan pays Kavya</span><strong class="num">₹4,900</strong></div>
+            <div class="flex items-center gap-2 mt-2"><span class="avatar sm" style="--avatar: #0ea5e9" title="Arjun Mehta" aria-hidden="true">AM</span><span class="text-sm grow">Arjun pays Priya</span><strong class="num">₹1,700</strong></div>
+            <div class="flex items-center gap-2 mt-2"><span class="avatar sm" style="--avatar: #0ea5e9" title="Arjun Mehta" aria-hidden="true">AM</span><span class="text-sm grow">Arjun pays Kavya</span><strong class="num">₹800</strong></div>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="features" aria-labelledby="features-title">
+      <div class="section-inner">
+        <div class="section-title">
+          <h2 id="features-title">Everything a shared wallet needs</h2>
+          <p>From your morning coffee to a four-person trip to Goa, every rupee lands in the right place.</p>
+        </div>
+        <div class="grid grid-3">
+          <article class="card feature tone-success">
+            <i class="fa-solid fa-wallet" aria-hidden="true"></i>
+            <h3>Personal finance</h3>
+            <p>Expenses, income, categories and recurring bills in one place, with filters and search.</p>
+          </article>
+          <article class="card feature tone-warning">
+            <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+            <h3>Budgets that warn you</h3>
+            <p>Set monthly limits per category and see caution, warning and over-budget states at a glance.</p>
+          </article>
+          <article class="card feature tone-primary">
+            <i class="fa-solid fa-users" aria-hidden="true"></i>
+            <h3>Group expenses</h3>
+            <p>Trips, flatmates, office lunches. Split equally or by exact amounts per person.</p>
+          </article>
+          <article class="card feature tone-info">
+            <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
+            <h3>Fewest settlements</h3>
+            <p>A greedy min-cash-flow algorithm turns a web of debts into at most N-1 payments.</p>
+          </article>
+          <article class="card feature tone-danger">
+            <i class="fa-solid fa-camera" aria-hidden="true"></i>
+            <h3>Receipt scanning</h3>
+            <p>Upload a bill photo; OCR reads the merchant, date and total for you to confirm.</p>
+          </article>
+          <article class="card feature tone-success">
+            <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+            <h3>Insights &amp; forecast</h3>
+            <p>Monthly trends, category breakdowns and a month-end spending projection.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="how-title">
+      <div class="section-inner">
+        <div class="section-title">
+          <h2 id="how-title">Six debts become three payments</h2>
+          <p>After a trip, everyone owes everyone. SplitStack nets each person's balance and pairs the biggest debtor with the biggest creditor until all balances reach zero.</p>
+        </div>
+        <div class="settle-demo">
+          <div class="card">
+            <h3>Before: pairwise debts</h3>
+            <ul class="list">
+              <li class="list-item"><span class="grow">Arjun &rarr; Priya</span><span class="num">₹1,300</span></li>
+              <li class="list-item"><span class="grow">Priya &rarr; Kavya</span><span class="num">₹1,500</span></li>
+              <li class="list-item"><span class="grow">Rohan &rarr; Priya</span><span class="num">₹1,900</span></li>
+              <li class="list-item"><span class="grow">Arjun &rarr; Kavya</span><span class="num">₹1,800</span></li>
+              <li class="list-item"><span class="grow">Rohan &rarr; Arjun</span><span class="num">₹600</span></li>
+              <li class="list-item"><span class="grow">Rohan &rarr; Kavya</span><span class="num">₹2,400</span></li>
+            </ul>
+          </div>
+          <i class="fa-solid fa-arrow-right-long big-arrow" aria-hidden="true"></i>
+          <div class="card">
+            <h3>After: simplified plan</h3>
+            <ul class="list">
+              <li class="list-item"><span class="grow">Rohan &rarr; Kavya</span><span class="num">₹4,900</span></li>
+              <li class="list-item"><span class="grow">Arjun &rarr; Priya</span><span class="num">₹1,700</span></li>
+              <li class="list-item"><span class="grow">Arjun &rarr; Kavya</span><span class="num">₹800</span></li>
+            </ul>
+            <p class="mt-4 text-sm"><span class="badge badge-success">50% fewer payments</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="cta-title">
+      <div class="section-inner">
+        <div class="cta-band">
+          <h2 id="cta-title">Start tracking in under a minute</h2>
+          <p>Free, private, and built for students, flatmates and travellers.</p>
+          <a class="btn btn-lg btn-secondary" href="pages/register.html">Create your account</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="public-footer">
+    <div class="section-inner">
+      <span>&copy; 2026 SplitStack &middot; Web Technology course project</span>
+      <ul class="footer-links">
+        <li><a href="index.html#features">Features</a></li>
+        <li><a href="pages/login.html">Sign in</a></li>
+        <li><a href="pages/register.html">Create account</a></li>
+      </ul>
+    </div>
+  </footer>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

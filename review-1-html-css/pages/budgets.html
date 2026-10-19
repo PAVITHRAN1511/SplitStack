@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Budgets · SplitStack</title>
+  <meta name="description" content="Monthly spending limits per category with alerts.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="budgets">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <input type="checkbox" id="nav-toggle" class="visually-hidden" aria-label="Show navigation menu">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>Split<span class="brand-accent">Stack</span></span></a>
+      <nav aria-label="Main">
+        <div class="nav-section">
+          <span class="nav-label">Overview</span>
+          <a class="nav-link" href="dashboard.html"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Dashboard</a>
+          <a class="nav-link" href="analytics.html"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Analytics</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Personal finance</span>
+          <a class="nav-link" href="expenses.html"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>Expenses</a>
+          <a class="nav-link" href="income.html"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Income</a>
+          <a class="nav-link" href="budgets.html" aria-current="page"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budgets</a>
+          <a class="nav-link" href="recurring.html"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Recurring</a>
+          <a class="nav-link" href="categories.html"><i class="fa-solid fa-tags" aria-hidden="true"></i>Categories</a>
+          <a class="nav-link" href="receipt-scan.html"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Shared</span>
+          <a class="nav-link" href="groups.html"><i class="fa-solid fa-users" aria-hidden="true"></i>Groups<span class="nav-count">3</span></a>
+          <a class="nav-link" href="shopping.html"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Shopping lists<span class="nav-count">3</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Account</span>
+          <a class="nav-link" href="profile.html"><i class="fa-solid fa-user-gear" aria-hidden="true"></i>Profile &amp; settings</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="avatar" aria-hidden="true">PR</span>
+        <span class="user-meta"><span class="user-name">Priya Raman</span><span class="user-email">priya.raman@example.com</span></span>
+        <a class="icon-btn sm" href="login.html" aria-label="Sign out" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></a>
+      </div>
+    </aside>
+    <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+    <div class="app-main">
+      <header class="topbar">
+        <label for="nav-toggle" class="menu-btn" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
+        <div class="topbar-title"><span class="kicker">Personal finance</span><strong>Budgets</strong></div>
+        <div class="topbar-actions">
+          <form class="search" role="search" action="expenses.html">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="visually-hidden" for="global-search">Search SplitStack</label>
+            <input id="global-search" type="search" name="q" placeholder="Search expenses, groups, lists">
+            <button class="visually-hidden" type="submit">Search</button>
+          </form>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+          <a class="icon-btn" href="dashboard.html#insights" aria-label="Notifications, 3 new" title="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i><span class="dot"></span></a>
+          <a class="avatar" href="profile.html" aria-label="Your profile" title="Priya Raman">PR</a>
+        </div>
+      </header>
+      <main id="main" class="content">
+<div class="page-header">
+          <div><h1>Budgets for October 2026</h1><p>Alerts at 75% (caution), 90% (warning) and 100% (over budget).</p></div>
+        </div>
+        <div class="grid grid-main-side">
+          <div class="stack">
+            <section class="card budget" aria-labelledby="overall-title">
+              <div class="budget-head">
+                <span class="cat-icon"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i></span>
+                <div class="grow"><h2 id="overall-title">Overall monthly limit</h2><p class="text-xs">All categories combined</p></div>
+                <span class="badge badge-warning">Caution</span>
+              </div>
+              <div class="meter is-caution" role="progressbar" aria-label="Overall budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="80"><span style="--value: 80%"></span></div>
+              <div class="budget-figures"><span><strong class="num">₹31,840</strong> of ₹40,000 &middot; 80%</span><span class="text-success">₹8,160 left</span></div>
+            </section>
+            <div class="grid grid-2">
+              <article class="card budget">
+                <div class="budget-head">
+                  <span class="cat-icon" style="--cat: var(--cat-shopping)"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i></span>
+                  <div class="grow"><h3>Shopping</h3><p class="text-xs">126% used</p></div>
+                  <span class="badge badge-danger">Over budget</span>
+                </div>
+                <div class="meter is-danger" role="progressbar" aria-label="Shopping budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-valuetext="126%"><span style="--value: 126%"></span></div>
+                <div class="budget-figures"><span><strong class="num">₹6,280</strong> of ₹5,000</span><span class="text-danger fw-600">₹1,280 over</span></div>
+                <div class="flex gap-2"><a class="btn btn-ghost btn-sm" href="#set-budget">Edit</a><form class="inline-form" action="#" method="post"><button class="btn btn-ghost btn-sm" type="submit">Remove</button></form></div>
+              </article>
+              <article class="card budget">
+                <div class="budget-head">
+                  <span class="cat-icon" style="--cat: var(--cat-entertainment)"><i class="fa-solid fa-film" aria-hidden="true"></i></span>
+                  <div class="grow"><h3>Entertainment</h3><p class="text-xs">94% used</p></div>
+                  <span class="badge badge-warning">Warning</span>
+                </div>
+                <div class="meter is-warning" role="progressbar" aria-label="Entertainment budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="94" aria-valuetext="94%"><span style="--value: 94%"></span></div>
+                <div class="budget-figures"><span><strong class="num">₹2,340</strong> of ₹2,500</span><span class="text-success">₹160 left</span></div>
+                <div class="flex gap-2"><a class="btn btn-ghost btn-sm" href="#set-budget">Edit</a><form class="inline-form" action="#" method="post"><button class="btn btn-ghost btn-sm" type="submit">Remove</button></form></div>
+              </article>
+              <article class="card budget">
+                <div class="budget-head">
+                  <span class="cat-icon" style="--cat: var(--cat-bills)"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i></span>
+                  <div class="grow"><h3>Bills &amp; Utilities</h3><p class="text-xs">88% used</p></div>
+                  <span class="badge badge-warning">Caution</span>
+                </div>
+                <div class="meter is-caution" role="progressbar" aria-label="Bills and Utilities budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="88" aria-valuetext="88%"><span style="--value: 88%"></span></div>
+                <div class="budget-figures"><span><strong class="num">₹7,900</strong> of ₹9,000</span><span class="text-success">₹1,100 left</span></div>
+                <div class="flex gap-2"><a class="btn btn-ghost btn-sm" href="#set-budget">Edit</a><form class="inline-form" action="#" method="post"><button class="btn btn-ghost btn-sm" type="submit">Remove</button></form></div>
+              </article>
+              <article class="card budget">
+                <div class="budget-head">
+                  <span class="cat-icon" style="--cat: var(--cat-food)"><i class="fa-solid fa-utensils" aria-hidden="true"></i></span>
+                  <div class="grow"><h3>Food &amp; Dining</h3><p class="text-xs">84% used</p></div>
+                  <span class="badge badge-warning">Caution</span>
+                </div>
+                <div class="meter is-caution" role="progressbar" aria-label="Food and Dining budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="84" aria-valuetext="84%"><span style="--value: 84%"></span></div>
+                <div class="budget-figures"><span><strong class="num">₹8,420</strong> of ₹10,000</span><span class="text-success">₹1,580 left</span></div>
+                <div class="flex gap-2"><a class="btn btn-ghost btn-sm" href="#set-budget">Edit</a><form class="inline-form" action="#" method="post"><button class="btn btn-ghost btn-sm" type="submit">Remove</button></form></div>
+              </article>
+              <article class="card budget">
+                <div class="budget-head">
+                  <span class="cat-icon" style="--cat: var(--cat-transport)"><i class="fa-solid fa-car" aria-hidden="true"></i></span>
+                  <div class="grow"><h3>Transportation</h3><p class="text-xs">63% used</p></div>
+                  <span class="badge badge-success">On track</span>
+                </div>
+                <div class="meter " role="progressbar" aria-label="Transportation budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="63" aria-valuetext="63%"><span style="--value: 63%"></span></div>
+                <div class="budget-figures"><span><strong class="num">₹3,150</strong> of ₹5,000</span><span class="text-success">₹1,850 left</span></div>
+                <div class="flex gap-2"><a class="btn btn-ghost btn-sm" href="#set-budget">Edit</a><form class="inline-form" action="#" method="post"><button class="btn btn-ghost btn-sm" type="submit">Remove</button></form></div>
+              </article>
+              <article class="card budget">
+                <div class="budget-head">
+                  <span class="cat-icon" style="--cat: var(--cat-health)"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i></span>
+                  <div class="grow"><h3>Healthcare</h3><p class="text-xs">63% used</p></div>
+                  <span class="badge badge-success">On track</span>
+                </div>
+                <div class="meter " role="progressbar" aria-label="Healthcare budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="63" aria-valuetext="63%"><span style="--value: 63%"></span></div>
+                <div class="budget-figures"><span><strong class="num">₹1,250</strong> of ₹2,000</span><span class="text-success">₹750 left</span></div>
+                <div class="flex gap-2"><a class="btn btn-ghost btn-sm" href="#set-budget">Edit</a><form class="inline-form" action="#" method="post"><button class="btn btn-ghost btn-sm" type="submit">Remove</button></form></div>
+              </article>
+            </div>
+          </div>
+          <aside class="card" id="set-budget" aria-labelledby="set-title">
+            <div class="card-header"><h2 class="card-title" id="set-title"><i class="fa-solid fa-plus" aria-hidden="true"></i>Set a budget</h2></div>
+            <div class="card-body">
+              <form class="form" action="budgets.html" method="get">
+                <div class="field"><label for="b-cat">Category</label><select class="select" id="b-cat" name="category"><option value="">Overall monthly limit</option><option value="food">Food &amp; Dining</option><option value="transport">Transportation</option><option value="shopping">Shopping</option><option value="bills">Bills &amp; Utilities</option><option value="entertainment">Entertainment</option><option value="education">Education</option><option value="health">Healthcare</option><option value="travel">Travel</option><option value="other">Other</option></select></div>
+                <div class="form-grid">
+                  <div class="field"><label for="b-month">Month</label><select class="select" id="b-month" name="month"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10" selected>October</option><option value="11">November</option><option value="12">December</option></select></div>
+                  <div class="field"><label for="b-year">Year</label><input class="input" id="b-year" name="year" type="number" min="2020" max="2100" value="2026" required></div>
+                </div>
+                <div class="field">
+                  <label for="b-amount">Limit <span class="req" aria-hidden="true">*</span></label>
+                  <div class="input-group"><span class="addon" aria-hidden="true">₹</span><input class="input" id="b-amount" name="amount" type="number" min="1" step="1" required aria-describedby="b-hint"></div>
+                  <span class="hint" id="b-hint">Setting a limit for an existing category replaces it.</span>
+                </div>
+                <button class="btn btn-primary btn-block" type="submit">Save budget</button>
+              </form>
+            </div>
+          </aside>
+        </div>
+      </main>
+      <footer class="app-footer">&copy; 2026 SplitStack &middot; Personal &amp; group expense management</footer>
+    </div>
+  </div>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>

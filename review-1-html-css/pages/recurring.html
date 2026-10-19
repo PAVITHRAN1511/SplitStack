@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recurring payments · SplitStack</title>
+  <meta name="description" content="Subscriptions, rent and other repeating bills.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="recurring">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <input type="checkbox" id="nav-toggle" class="visually-hidden" aria-label="Show navigation menu">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>Split<span class="brand-accent">Stack</span></span></a>
+      <nav aria-label="Main">
+        <div class="nav-section">
+          <span class="nav-label">Overview</span>
+          <a class="nav-link" href="dashboard.html"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Dashboard</a>
+          <a class="nav-link" href="analytics.html"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Analytics</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Personal finance</span>
+          <a class="nav-link" href="expenses.html"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>Expenses</a>
+          <a class="nav-link" href="income.html"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Income</a>
+          <a class="nav-link" href="budgets.html"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budgets</a>
+          <a class="nav-link" href="recurring.html" aria-current="page"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Recurring</a>
+          <a class="nav-link" href="categories.html"><i class="fa-solid fa-tags" aria-hidden="true"></i>Categories</a>
+          <a class="nav-link" href="receipt-scan.html"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Shared</span>
+          <a class="nav-link" href="groups.html"><i class="fa-solid fa-users" aria-hidden="true"></i>Groups<span class="nav-count">3</span></a>
+          <a class="nav-link" href="shopping.html"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Shopping lists<span class="nav-count">3</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Account</span>
+          <a class="nav-link" href="profile.html"><i class="fa-solid fa-user-gear" aria-hidden="true"></i>Profile &amp; settings</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="avatar" aria-hidden="true">PR</span>
+        <span class="user-meta"><span class="user-name">Priya Raman</span><span class="user-email">priya.raman@example.com</span></span>
+        <a class="icon-btn sm" href="login.html" aria-label="Sign out" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></a>
+      </div>
+    </aside>
+    <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+    <div class="app-main">
+      <header class="topbar">
+        <label for="nav-toggle" class="menu-btn" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
+        <div class="topbar-title"><span class="kicker">Personal finance</span><strong>Recurring</strong></div>
+        <div class="topbar-actions">
+          <form class="search" role="search" action="expenses.html">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="visually-hidden" for="global-search">Search SplitStack</label>
+            <input id="global-search" type="search" name="q" placeholder="Search expenses, groups, lists">
+            <button class="visually-hidden" type="submit">Search</button>
+          </form>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+          <a class="icon-btn" href="dashboard.html#insights" aria-label="Notifications, 3 new" title="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i><span class="dot"></span></a>
+          <a class="avatar" href="profile.html" aria-label="Your profile" title="Priya Raman">PR</a>
+        </div>
+      </header>
+      <main id="main" class="content">
+<div class="page-header">
+          <div><h1>Recurring payments</h1><p>₹13,648 a month in active subscriptions and bills, plus ₹9,899 a year.</p></div>
+        </div>
+        <div class="grid grid-main-side">
+          <section class="card" aria-labelledby="rec-title">
+            <div class="card-header"><h2 class="card-title" id="rec-title"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Schedules</h2><span class="badge">5 active &middot; 1 paused</span></div>
+            <div class="card-body flush">
+              <div class="table-wrap">
+                <table class="table stack-sm">
+                  <thead><tr><th scope="col">Payment</th><th scope="col">Frequency</th><th scope="col">Next due</th><th scope="col" class="end">Amount</th><th scope="col">Active</th><th scope="col" class="end"><span class="visually-hidden">Actions</span></th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td data-label="Payment"><span class="cell-main">Flat rent</span><span class="cell-sub">Bills &amp; Utilities</span></td>
+                      <td data-label="Frequency"><span class="badge badge-info">Monthly</span></td>
+                      <td data-label="Next due"><span class="cell-main">01 Nov 2026</span><span class="cell-sub">In 4 days</span></td>
+                      <td data-label="Amount" class="end num fw-600">₹12,000</td>
+                      <td data-label="Active"><label class="switch"><input type="checkbox" name="active-0" checked><span class="visually-hidden">Flat rent active</span></label></td>
+                      <td data-label="Actions" class="end"><form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Flat rent"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></td>
+                    </tr>
+                    <tr>
+                      <td data-label="Payment"><span class="cell-main">Jio Fiber broadband</span><span class="cell-sub">Bills &amp; Utilities</span></td>
+                      <td data-label="Frequency"><span class="badge badge-info">Monthly</span></td>
+                      <td data-label="Next due"><span class="cell-main">10 Nov 2026</span><span class="cell-sub">In 13 days</span></td>
+                      <td data-label="Amount" class="end num fw-600">₹999</td>
+                      <td data-label="Active"><label class="switch"><input type="checkbox" name="active-1" checked><span class="visually-hidden">Jio Fiber broadband active</span></label></td>
+                      <td data-label="Actions" class="end"><form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Jio Fiber broadband"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></td>
+                    </tr>
+                    <tr>
+                      <td data-label="Payment"><span class="cell-main">Netflix</span><span class="cell-sub">Entertainment</span></td>
+                      <td data-label="Frequency"><span class="badge badge-info">Monthly</span></td>
+                      <td data-label="Next due"><span class="cell-main">05 Nov 2026</span><span class="cell-sub">In 8 days</span></td>
+                      <td data-label="Amount" class="end num fw-600">₹649</td>
+                      <td data-label="Active"><label class="switch"><input type="checkbox" name="active-2" checked><span class="visually-hidden">Netflix active</span></label></td>
+                      <td data-label="Actions" class="end"><form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Netflix"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></td>
+                    </tr>
+                    <tr>
+                      <td data-label="Payment"><span class="cell-main">Gym membership</span><span class="cell-sub">Healthcare</span></td>
+                      <td data-label="Frequency"><span class="badge badge-info">Monthly</span></td>
+                      <td data-label="Next due"><span class="cell-main">—</span><span class="cell-sub">Paused</span></td>
+                      <td data-label="Amount" class="end num fw-600">₹1,500</td>
+                      <td data-label="Active"><label class="switch"><input type="checkbox" name="active-3"><span class="visually-hidden">Gym membership active</span></label></td>
+                      <td data-label="Actions" class="end"><form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Gym membership"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></td>
+                    </tr>
+                    <tr>
+                      <td data-label="Payment"><span class="cell-main">Car insurance</span><span class="cell-sub">Transportation</span></td>
+                      <td data-label="Frequency"><span class="badge badge-info">Yearly</span></td>
+                      <td data-label="Next due"><span class="cell-main">18 Jan 2027</span><span class="cell-sub">In 82 days</span></td>
+                      <td data-label="Amount" class="end num fw-600">₹8,400</td>
+                      <td data-label="Active"><label class="switch"><input type="checkbox" name="active-4" checked><span class="visually-hidden">Car insurance active</span></label></td>
+                      <td data-label="Actions" class="end"><form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Car insurance"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></td>
+                    </tr>
+                    <tr>
+                      <td data-label="Payment"><span class="cell-main">Amazon Prime</span><span class="cell-sub">Shopping</span></td>
+                      <td data-label="Frequency"><span class="badge badge-info">Yearly</span></td>
+                      <td data-label="Next due"><span class="cell-main">12 Mar 2027</span><span class="cell-sub">In 135 days</span></td>
+                      <td data-label="Amount" class="end num fw-600">₹1,499</td>
+                      <td data-label="Active"><label class="switch"><input type="checkbox" name="active-5" checked><span class="visually-hidden">Amazon Prime active</span></label></td>
+                      <td data-label="Actions" class="end"><form class="inline-form" action="#" method="post"><button class="icon-btn sm danger" type="submit" aria-label="Delete Amazon Prime"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+          <aside class="card" aria-labelledby="add-rec-title">
+            <div class="card-header"><h2 class="card-title" id="add-rec-title"><i class="fa-solid fa-plus" aria-hidden="true"></i>New schedule</h2></div>
+            <div class="card-body">
+              <form class="form" action="recurring.html" method="get">
+                <div class="field"><label for="r-name">Name <span class="req" aria-hidden="true">*</span></label><input class="input" id="r-name" name="name" type="text" maxlength="80" placeholder="e.g. Spotify" required></div>
+                <div class="field"><label for="r-amount">Amount <span class="req" aria-hidden="true">*</span></label><div class="input-group"><span class="addon" aria-hidden="true">₹</span><input class="input" id="r-amount" name="amount" type="number" min="1" step="0.01" required></div></div>
+                <div class="form-grid">
+                  <div class="field"><label for="r-freq">Frequency</label><select class="select" id="r-freq" name="frequency"><option>Monthly</option><option>Weekly</option><option>Yearly</option><option>Daily</option></select></div>
+                  <div class="field"><label for="r-cat">Category</label><select class="select" id="r-cat" name="category"><option value="food">Food &amp; Dining</option><option value="transport">Transportation</option><option value="shopping">Shopping</option><option value="bills" selected>Bills &amp; Utilities</option><option value="entertainment">Entertainment</option><option value="education">Education</option><option value="health">Healthcare</option><option value="travel">Travel</option><option value="other">Other</option></select></div>
+                  <div class="field"><label for="r-start">Start date</label><input class="input" id="r-start" name="start_date" type="date" value="2026-10-28" required></div>
+                  <div class="field"><label for="r-next">Next due</label><input class="input" id="r-next" name="next_due_date" type="date" value="2026-11-28" required></div>
+                </div>
+                <button class="btn btn-primary btn-block" type="submit">Add schedule</button>
+              </form>
+            </div>
+          </aside>
+        </div>
+      </main>
+      <footer class="app-footer">&copy; 2026 SplitStack &middot; Personal &amp; group expense management</footer>
+    </div>
+  </div>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard · SplitStack</title>
+  <meta name="description" content="Your SplitStack overview: income, spending, budgets, groups and insights.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="dashboard">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <input type="checkbox" id="nav-toggle" class="visually-hidden" aria-label="Show navigation menu">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>Split<span class="brand-accent">Stack</span></span></a>
+      <nav aria-label="Main">
+        <div class="nav-section">
+          <span class="nav-label">Overview</span>
+          <a class="nav-link" href="dashboard.html" aria-current="page"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Dashboard</a>
+          <a class="nav-link" href="analytics.html"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Analytics</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Personal finance</span>
+          <a class="nav-link" href="expenses.html"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>Expenses</a>
+          <a class="nav-link" href="income.html"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Income</a>
+          <a class="nav-link" href="budgets.html"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budgets</a>
+          <a class="nav-link" href="recurring.html"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Recurring</a>
+          <a class="nav-link" href="categories.html"><i class="fa-solid fa-tags" aria-hidden="true"></i>Categories</a>
+          <a class="nav-link" href="receipt-scan.html"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Shared</span>
+          <a class="nav-link" href="groups.html"><i class="fa-solid fa-users" aria-hidden="true"></i>Groups<span class="nav-count">3</span></a>
+          <a class="nav-link" href="shopping.html"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Shopping lists<span class="nav-count">3</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Account</span>
+          <a class="nav-link" href="profile.html"><i class="fa-solid fa-user-gear" aria-hidden="true"></i>Profile &amp; settings</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="avatar" aria-hidden="true">PR</span>
+        <span class="user-meta"><span class="user-name">Priya Raman</span><span class="user-email">priya.raman@example.com</span></span>
+        <a class="icon-btn sm" href="login.html" aria-label="Sign out" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></a>
+      </div>
+    </aside>
+    <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+    <div class="app-main">
+      <header class="topbar">
+        <label for="nav-toggle" class="menu-btn" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
+        <div class="topbar-title"><span class="kicker">October 2026</span><strong>Dashboard</strong></div>
+        <div class="topbar-actions">
+          <form class="search" role="search" action="expenses.html">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="visually-hidden" for="global-search">Search SplitStack</label>
+            <input id="global-search" type="search" name="q" placeholder="Search expenses, groups, lists">
+            <button class="visually-hidden" type="submit">Search</button>
+          </form>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+          <a class="icon-btn" href="dashboard.html#insights" aria-label="Notifications, 3 new" title="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i><span class="dot"></span></a>
+          <a class="avatar" href="profile.html" aria-label="Your profile" title="Priya Raman">PR</a>
+        </div>
+      </header>
+      <main id="main" class="content">
+<section class="welcome mb-4" aria-labelledby="welcome-title">
+          <div>
+            <h1 id="welcome-title">Good evening, Priya</h1>
+            <p>You have spent ₹31,840 of your ₹40,000 monthly budget with 3 days left in October.</p>
+          </div>
+          <div class="page-actions">
+            <a class="btn btn-primary" href="expense-form.html"><i class="fa-solid fa-plus" aria-hidden="true"></i>Add expense</a>
+            <a class="btn btn-secondary" href="receipt-scan.html"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+          </div>
+        </section>
+
+        <section class="grid grid-4 mb-4" aria-label="This month at a glance">
+
+        <article class="card stat tone-success">
+          <div class="stat-top"><h2 class="stat-label">Income</h2><span class="stat-icon"><i class="fa-solid fa-wallet" aria-hidden="true"></i></span></div>
+          <p class="stat-value"><span class="num">₹73,500</span></p>
+          <p class="stat-meta"><span class="text-success"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i> 7.8%</span> vs September</p>
+        </article>
+
+        <article class="card stat tone-danger">
+          <div class="stat-top"><h2 class="stat-label">Expenses</h2><span class="stat-icon"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i></span></div>
+          <p class="stat-value"><span class="num">₹31,840</span></p>
+          <p class="stat-meta"><span class="text-danger"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i> 6.8%</span> vs September</p>
+        </article>
+
+        <article class="card stat tone-primary">
+          <div class="stat-top"><h2 class="stat-label">Saved</h2><span class="stat-icon"><i class="fa-solid fa-piggy-bank" aria-hidden="true"></i></span></div>
+          <p class="stat-value"><span class="num">₹41,660</span></p>
+          <p class="stat-meta"><span class="badge badge-primary">56.7% savings rate</span></p>
+        </article>
+
+        <article class="card stat tone-warning">
+          <div class="stat-top"><h2 class="stat-label">Group balance</h2><span class="stat-icon"><i class="fa-solid fa-users" aria-hidden="true"></i></span></div>
+          <p class="stat-value"><span class="num text-success">+₹1,250</span></p>
+          <p class="stat-meta">Owed to you across 3 groups</p>
+        </article>
+        </section>
+
+        <div class="grid grid-main-side mb-4">
+          <section class="card" aria-labelledby="trend-title">
+            <div class="card-header">
+              <h2 class="card-title" id="trend-title"><i class="fa-solid fa-chart-column" aria-hidden="true"></i>Income vs expenses</h2>
+              <a class="card-link" href="analytics.html">Full analytics <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <div class="card-body">
+            <div class="bar-chart" role="img" aria-labelledby="dash-trend-desc">
+              <div class="bar-group">
+                <div class="bar-pair">
+                  <span class="bar income" style="--h: 82.5%" title="May income ₹66,000"></span>
+                  <span class="bar expense" style="--h: 35.5%" title="May expenses ₹28,400"></span>
+                </div>
+                <span class="bar-label">May</span>
+              </div>
+              <div class="bar-group">
+                <div class="bar-pair">
+                  <span class="bar income" style="--h: 81.3%" title="Jun income ₹65,000"></span>
+                  <span class="bar expense" style="--h: 42.4%" title="Jun expenses ₹33,900"></span>
+                </div>
+                <span class="bar-label">Jun</span>
+              </div>
+              <div class="bar-group">
+                <div class="bar-pair">
+                  <span class="bar income" style="--h: 88.1%" title="Jul income ₹70,500"></span>
+                  <span class="bar expense" style="--h: 37.7%" title="Jul expenses ₹30,150"></span>
+                </div>
+                <span class="bar-label">Jul</span>
+              </div>
+              <div class="bar-group">
+                <div class="bar-pair">
+                  <span class="bar income" style="--h: 81.3%" title="Aug income ₹65,000"></span>
+                  <span class="bar expense" style="--h: 45.9%" title="Aug expenses ₹36,700"></span>
+                </div>
+                <span class="bar-label">Aug</span>
+              </div>
+              <div class="bar-group">
+                <div class="bar-pair">
+                  <span class="bar income" style="--h: 85.3%" title="Sep income ₹68,200"></span>
+                  <span class="bar expense" style="--h: 37.3%" title="Sep expenses ₹29,800"></span>
+                </div>
+                <span class="bar-label">Sep</span>
+              </div>
+              <div class="bar-group">
+                <div class="bar-pair">
+                  <span class="bar income" style="--h: 91.9%" title="Oct income ₹73,500"></span>
+                  <span class="bar expense" style="--h: 39.8%" title="Oct expenses ₹31,840"></span>
+                </div>
+                <span class="bar-label">Oct</span>
+              </div>
+            </div>
+            <p class="visually-hidden" id="dash-trend-desc">Bar chart of income and expenses from May to October 2026. Income ranges from ₹65,000 to ₹73,500; expenses from ₹28,400 to ₹36,700.</p>
+            <ul class="legend inline mt-4">
+              <li style="--cat: var(--success)">Income</li>
+              <li style="--cat: var(--primary)">Expenses</li>
+            </ul>
+            <details class="mt-4 text-sm">
+              <summary>View as table</summary>
+              <div class="table-wrap mt-2">
+                <table class="table">
+                  <thead><tr><th scope="col">Month</th><th scope="col" class="end">Income</th><th scope="col" class="end">Expenses</th><th scope="col" class="end">Saved</th></tr></thead>
+                  <tbody>
+                    <tr><th scope="row">May 2026</th><td class="end num">₹66,000</td><td class="end num">₹28,400</td><td class="end num">₹37,600</td></tr>
+                    <tr><th scope="row">Jun 2026</th><td class="end num">₹65,000</td><td class="end num">₹33,900</td><td class="end num">₹31,100</td></tr>
+                    <tr><th scope="row">Jul 2026</th><td class="end num">₹70,500</td><td class="end num">₹30,150</td><td class="end num">₹40,350</td></tr>
+                    <tr><th scope="row">Aug 2026</th><td class="end num">₹65,000</td><td class="end num">₹36,700</td><td class="end num">₹28,300</td></tr>
+                    <tr><th scope="row">Sep 2026</th><td class="end num">₹68,200</td><td class="end num">₹29,800</td><td class="end num">₹38,400</td></tr>
+                    <tr><th scope="row">Oct 2026</th><td class="end num">₹73,500</td><td class="end num">₹31,840</td><td class="end num">₹41,660</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+            </div>
+          </section>
+          <section class="card" aria-labelledby="cat-title">
+            <div class="card-header">
+              <h2 class="card-title" id="cat-title"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Where it went</h2>
+              <span class="badge">October</span>
+            </div>
+            <div class="card-body">
+            <div class="donut-wrap">
+              <div class="donut" style="--segments: var(--cat-food) 0.0% 26.4%, var(--cat-bills) 26.4% 51.3%, var(--cat-shopping) 51.3% 71.0%, var(--cat-transport) 71.0% 80.9%, var(--cat-travel) 80.9% 88.7%, var(--cat-entertainment) 88.7% 96.1%, var(--cat-health) 96.1% 100.0%" role="img" aria-label="October spending by category, total ₹31,840. Largest: Food and Dining ₹8,420.">
+                <div class="donut-center"><strong class="num">₹31,840</strong><span>October</span></div>
+              </div>
+              <ul class="legend">
+                <li style="--cat: var(--cat-food)">Food &amp; Dining<span class="num">26.4%</span></li>
+                <li style="--cat: var(--cat-bills)">Bills &amp; Utilities<span class="num">24.8%</span></li>
+                <li style="--cat: var(--cat-shopping)">Shopping<span class="num">19.7%</span></li>
+                <li style="--cat: var(--cat-transport)">Transportation<span class="num">9.9%</span></li>
+                <li style="--cat: var(--cat-travel)">Travel<span class="num">7.9%</span></li>
+                <li style="--cat: var(--cat-entertainment)">Entertainment<span class="num">7.3%</span></li>
+                <li style="--cat: var(--cat-health)">Healthcare<span class="num">3.9%</span></li>
+              </ul>
+            </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid grid-main-side mb-4">
+          <section class="card" aria-labelledby="recent-title">
+            <div class="card-header">
+              <h2 class="card-title" id="recent-title"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>Recent transactions</h2>
+              <a class="card-link" href="expenses.html">All expenses <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <div class="card-body flush">
+              <div class="table-wrap">
+                <table class="table stack-sm">
+                  <caption class="visually-hidden">Your six most recent expenses</caption>
+                  <thead><tr><th scope="col">Date</th><th scope="col">Description</th><th scope="col">Category</th><th scope="col">Method</th><th scope="col" class="end">Amount</th></tr></thead>
+                  <tbody>
+                    <tr><td data-label="Date" class="text-dim">28 Oct</td><td data-label="Description" class="fw-600">Swiggy · dinner</td><td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-food)"><i class="fa-solid fa-utensils" aria-hidden="true"></i>Food &amp; Dining</span></td><td data-label="Method"><span class="badge">UPI</span></td><td data-label="Amount" class="end num amount-out">&minus;₹640</td></tr>
+                    <tr><td data-label="Date" class="text-dim">27 Oct</td><td data-label="Description" class="fw-600">Metro card recharge</td><td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-transport)"><i class="fa-solid fa-car" aria-hidden="true"></i>Transportation</span></td><td data-label="Method"><span class="badge">UPI</span></td><td data-label="Amount" class="end num amount-out">&minus;₹500</td></tr>
+                    <tr><td data-label="Date" class="text-dim">26 Oct</td><td data-label="Description" class="fw-600">TNEB electricity bill</td><td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-bills)"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i>Bills &amp; Utilities</span></td><td data-label="Method"><span class="badge">Net banking</span></td><td data-label="Amount" class="end num amount-out">&minus;₹2,180</td></tr>
+                    <tr><td data-label="Date" class="text-dim">24 Oct</td><td data-label="Description" class="fw-600">Running shoes · Myntra</td><td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-shopping)"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>Shopping</span></td><td data-label="Method"><span class="badge">Card</span></td><td data-label="Amount" class="end num amount-out">&minus;₹3,499</td></tr>
+                    <tr><td data-label="Date" class="text-dim">22 Oct</td><td data-label="Description" class="fw-600">PVR · movie night</td><td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-entertainment)"><i class="fa-solid fa-film" aria-hidden="true"></i>Entertainment</span></td><td data-label="Method"><span class="badge">UPI</span></td><td data-label="Amount" class="end num amount-out">&minus;₹780</td></tr>
+                    <tr><td data-label="Date" class="text-dim">20 Oct</td><td data-label="Description" class="fw-600">Apollo Pharmacy</td><td data-label="Category"><span class="cat-tag" style="--cat: var(--cat-health)"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>Healthcare</span></td><td data-label="Method"><span class="badge">Cash</span></td><td data-label="Amount" class="end num amount-out">&minus;₹450</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="budget-title">
+            <div class="card-header">
+              <h2 class="card-title tone-warning" id="budget-title"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budgets</h2>
+              <a class="card-link" href="budgets.html">Manage</a>
+            </div>
+            <div class="card-body stack">
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="fw-600">Shopping</span><span class="badge badge-danger">126% used</span></div>
+                <div class="meter is-danger" role="progressbar" aria-label="Shopping budget" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-valuetext="126% of ₹5,000"><span style="--value: 126%"></span></div>
+                <div class="budget-figures mt-2"><span>₹6,280 of ₹5,000</span><span class="text-danger fw-600">₹1,280 over</span></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="fw-600">Entertainment</span><span class="badge badge-warning">94% used</span></div>
+                <div class="meter is-warning" role="progressbar" aria-label="Entertainment budget" aria-valuemin="0" aria-valuemax="100" aria-valuenow="94" aria-valuetext="94% of ₹2,500"><span style="--value: 94%"></span></div>
+                <div class="budget-figures mt-2"><span>₹2,340 of ₹2,500</span><span class="text-success">₹160 left</span></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="fw-600">Food &amp; Dining</span><span class="badge badge-warning">84% used</span></div>
+                <div class="meter is-caution" role="progressbar" aria-label="Food &amp; Dining budget" aria-valuemin="0" aria-valuemax="100" aria-valuenow="84" aria-valuetext="84% of ₹10,000"><span style="--value: 84%"></span></div>
+                <div class="budget-figures mt-2"><span>₹8,420 of ₹10,000</span><span class="text-success">₹1,580 left</span></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="fw-600">Overall October</span><span class="badge badge-warning">80% used</span></div>
+                <div class="meter is-caution" role="progressbar" aria-label="Overall October budget" aria-valuemin="0" aria-valuemax="100" aria-valuenow="80" aria-valuetext="80% of ₹40,000"><span style="--value: 80%"></span></div>
+                <div class="budget-figures mt-2"><span>₹31,840 of ₹40,000</span><span class="text-success">₹8,160 left</span></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid grid-3">
+          <section class="card" aria-labelledby="groups-title">
+            <div class="card-header">
+              <h2 class="card-title" id="groups-title"><i class="fa-solid fa-users" aria-hidden="true"></i>Your groups</h2>
+              <a class="card-link" href="groups.html">All groups</a>
+            </div>
+            <div class="card-body">
+              <ul class="list">
+                <li class="list-item"><span class="cat-icon" style="--cat: var(--cat-travel)"><i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i></span><span class="grow"><a class="list-title" href="group-detail.html?id=grp_goa">Goa Trip 2026</a><span class="list-sub">4 members</span></span><span class="balance-pos num">+₹1,700</span></li>
+                <li class="list-item"><span class="cat-icon" style="--cat: var(--cat-bills)"><i class="fa-solid fa-house" aria-hidden="true"></i></span><span class="grow"><a class="list-title" href="group-detail.html?id=grp_flat">Flat 4B</a><span class="list-sub">3 members</span></span><span class="balance-neg num">&minus;₹450</span></li>
+                <li class="list-item"><span class="cat-icon" style="--cat: var(--cat-food)"><i class="fa-solid fa-mug-hot" aria-hidden="true"></i></span><span class="grow"><a class="list-title" href="group-detail.html?id=grp_office">Office lunch club</a><span class="list-sub">6 members</span></span><span class="balance-zero">Settled</span></li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="card" id="insights" aria-labelledby="insights-title">
+            <div class="card-header">
+              <h2 class="card-title" id="insights-title"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>Smart insights</h2>
+              <span class="badge badge-primary">3 new</span>
+            </div>
+            <div class="card-body stack gap-3">
+              <div class="insight tone-danger"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><div><strong>Shopping is 26% over budget</strong><p>₹6,280 spent against a ₹5,000 limit.</p></div></div>
+              <div class="insight tone-info"><i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i><div><strong>Food spending up 12%</strong><p>Compared with September. Mostly food delivery.</p></div></div>
+              <div class="insight tone-warning"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i><div><strong>Rent of ₹12,000 due 1 Nov</strong><p>Recurring payment, in 4 days.</p></div></div>
+              <div class="insight tone-success"><i class="fa-solid fa-piggy-bank" aria-hidden="true"></i><div><strong>Saving above average</strong><p>56.7% this month vs a 6-month average of 53.3%.</p></div></div>
+            </div>
+          </section>
+
+          <div class="stack">
+            <section class="card" aria-labelledby="forecast-title">
+              <div class="card-header">
+                <h2 class="card-title tone-info" id="forecast-title"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Month-end forecast</h2>
+              </div>
+              <div class="card-body forecast">
+                <div><p class="text-xs text-dim">Projected October spend</p><p class="forecast-figure num">₹35,250</p></div>
+                <div class="meter is-caution" role="progressbar" aria-label="Projected spend against budget" aria-valuemin="0" aria-valuemax="100" aria-valuenow="88"><span style="--value: 88%"></span></div>
+                <p class="text-xs">Based on ₹1,137 a day over 28 days. That is 88% of your ₹40,000 budget: <strong class="text-success">on track</strong>.</p>
+              </div>
+            </section>
+            <section class="card" aria-labelledby="quick-title">
+              <div class="card-header"><h2 class="card-title" id="quick-title"><i class="fa-solid fa-bolt" aria-hidden="true"></i>Quick actions</h2></div>
+              <div class="card-body">
+                <nav class="quick-actions" aria-labelledby="quick-title">
+                  <a href="expense-form.html" class="tone-danger"><i class="fa-solid fa-receipt" aria-hidden="true"></i>Expense</a>
+                  <a href="income-form.html" class="tone-success"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Income</a>
+                  <a href="receipt-scan.html" class="tone-info"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan</a>
+                  <a href="group-create.html" class="tone-primary"><i class="fa-solid fa-user-plus" aria-hidden="true"></i>Group</a>
+                  <a href="shopping-form.html" class="tone-warning"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i>List</a>
+                  <a href="budgets.html" class="tone-warning"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budget</a>
+                </nav>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+      <footer class="app-footer">&copy; 2026 SplitStack &middot; Personal &amp; group expense management</footer>
+    </div>
+  </div>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>

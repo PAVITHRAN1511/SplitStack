@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monthly groceries · SplitStack</title>
+  <meta name="description" content="Shopping checklist with estimated and actual prices.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="shopping-detail">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <input type="checkbox" id="nav-toggle" class="visually-hidden" aria-label="Show navigation menu">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>Split<span class="brand-accent">Stack</span></span></a>
+      <nav aria-label="Main">
+        <div class="nav-section">
+          <span class="nav-label">Overview</span>
+          <a class="nav-link" href="dashboard.html"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Dashboard</a>
+          <a class="nav-link" href="analytics.html"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Analytics</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Personal finance</span>
+          <a class="nav-link" href="expenses.html"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>Expenses</a>
+          <a class="nav-link" href="income.html"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Income</a>
+          <a class="nav-link" href="budgets.html"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Budgets</a>
+          <a class="nav-link" href="recurring.html"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Recurring</a>
+          <a class="nav-link" href="categories.html"><i class="fa-solid fa-tags" aria-hidden="true"></i>Categories</a>
+          <a class="nav-link" href="receipt-scan.html"><i class="fa-solid fa-camera" aria-hidden="true"></i>Scan receipt</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Shared</span>
+          <a class="nav-link" href="groups.html"><i class="fa-solid fa-users" aria-hidden="true"></i>Groups<span class="nav-count">3</span></a>
+          <a class="nav-link" href="shopping.html" aria-current="page"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Shopping lists<span class="nav-count">3</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-label">Account</span>
+          <a class="nav-link" href="profile.html"><i class="fa-solid fa-user-gear" aria-hidden="true"></i>Profile &amp; settings</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="avatar" aria-hidden="true">PR</span>
+        <span class="user-meta"><span class="user-name">Priya Raman</span><span class="user-email">priya.raman@example.com</span></span>
+        <a class="icon-btn sm" href="login.html" aria-label="Sign out" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></a>
+      </div>
+    </aside>
+    <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+    <div class="app-main">
+      <header class="topbar">
+        <label for="nav-toggle" class="menu-btn" aria-hidden="true"><i class="fa-solid fa-bars"></i></label>
+        <div class="topbar-title"><span class="kicker">Shopping lists</span><strong>Monthly groceries</strong></div>
+        <div class="topbar-actions">
+          <form class="search" role="search" action="expenses.html">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="visually-hidden" for="global-search">Search SplitStack</label>
+            <input id="global-search" type="search" name="q" placeholder="Search expenses, groups, lists">
+            <button class="visually-hidden" type="submit">Search</button>
+          </form>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+          <a class="icon-btn" href="dashboard.html#insights" aria-label="Notifications, 3 new" title="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i><span class="dot"></span></a>
+          <a class="avatar" href="profile.html" aria-label="Your profile" title="Priya Raman">PR</a>
+        </div>
+      </header>
+      <main id="main" class="content">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="shopping.html">Shopping lists</a></li><li aria-current="page">Monthly groceries</li></ol></nav>
+        <div class="page-header">
+          <div><h1>Monthly groceries</h1><p>Personal list &middot; 9 of 14 items bought</p></div>
+          <div class="page-actions">
+            <a class="btn btn-secondary" id="edit-list-btn" href="shopping-form.html?id=shop_1"><i class="fa-solid fa-pen" aria-hidden="true"></i>Edit list</a>
+            <form action="expenses.html" method="get"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i>Convert to expense</button></form>
+            <form action="shopping.html" method="get"><button class="btn btn-danger" type="submit"><i class="fa-solid fa-trash" aria-hidden="true"></i>Delete list</button></form>
+          </div>
+        </div>
+
+        <div class="meter mb-4" id="list-progress-meter" style="--fill: var(--success)" role="progressbar" aria-label="Monthly groceries progress" aria-valuemin="0" aria-valuemax="14" aria-valuenow="9"><span style="--value: 64%"></span></div>
+        <section class="grid grid-4 mb-4" aria-label="List totals">
+          <article class="card stat tone-primary"><div class="stat-top"><h2 class="stat-label">Estimated total</h2></div><p class="stat-value num">₹3,131</p><p class="stat-meta">All 14 items</p></article>
+          <article class="card stat tone-info"><div class="stat-top"><h2 class="stat-label">Estimate for bought</h2></div><p class="stat-value num">₹2,171</p><p class="stat-meta">9 items</p></article>
+          <article class="card stat tone-success"><div class="stat-top"><h2 class="stat-label">Actually paid</h2></div><p class="stat-value num">₹2,206</p><p class="stat-meta">9 items</p></article>
+          <article class="card stat tone-danger"><div class="stat-top"><h2 class="stat-label">Variance</h2></div><p class="stat-value num text-danger">+₹35</p><p class="stat-meta">1.6% over estimate</p></article>
+        </section>
+
+        <div class="grid grid-main-side">
+          <section class="card" aria-labelledby="items-title">
+            <div class="card-header"><h2 class="card-title" id="items-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i>Items</h2><span class="text-xs text-dim">Estimated &middot; actual</span></div>
+            <div class="card-body flush">
+              <ul class="checklist">
+                  <li class="check-item">
+                    <input type="checkbox" id="item-0" name="purchased" value="0" checked>
+                    <label for="item-0"><span class="cell-main">Basmati rice, 5 kg</span><span class="cell-sub">Qty 1</span></label>
+                    <span class="price num text-dim hide-sm">₹650</span>
+                    <span class="price num fw-600">₹690</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Basmati rice, 5 kg"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-1" name="purchased" value="1" checked>
+                    <label for="item-1"><span class="cell-main">Toor dal, 1 kg</span><span class="cell-sub">Qty 2</span></label>
+                    <span class="price num text-dim hide-sm">₹320</span>
+                    <span class="price num fw-600">₹310</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Toor dal, 1 kg"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-2" name="purchased" value="2" checked>
+                    <label for="item-2"><span class="cell-main">Milk, 1 L</span><span class="cell-sub">Qty 6</span></label>
+                    <span class="price num text-dim hide-sm">₹336</span>
+                    <span class="price num fw-600">₹336</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Milk, 1 L"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-3" name="purchased" value="3" checked>
+                    <label for="item-3"><span class="cell-main">Eggs, tray of 12</span><span class="cell-sub">Qty 2</span></label>
+                    <span class="price num text-dim hide-sm">₹180</span>
+                    <span class="price num fw-600">₹168</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Eggs, tray of 12"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-4" name="purchased" value="4" checked>
+                    <label for="item-4"><span class="cell-main">Tomatoes, 1 kg</span><span class="cell-sub">Qty 2</span></label>
+                    <span class="price num text-dim hide-sm">₹80</span>
+                    <span class="price num fw-600">₹96</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Tomatoes, 1 kg"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-5" name="purchased" value="5" checked>
+                    <label for="item-5"><span class="cell-main">Onions, 1 kg</span><span class="cell-sub">Qty 3</span></label>
+                    <span class="price num text-dim hide-sm">₹105</span>
+                    <span class="price num fw-600">₹99</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Onions, 1 kg"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-6" name="purchased" value="6" checked>
+                    <label for="item-6"><span class="cell-main">Sunflower oil, 1 L</span><span class="cell-sub">Qty 2</span></label>
+                    <span class="price num text-dim hide-sm">₹340</span>
+                    <span class="price num fw-600">₹352</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Sunflower oil, 1 L"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-7" name="purchased" value="7" checked>
+                    <label for="item-7"><span class="cell-main">Brown bread</span><span class="cell-sub">Qty 2</span></label>
+                    <span class="price num text-dim hide-sm">₹100</span>
+                    <span class="price num fw-600">₹100</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Brown bread"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-8" name="purchased" value="8" checked>
+                    <label for="item-8"><span class="cell-main">Bananas, dozen</span><span class="cell-sub">Qty 1</span></label>
+                    <span class="price num text-dim hide-sm">₹60</span>
+                    <span class="price num fw-600">₹55</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Bananas, dozen"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-9" name="purchased" value="9">
+                    <label for="item-9"><span class="cell-main">Paneer, 200 g</span><span class="cell-sub">Qty 2</span></label>
+                    <span class="price num text-dim hide-sm">₹180</span>
+                    <span class="price num fw-600">&mdash;</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Paneer, 200 g"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-10" name="purchased" value="10">
+                    <label for="item-10"><span class="cell-main">Curd, 500 g</span><span class="cell-sub">Qty 2</span></label>
+                    <span class="price num text-dim hide-sm">₹90</span>
+                    <span class="price num fw-600">&mdash;</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Curd, 500 g"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-11" name="purchased" value="11">
+                    <label for="item-11"><span class="cell-main">Filter coffee powder</span><span class="cell-sub">Qty 1</span></label>
+                    <span class="price num text-dim hide-sm">₹280</span>
+                    <span class="price num fw-600">&mdash;</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Filter coffee powder"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-12" name="purchased" value="12">
+                    <label for="item-12"><span class="cell-main">Dish wash liquid</span><span class="cell-sub">Qty 1</span></label>
+                    <span class="price num text-dim hide-sm">₹120</span>
+                    <span class="price num fw-600">&mdash;</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Dish wash liquid"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                  <li class="check-item">
+                    <input type="checkbox" id="item-13" name="purchased" value="13">
+                    <label for="item-13"><span class="cell-main">Whole wheat atta, 5 kg</span><span class="cell-sub">Qty 1</span></label>
+                    <span class="price num text-dim hide-sm">₹290</span>
+                    <span class="price num fw-600">&mdash;</span>
+                    <button class="icon-btn sm danger hide-sm" type="button" aria-label="Remove Whole wheat atta, 5 kg"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </li>
+                </ul>
+            </div>
+          </section>
+          <aside class="card" aria-labelledby="add-item-title">
+            <div class="card-header"><h2 class="card-title" id="add-item-title"><i class="fa-solid fa-plus" aria-hidden="true"></i>Add an item</h2></div>
+            <div class="card-body">
+              <form class="form" action="shopping-detail.html" method="get">
+                <div class="field"><label for="i-name">Item <span class="req" aria-hidden="true">*</span></label><input class="input" id="i-name" name="item_name" type="text" maxlength="80" required></div>
+                <div class="form-grid">
+                  <div class="field"><label for="i-qty">Quantity</label><input class="input" id="i-qty" name="quantity" type="number" min="1" step="1" value="1" required></div>
+                  <div class="field"><label for="i-price">Est. unit price</label><div class="input-group"><span class="addon" aria-hidden="true">₹</span><input class="input" id="i-price" name="estimated_price" type="number" min="0" step="0.01"></div></div>
+                </div>
+                <div class="field"><label for="i-assign">Assigned to</label><select class="select" id="i-assign" name="assigned_to"><option value="">Unassigned</option><option value="priya" selected>Priya Raman</option></select></div>
+                <button class="btn btn-secondary btn-block" type="submit">Add item</button>
+              </form>
+            </div>
+          </aside>
+        </div>
+      </main>
+      <footer class="app-footer">&copy; 2026 SplitStack &middot; Personal &amp; group expense management</footer>
+    </div>
+  </div>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · SplitStack</title>
+  <meta name="description" content="Sign in to your SplitStack account.">
+  <meta name="theme-color" content="#070b14">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <script>
+    try {
+      const t = localStorage.getItem('splitstack_theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  </script>
+</head>
+<body data-page="login">
+  <a class="skip-link" href="#main">Skip to main content</a>
+<div class="auth-layout">
+    <aside class="auth-panel" aria-label="About SplitStack">
+      <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span><span>SplitStack</span></a>
+      <div>
+        <h2>Split bills, not friendships.</h2>
+        <p class="mt-2">Track your own spending, share costs with any group and settle up in the fewest payments possible.</p>
+      </div>
+      <ul class="steps">
+        <li>Log expenses and income in seconds, or scan a receipt.</li>
+        <li>Share bills equally or with custom amounts.</li>
+        <li>SplitStack works out who pays whom.</li>
+      </ul>
+    </aside>
+    <main id="main" class="auth-main">
+      <div class="auth-card">
+        <h1>Welcome back</h1>
+        <p>Sign in to see your dashboard, groups and budgets.</p>
+        <div class="alert alert-info mb-4" role="status">
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          <div><strong>Demo login:</strong> <code>demo@splitstack.app</code> / <code>Demo@1234</code></div>
+        </div>
+        <form class="form" action="dashboard.html" method="get">
+          <div class="field">
+            <label for="email">Email address <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required aria-describedby="email-hint">
+            <span class="hint" id="email-hint">The email you registered with.</span>
+          </div>
+          <div class="field">
+            <div class="form-row"><label for="password" class="field-label">Password <span class="req" aria-hidden="true">*</span></label><a class="text-xs" href="#reset">Forgot password?</a></div>
+            <div class="input-with-action">
+              <input class="input" id="password" name="password" type="password" autocomplete="current-password" minlength="8" required>
+              <button class="icon-btn" type="button" aria-label="Show password" aria-pressed="false"><i class="fa-regular fa-eye" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="check"><input type="checkbox" name="remember" checked> Keep me signed in</label>
+          </div>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Sign in</button>
+          <p class="text-sm text-center">New to SplitStack? <a href="register.html">Create an account</a></p>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>
